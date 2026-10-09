@@ -1,6 +1,7 @@
+// Sidebar geometry adapted from Wealthfolio v3.9.1; see THIRD_PARTY_NOTICES.md.
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
-  ArrowLeftRight,
   ChartNoAxesCombined,
   House,
   Landmark,
@@ -8,41 +9,52 @@ import {
   Menu,
   Moon,
   Sun,
-  Tags,
+  Settings,
   X,
+  Wallet,
+  BriefcaseBusiness,
+  TrendingUp,
+  ChartPie,
+  Files,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
 } from 'lucide-react'
-import type { Account } from '@/lib/api'
-import { Money } from './primitives'
+import type { PreviewPage } from '@/pages/previews'
 
 export type Page =
-  | 'Dashboard'
+  | 'Overview'
   | 'Accounts'
   | 'Transactions'
-  | 'Transfers'
-  | 'Categories'
+  | 'Settings'
   | 'Account'
+  | PreviewPage
 export type Navigate = (page: Page, accountId?: string) => void
 const primary = [
-  { page: 'Dashboard', icon: House },
+  { page: 'Overview', icon: House },
+  { page: 'Accounts', icon: Landmark },
   { page: 'Transactions', icon: ListFilter },
-  { page: 'Transfers', icon: ArrowLeftRight },
-  { page: 'Categories', icon: Tags },
+  { page: 'Budget', icon: Wallet },
+  { page: 'Investments', icon: BriefcaseBusiness },
+  { page: 'Performance', icon: TrendingUp },
+  { page: 'Net Worth', icon: ChartPie },
+  { page: 'Reports', icon: Files },
+  { page: 'Settings', icon: Settings },
 ] as const
 
 export function AppShell({
   page,
-  accountId,
-  accounts,
   navigate,
   children,
 }: {
   page: Page
-  accountId?: string
-  accounts: Account[]
   navigate: Navigate
   children: ReactNode
 }) {
   const [open, setOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
+  const [search, setSearch] = useState('')
+  const searchDialog = useRef<HTMLDialogElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const [theme, setTheme] = useState(() => {
     try {
@@ -51,9 +63,7 @@ export function AppShell({
     } catch {
       /* Storage is optional. */
     }
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light'
+    return 'dark'
   })
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -78,6 +88,7 @@ export function AppShell({
   function go(next: Page, id?: string) {
     navigate(next, id)
     setOpen(false)
+    searchDialog.current?.close()
     requestAnimationFrame(() => document.getElementById('page-title')?.focus())
   }
   function content() {
@@ -87,69 +98,67 @@ export function AppShell({
           <span className="project-mark">
             <ChartNoAxesCombined aria-hidden="true" size={18} />
           </span>
-          <div>
+          <div className="brand-label">
             Finance Tracker<span className="metadata">Personal workspace</span>
           </div>
         </div>
+        <button
+          className="nav-item sidebar-search"
+          aria-label="Find a page"
+          onClick={() => {
+            setSearch('')
+            searchDialog.current?.showModal()
+          }}
+        >
+          <Search size={20} />
+          <span className="nav-label">Find a page</span>
+        </button>
         <nav aria-label="Main navigation" className="primary-nav">
           {primary.map(({ page: item, icon: Icon }) => (
             <button
               key={item}
               className="nav-item"
-              aria-current={page === item ? 'page' : undefined}
+              title={
+                [
+                  'Budget',
+                  'Investments',
+                  'Performance',
+                  'Net Worth',
+                  'Reports',
+                ].includes(item)
+                  ? `${item} · Preview`
+                  : item
+              }
+              aria-label={
+                [
+                  'Budget',
+                  'Investments',
+                  'Performance',
+                  'Net Worth',
+                  'Reports',
+                ].includes(item)
+                  ? `${item} Preview`
+                  : item
+              }
+              aria-current={
+                page === item || (page === 'Account' && item === 'Accounts')
+                  ? 'page'
+                  : undefined
+              }
               onClick={() => go(item)}
             >
-              <Icon size={17} aria-hidden="true" />
-              {item}
+              <Icon size={20} aria-hidden="true" />
+              <span className="nav-label">{item}</span>
+              {[
+                'Budget',
+                'Investments',
+                'Performance',
+                'Net Worth',
+                'Reports',
+              ].includes(item) && <span className="nav-preview">Preview</span>}
             </button>
           ))}
         </nav>
-        <section className="sidebar-accounts" aria-label="Account navigation">
-          <div className="sidebar-section-title">
-            Accounts
-            <button
-              className="text-action"
-              onClick={() => go('Accounts')}
-              aria-label="Manage accounts"
-            >
-              Manage
-            </button>
-          </div>
-          <button
-            className="nav-item"
-            aria-current={page === 'Accounts' ? 'page' : undefined}
-            onClick={() => go('Accounts')}
-          >
-            <Landmark size={17} aria-hidden="true" />
-            All accounts
-          </button>
-          {!accounts.some((a) => a.active) && (
-            <p className="metadata px-3 py-2">No active accounts yet.</p>
-          )}
-          {accounts
-            .filter((a) => a.active)
-            .map((a) => (
-              <button
-                className="account-nav"
-                key={a.id}
-                aria-current={
-                  page === 'Account' && accountId === a.id ? 'page' : undefined
-                }
-                onClick={() => go('Account', a.id)}
-                aria-label={`Open ${a.name}`}
-              >
-                <span className="account-name" title={a.name}>
-                  {a.name}
-                </span>
-                <Money
-                  value={a.balance}
-                  currency={a.currency}
-                  compact
-                  tone={a.balance.startsWith('-') ? 'negative' : 'neutral'}
-                />
-              </button>
-            ))}
-        </section>
         <div className="sidebar-footer">
           <button
             className="nav-item"
@@ -161,22 +170,85 @@ export function AppShell({
             ) : (
               <Moon size={17} aria-hidden="true" />
             )}{' '}
-            {theme === 'dark' ? 'Light appearance' : 'Dark appearance'}
+            <span className="nav-label">
+              {theme === 'dark' ? 'Light appearance' : 'Dark appearance'}
+            </span>
           </button>
-          <p className="metadata">
-            <span className="local-dot" />
-            Local · Self-hosted
-          </p>
+          <button
+            className="nav-item sidebar-toggle"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            {collapsed ? (
+              <PanelLeftOpen size={20} />
+            ) : (
+              <PanelLeftClose size={20} />
+            )}
+            <span className="nav-label">Collapse sidebar</span>
+          </button>
+          <span
+            className="workspace-avatar"
+            title="Finance Tracker · Local workspace"
+            aria-label="Local workspace"
+          >
+            FT
+          </span>
         </div>
       </>
     )
   }
   return (
-    <div className="application-shell">
+    <div
+      className={`application-shell reference-shell ${collapsed ? 'sidebar-collapsed' : ''}`}
+    >
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
       <aside className="desktop-sidebar">{content()}</aside>
+      <dialog
+        ref={searchDialog}
+        className="page-finder"
+        aria-label="Find a page"
+      >
+        <label className="field">
+          Find a page
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Page name"
+          />
+        </label>
+        <nav aria-label="Matching pages">
+          {primary
+            .filter((item) =>
+              item.page.toLowerCase().includes(search.toLowerCase()),
+            )
+            .map(({ page: item, icon: Icon }) => (
+              <button className="nav-item" key={item} onClick={() => go(item)}>
+                <Icon size={18} />
+                {item}
+                {[
+                  'Budget',
+                  'Investments',
+                  'Performance',
+                  'Net Worth',
+                  'Reports',
+                ].includes(item) && (
+                  <span className="nav-preview">Preview</span>
+                )}
+              </button>
+            ))}
+        </nav>
+        {!primary.some((item) =>
+          item.page.toLowerCase().includes(search.toLowerCase()),
+        ) && <p className="metadata">No matching pages</p>}
+        <button
+          className="text-action"
+          onClick={() => searchDialog.current?.close()}
+        >
+          Close
+        </button>
+      </dialog>
       <header className="mobile-toolbar">
         <button
           className="icon-button"
@@ -195,6 +267,23 @@ export function AppShell({
         ref={dialog}
         className="navigation-drawer"
         aria-label="Navigation"
+        onKeyDown={(event) => {
+          if (event.key !== 'Tab') return
+          const buttons = Array.from(
+            event.currentTarget.querySelectorAll<HTMLButtonElement>(
+              'button:not(:disabled)',
+            ),
+          )
+          const first = buttons[0]
+          const last = buttons.at(-1)
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault()
+            last?.focus()
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault()
+            first?.focus()
+          }
+        }}
         onCancel={() => setOpen(false)}
         onClose={() => setOpen(false)}
         onClick={(e) => {
@@ -212,7 +301,11 @@ export function AppShell({
           {content()}
         </div>
       </dialog>
-      <main id="main-content" className="main-content" tabIndex={-1}>
+      <main
+        id="main-content"
+        className={`main-content ${page === 'Overview' ? 'overview-main' : ''}`}
+        tabIndex={-1}
+      >
         {children}
       </main>
     </div>

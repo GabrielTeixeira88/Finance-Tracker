@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Field, TransactionForm } from '@/components/forms'
+import { Field, TransactionForm, TransactionComposer } from '@/components/forms'
 import { Button } from '@/components/ui/button'
 import { TransactionTable } from '@/components/transaction-table'
 import { PageHeader, Money, LoadingState } from '@/components/primitives'
@@ -65,7 +65,7 @@ export default function Transactions({
             setCreating(!creating)
           }}
         >
-          {creating ? 'Close form' : 'Add transaction'}
+          {creating ? 'Close form' : '+ Add Transaction'}
         </Button>
       </PageHeader>
       {account && (
@@ -79,7 +79,17 @@ export default function Transactions({
           </span>
         </div>
       )}
-      {(creating || editing) && (
+      {creating && (
+        <TransactionComposer
+          accounts={accounts}
+          categories={categories}
+          onSaved={() => {
+            setCreating(false)
+            setOffset(0)
+          }}
+        />
+      )}
+      {editing && (
         <TransactionForm
           key={editing?.id ?? 'new'}
           transaction={editing}

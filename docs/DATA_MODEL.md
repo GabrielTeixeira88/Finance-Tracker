@@ -1,6 +1,6 @@
 # Phase 1 data model
 
-All financial records stay in local PostgreSQL. The ledger is authoritative; there
+All financial records stay in local SQLite. The ledger is authoritative; there
 is no editable or cached account-balance column.
 
 ```mermaid
@@ -40,7 +40,9 @@ the API's explicit check.
 
 ## Monetary convention
 
-Amounts use PostgreSQL `NUMERIC(24,6)` and Python `Decimal`. They must be finite,
+Amounts use Python `Decimal` and the SQLAlchemy `ExactMoney` adapter. SQLite stores
+24 zero-padded decimal digits of millionths as TEXT (not NUMERIC/REAL). This preserves
+the former NUMERIC(24,6) range without 64-bit integer overflow. Values must be finite,
 strictly positive, less than 10^18, and have at most six fractional digits. APIs
 require decimal **strings**, rejecting JSON numbers rather than risking float
 conversion. Excess precision is rejected before persistence, not silently rounded.
@@ -48,7 +50,7 @@ Responses serialize money as strings; the frontend formats those strings directl
 
 Every transaction and transfer stores currency. Composite foreign keys tie it to
 the referenced account's currency. No aggregation combines different currencies.
-All timestamps are timezone-aware; transaction dates are calendar dates with no
+The UTCDateTime adapter restores UTC timezone information on SQLite reads; transaction dates are calendar dates with no
 timezone conversion.
 
 ## Transactions and opening history
@@ -82,27 +84,38 @@ Physical transaction deletion is blocked by a database trigger.
 ## Transfers
 
 `transfers`: UUID id, source_account_id, destination_account_id, positive amount,
-currency, date, description, created_at, updated_at. A transfer links exactly two
+currency, date, description, created_at, updated_at, source_entry_id, and
+destination_entry_id. The entry IDs are deferred foreign keys to transactions. A transfer links exactly two
 transactions through transfer_id: OUT on the source and IN on the destination.
 
-The dedicated API locks the two active accounts in UUID order, inserts the parent
-and both entries within one transaction, and commits once. Same-account transfers
-and cross-currency transfers are rejected. Composite foreign keys require both
-accounts to match the transfer currency. A unique `(transfer_id, direction)`
-constraint and a deferred PostgreSQL constraint trigger require two matching sides
-(accounts, amount, currency, date, description) when the transaction commits. Any
-failure rolls back the parent and both sides. No overdraft prevention is imposed;
-negative balances are legitimate, especially for credit cards.
+The dedicated backend operation reserves the SQLite writer before reading accounts,
+inserts the parent and both entries in one transaction, and commits once. Same-account
+and cross-currency transfers are rejected. Composite foreign keys require matching
+account currencies. Parent entry pointers must resolve at commit; insert triggers
+validate that each side exactly matches its parent. Unique `(transfer_id, direction)`
+and distinct entry ID constraints prohibit extra sides. Partial or mismatched
+transfers cannot commit, including through direct database writes. All failures roll
+back the whole operation. Negative balances remain valid; overdraft prevention is
+not imposed.
+
+The frontend exposes transfers only through Transactions -> Add Transaction ->
+Transfer. The dedicated `/api/transfers` endpoint remains an atomic backend boundary,
+not a separate product section. Categories are managed in Settings. Their stored
+`normalized_name` is generated from lower(trim(name)) and uniquely indexed; this
+keeps duplicate-name enforcement introspectable by SQLite/Alembic.
 
 ## Balances and dashboard
 
+Python aggregates decoded Decimal values (never SQLite floating-point SUM).
 For each account, sum non-deleted IN amounts minus non-deleted OUT amounts across
-**all recorded dates**, including future-dated entries. There is no as-of-date
-balance feature yet. Dashboard total account value is the sum of these balances,
+**all recorded dates**, including future-dated entries, for the Phase 1 accounts and
+dashboard endpoints. The new history endpoint instead calculates as-of-date balances.
+Legacy dashboard total account value is the sum of all-date balances,
 including inactive accounts and signed credit-card liabilities, grouped by currency.
 INVESTMENT accounts contribute their ledger cash balance only.
 
-The frontend supplies its local current month as `YYYY-MM` to `/api/dashboard`.
+The retained `/api/dashboard` endpoint accepts a selected month as `YYYY-MM`.
+Overview now uses `/api/history` instead.
 The backend includes dates from that month's first day (inclusive) to the next
 month's first day (exclusive). Only INCOME contributes to income and only EXPENSE
 contributes to expenses. Both opening entries and transfers are excluded. Recent
@@ -137,3 +150,32 @@ input/unsupported currency operations, and 409 for immutable/referenced records 
 constraint conflicts. Database exception details are not returned to the browser.
 
 See FastAPI `/docs` for complete request and response schemas.
+
+## Historical display (Phase 1.6)
+
+`GET /api/history?period=1M|3M|YTD|1Y|ALL&end=YYYY-MM-DD` is read-only.
+1M begins on the first of the ending month; 3M and 1Y include respectively three
+and twelve calendar months; YTD starts January 1; ALL starts at the earliest retained
+entry. The end date is inclusive. Baseline is the closing balance on the day before
+the period. Points are emitted on activity dates and at the end, with unchanged
+balances carried forward between them. Overview renders a monotone visual curve;
+preview charts retain step rendering. Interpolated geometry is not additional financial
+history: displayed amounts always use exact closing ledger values. Both transfer sides are applied
+before emitting the day's point. Missing accounts have zero reconstructed balance.
+
+Each currency series includes baseline, closing balance, income, expenses, net flow,
+absolute change, optional percentage change, and expense-only category totals.
+Percentage change is omitted when the baseline is zero or negative. Opening balances
+can affect balance change but never flow totals, so these metrics need not match.
+Soft-deleted and later-dated entries are excluded. Account metadata is current, not
+historically versioned. Includes inactive accounts and signed credit-card debt.
+No currencies are combined or converted. Recent activity contains up to eight entries
+inside the selected range, including both linked transfer sides where applicable.
+
+`demo_fixtures` (`sqlite_0002`): string version id, start_date, end_date, JSON payload.
+This optional record marks the deterministic synthetic seed and holds only clearly
+fictional UI illustrations. All monetary JSON values are decimal strings. Budget
+category IDs identify labels for comparison only, not a budget-domain relationship.
+Preview holdings are not `FinancialAccount` assets and never participate in balance
+calculation. GET `/api/demo` returns `enabled: false` on an ordinary workspace.
+There is no preview write API or automatic seeding.

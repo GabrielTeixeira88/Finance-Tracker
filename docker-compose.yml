@@ -1,48 +1,17 @@
 name: finance-tracker
 
-x-backend: &backend
-  build: ./backend
-  environment:
-    POSTGRES_USER: ${POSTGRES_USER:?Copy .env.example to .env first}
-    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-    POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
-    POSTGRES_HOST: db
-    POSTGRES_PORT: 5432
-
+# Optional packaging. Native Python + Node development requires no Docker.
 services:
-  db:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-      start_period: 10s
-    restart: unless-stopped
-
-  migrate:
-    <<: *backend
-    command: ["alembic", "upgrade", "head"]
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: "no"
-
   backend:
-    <<: *backend
+    build: ./backend
+    environment:
+      DATABASE_PATH: /app/data/finance-tracker.db
+      SQLITE_BUSY_TIMEOUT_MS: ${SQLITE_BUSY_TIMEOUT_MS:-5000}
+    volumes:
+      - ./data:/app/data
+    command: ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
     ports:
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/ready', timeout=4)"]
       interval: 10s
@@ -50,7 +19,6 @@ services:
       retries: 6
       start_period: 10s
     restart: unless-stopped
-
   frontend:
     build: ./frontend
     ports:

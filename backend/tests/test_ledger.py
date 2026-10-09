@@ -144,7 +144,7 @@ def test_category_integrity_and_safe_soft_delete(api, db_engine):
     assert api.delete(f"/api/categories/{category['id']}").status_code == 409
     assert Decimal(api.get(f"/api/accounts/{acct['id']}").json()["balance"]) == Decimal("1000")
     with db_engine.begin() as conn, pytest.raises(IntegrityError):
-        conn.execute(text("DELETE FROM categories WHERE id=:id"), {"id": category["id"]})
+        conn.execute(text("DELETE FROM categories WHERE id=:id"), {"id": UUID(category["id"]).hex})
 
 
 def test_filters_updates_dates_and_currencies(api):
@@ -222,7 +222,9 @@ def test_transfer_sides_cannot_be_edited_or_deleted(api, db_engine):
     side = api.get("/api/transactions?transaction_type=TRANSFER").json()[0]
     assert api.delete(f"/api/transactions/{side['id']}").status_code == 409
     with db_engine.begin() as conn, pytest.raises(IntegrityError):
-        conn.execute(text("UPDATE transactions SET amount=2 WHERE id=:id"), {"id": side["id"]})
+        conn.execute(
+            text("UPDATE transactions SET amount=2 WHERE id=:id"), {"id": UUID(side["id"]).hex}
+        )
 
 
 def test_account_edit_deactivate_reactivate_and_category_management(api):

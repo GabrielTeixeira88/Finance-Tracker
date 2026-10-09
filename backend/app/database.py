@@ -1,7 +1,8 @@
 from collections.abc import Iterator
 from functools import lru_cache
+from pathlib import Path
 
-from sqlalchemy import Engine, MetaData, create_engine
+from sqlalchemy import Engine, MetaData, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session
 
 from app.config import get_settings
@@ -19,14 +20,37 @@ class Base(DeclarativeBase):
     )
 
 
+def make_engine(url, busy_timeout_ms=5000) -> Engine:
+    # File paths are resolved by Settings, independent of the process working directory.
+    Path(url.database).parent.mkdir(parents=True, exist_ok=True)
+    engine = create_engine(url, connect_args={"check_same_thread": False}, hide_parameters=True)
+
+    @event.listens_for(engine, "connect")
+    def configure(connection, _):
+        # SQLAlchemy controls BEGIN explicitly, including transactional DDL.
+        connection.isolation_level = None
+        cursor = connection.cursor()
+        cursor.execute(f"PRAGMA busy_timeout={int(busy_timeout_ms)}")
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=FULL")
+        cursor.execute("PRAGMA recursive_triggers=ON")
+        cursor.close()
+
+    @event.listens_for(engine, "begin")
+    def begin(connection):
+        statement = (
+            "BEGIN IMMEDIATE" if connection.get_execution_options().get("sqlite_write") else "BEGIN"
+        )
+        connection.exec_driver_sql(statement)
+
+    return engine
+
+
 @lru_cache
 def get_engine() -> Engine:
-    return create_engine(
-        get_settings().database_url,
-        pool_pre_ping=True,
-        connect_args={"connect_timeout": 3},
-        hide_parameters=True,
-    )
+    settings = get_settings()
+    return make_engine(settings.database_url, settings.sqlite_busy_timeout_ms)
 
 
 def get_session() -> Iterator[Session]:

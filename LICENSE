@@ -2,6 +2,10 @@ Copyright (c) 2026 Finance Tracker contributors
 
 All rights reserved.
 
+Third-party and adapted frontend files have separate license terms identified
+in THIRD_PARTY_NOTICES.md, including AGPL-3.0-only Wealthfolio adaptations and
+SIL OFL 1.1 font software. This notice does not override those licenses.
+
 No open-source license has been selected for this project yet. No permission
 to use, copy, modify, distribute, sublicense, or sell this software is granted
 by this file. The project owner should replace this notice when choosing a license.

@@ -53,7 +53,7 @@ def health() -> HealthResponse:
 
 @app.get("/api/health/ready", response_model=ReadyResponse, tags=["health"])
 def ready(session: Annotated[Session, Depends(get_session)]) -> ReadyResponse | JSONResponse:
-    """Readiness requires a successful round trip to local PostgreSQL."""
+    """Readiness requires a successful query against the local SQLite file."""
     try:
         session.execute(text("SELECT 1"))
     except SQLAlchemyError:

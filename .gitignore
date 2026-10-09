@@ -41,6 +41,7 @@ data/*
 *.backup
 *.bak
 *.db
+*.db-*
 *.sqlite*
 *.rdb
 *.aof
@@ -78,6 +79,8 @@ test-results/
 *.log
 .idea/
 .vscode/
+.codex/
+.agents/
 .DS_Store
 Thumbs.db
 Desktop.ini

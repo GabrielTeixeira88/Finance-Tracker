@@ -3,20 +3,25 @@ from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 
+from app import history as history_service
 from app import ledger, schemas
 from app.database import get_session
-from app.models import Category, FinancialAccount, Transaction, Transfer
+from app.models import Category, DemoFixture, FinancialAccount, Transaction, Transfer
 
 router = APIRouter(prefix="/api")
 
 
-def unit_of_work(session: Annotated[Session, Depends(get_session)]) -> Iterator[Session]:
+def unit_of_work(
+    request: Request, session: Annotated[Session, Depends(get_session)]
+) -> Iterator[Session]:
     try:
+        if request.method not in {"GET", "HEAD", "OPTIONS"}:
+            session.connection(execution_options={"sqlite_write": True})
         yield session
         session.commit()
     except IntegrityError as error:
@@ -24,6 +29,13 @@ def unit_of_work(session: Annotated[Session, Depends(get_session)]) -> Iterator[
         raise HTTPException(
             409, "Operation conflicts with existing records or ledger integrity"
         ) from error
+    except OperationalError as error:
+        session.rollback()
+        if getattr(error.orig, "sqlite_errorcode", None) in {5, 6}:
+            raise HTTPException(
+                503, "Local database is busy; retry shortly", headers={"Retry-After": "1"}
+            ) from error
+        raise
     except Exception:
         session.rollback()
         raise
@@ -158,3 +170,22 @@ def get_transfer(record_id: UUID, db: DB):
 @router.get("/dashboard", response_model=schemas.DashboardOutput)
 def dashboard(db: DB, month: str = Query(pattern=r"^\d{4}-\d{2}$")):
     return ledger.dashboard(db, month)
+
+
+@router.get("/history", response_model=history_service.History)
+def history(db: DB, end: date, period: history_service.Period = "1Y"):
+    return history_service.history(db, period, end)
+
+
+@router.get("/demo")
+def demo(db: DB):
+    fixture = db.scalar(select(DemoFixture).order_by(DemoFixture.id).limit(1))
+    if fixture is None:
+        return {"enabled": False}
+    return {
+        "enabled": True,
+        "version": fixture.id,
+        "start_date": fixture.start_date,
+        "end_date": fixture.end_date,
+        "preview": fixture.payload,
+    }

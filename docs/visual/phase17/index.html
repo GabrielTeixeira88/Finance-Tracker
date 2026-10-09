@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phase 1.7 — Wealthfolio / Finance Tracker comparison</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font:
+        14px system-ui,
+        sans-serif;
+      background: #100f0f;
+      color: #cecdc3;
+    }
+    body {
+      margin: 0;
+    }
+    header {
+      padding: 16px;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+    label {
+      margin-right: 20px;
+    }
+    select {
+      font: inherit;
+    }
+    a {
+      color: #cecdc3;
+    }
+    .comparison {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    figure {
+      margin: 0;
+    }
+    figcaption {
+      box-sizing: border-box;
+      height: 40px;
+      padding: 10px 16px;
+      background: #252422;
+    }
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .actual .comparison {
+      grid-template-columns: repeat(2, var(--capture-width));
+      width: max-content;
+    }
+    footer {
+      padding: 16px;
+      line-height: 1.7;
+    }
+  </style>
+  <header>
+    <h1>Phase 1.7 visual review — identical capture resolutions</h1>
+    <label for="size">Capture</label
+    ><select id="size">
+      <option value="1440">1440 × 900</option>
+      <option value="1920">1920 × 1080</option>
+      <option value="tooltip">Tooltip · 1440 × 900</option>
+    </select>
+    <label
+      ><input id="actual" type="checkbox" /> Show original pixels (scroll
+      horizontally)</label
+    >
+    <p>
+      Both applications use the same synthetic ledger amounts and September 2026
+      ending date. Screenshots are unaltered browser captures.
+    </p>
+  </header>
+  <div class="comparison">
+    <figure>
+      <figcaption>Wealthfolio v3.9.1 — reference</figcaption>
+      <a id="reference-link" href="wealthfolio-1440.png"
+        ><img
+          id="reference"
+          src="wealthfolio-1440.png"
+          alt="Running Wealthfolio dark desktop reference"
+      /></a>
+    </figure>
+    <figure>
+      <figcaption>Finance Tracker — implementation</figcaption>
+      <a id="implementation-link" href="finance-tracker-1440.png"
+        ><img
+          id="implementation"
+          src="finance-tracker-1440.png"
+          alt="Finance Tracker Overview with the same ledger balances"
+      /></a>
+    </figure>
+  </div>
+  <footer>
+    <a href="../../PHASE_1_7_VISUAL_REVIEW.md"
+      >Measurements, remaining differences, validation results</a
+    ><br />
+    Additional captures:
+    <a href="finance-tracker-expanded.png">expanded sidebar</a> ·
+    <a href="finance-tracker-mobile.png">390px Overview</a> ·
+    <a href="finance-tracker-mobile-drawer.png">mobile drawer</a> ·
+    <a href="finance-tracker-light.png">light theme</a><br />
+    <a href="../../../THIRD_PARTY_NOTICES.md"
+      >Wealthfolio attribution and licenses</a
+    >. Reference branding is shown only for comparison.
+  </footer>
+  <script>
+    const select = document.getElementById("size");
+    const actual = document.getElementById("actual");
+    function update() {
+      document.documentElement.style.setProperty(
+        "--capture-width",
+        `${select.value === "1920" ? 1920 : 1440}px`,
+      );
+      document.body.classList.toggle("actual", actual.checked);
+      for (const [id, prefix] of [
+        ["reference", "wealthfolio"],
+        ["implementation", "finance-tracker"],
+      ]) {
+        const path = `${prefix}-${select.value}.png`;
+        document.getElementById(id).src = path;
+        document.getElementById(`${id}-link`).href = path;
+      }
+    }
+    select.addEventListener("change", update);
+    actual.addEventListener("change", update);
+    update();
+  </script>
+</html>

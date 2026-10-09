@@ -62,6 +62,79 @@ export type Account = z.infer<typeof accountSchema>
 export type Category = z.infer<typeof categorySchema>
 export type Transaction = z.infer<typeof transactionSchema>
 
+export const periods = ['1M', '3M', 'YTD', '1Y', 'ALL'] as const
+export type Period = (typeof periods)[number]
+const pointSchema = z.object({ date: z.string(), balance: decimal })
+const historySchema = z.object({
+  date_from: z.string(),
+  date_to: z.string(),
+  series: z.array(
+    z.object({
+      currency: z.string(),
+      opening_balance: decimal,
+      total_balance: decimal,
+      income: decimal,
+      expenses: decimal,
+      net_flow: decimal,
+      change: decimal,
+      change_percent: decimal.nullable(),
+      points: z.array(pointSchema),
+      spending: z.array(
+        z.object({
+          category_id: z.string().nullable(),
+          name: z.string(),
+          amount: decimal,
+        }),
+      ),
+    }),
+  ),
+  accounts: z.array(accountSchema),
+  recent_transactions: z.array(transactionSchema),
+})
+const demoSchema = z.discriminatedUnion('enabled', [
+  z.object({ enabled: z.literal(false) }),
+  z.object({
+    enabled: z.literal(true),
+    version: z.string(),
+    start_date: z.string(),
+    end_date: z.string(),
+    preview: z.object({
+      currency: z.string(),
+      budgets: z.array(
+        z.object({
+          category_id: z.string(),
+          name: z.string(),
+          target: decimal,
+        }),
+      ),
+      holdings: z.array(
+        z.object({ symbol: z.string(), name: z.string(), value: decimal }),
+      ),
+      performance: z.array(pointSchema),
+      activity: z.array(
+        z.object({
+          date: z.string(),
+          description: z.string(),
+          amount: decimal,
+        }),
+      ),
+    }),
+  }),
+])
+export type History = z.infer<typeof historySchema>
+export type HistorySeries = History['series'][number]
+export type Demo = z.infer<typeof demoSchema>
+export const getHistory = async (
+  period: Period,
+  end: string,
+  signal?: AbortSignal,
+) =>
+  historySchema.parse(
+    await request(`/history?period=${period}&end=${end}`, { signal }),
+  )
+export const getDemo = async (signal?: AbortSignal) =>
+  demoSchema.parse(await request('/demo', { signal }))
+
 export async function request(path: string, options: RequestInit = {}) {
   const response = await fetch(`/api${path}`, {
     ...options,

@@ -5,11 +5,12 @@ import { ErrorState, LoadingState, PageHeader } from '@/components/primitives'
 import { getAccounts, getCategories } from '@/lib/api'
 import Dashboard from '@/pages/dashboard'
 import Transactions from '@/pages/transactions'
-import { Accounts, Categories, Transfers } from '@/pages/management'
+import { Accounts, Settings } from '@/pages/management'
+import Preview, { type PreviewPage } from '@/pages/previews'
 
 export default function App() {
   const [route, setRoute] = useState<{ page: Page; accountId?: string }>({
-    page: 'Dashboard',
+    page: 'Overview',
   })
   const accounts = useQuery({
     queryKey: ['accounts'],
@@ -23,7 +24,7 @@ export default function App() {
     setRoute({ page, accountId })
   const selected = accounts.data?.find((a) => a.id === route.accountId)
   return (
-    <AppShell {...route} accounts={accounts.data ?? []} navigate={navigate}>
+    <AppShell page={route.page} navigate={navigate}>
       {accounts.isPending || categories.isPending ? (
         <>
           <PageHeader title="Workspace" />
@@ -42,7 +43,7 @@ export default function App() {
         </>
       ) : (
         <>
-          {route.page === 'Dashboard' && (
+          {route.page === 'Overview' && (
             <Dashboard
               accounts={accounts.data}
               categories={categories.data}
@@ -73,11 +74,21 @@ export default function App() {
                 retry={() => navigate('Accounts')}
               />
             ))}
-          {route.page === 'Transfers' && (
-            <Transfers accounts={accounts.data} categories={categories.data} />
+          {route.page === 'Settings' && (
+            <Settings categories={categories.data} />
           )}
-          {route.page === 'Categories' && (
-            <Categories categories={categories.data} />
+          {[
+            'Budget',
+            'Investments',
+            'Performance',
+            'Net Worth',
+            'Reports',
+          ].includes(route.page) && (
+            <Preview
+              key={route.page}
+              page={route.page as PreviewPage}
+              navigate={navigate}
+            />
           )}
         </>
       )}

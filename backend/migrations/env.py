@@ -1,9 +1,8 @@
 from alembic import context
-from sqlalchemy import create_engine, pool
 
 from app import models  # noqa: F401
 from app.config import get_settings
-from app.database import Base
+from app.database import Base, make_engine
 
 target_metadata = Base.metadata
 
@@ -21,9 +20,8 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    engine = create_engine(
+    engine = make_engine(
         context.config.attributes.get("database_url") or get_settings().database_url,
-        poolclass=pool.NullPool,
     )
     with engine.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)

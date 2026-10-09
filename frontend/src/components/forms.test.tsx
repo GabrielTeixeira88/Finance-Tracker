@@ -2,7 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
-import { AccountForm, TransactionForm, TransferForm } from './forms'
+import {
+  AccountForm,
+  TransactionForm,
+  TransferForm,
+  TransactionComposer,
+} from './forms'
 import { type Account, formatMoney, moneyInput } from '@/lib/api'
 
 const accounts: Account[] = [
@@ -138,3 +143,52 @@ it('formats large and fractional amounts without floating-point loss', () => {
   for (const input of ['0', '-1', 'NaN', 'Infinity', '1e3', '0.0000001'])
     expect(moneyInput.safeParse(input).success).toBe(false)
 })
+
+for (const kind of ['EXPENSE', 'INCOME', 'TRANSFER'] as const) {
+  it(`creates ${kind} through the unified transaction workflow`, async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response('{}'))
+    vi.stubGlobal('fetch', fetch)
+    const saved = vi.fn()
+    wrap(
+      <TransactionComposer
+        accounts={accounts}
+        categories={[]}
+        onSaved={saved}
+      />,
+    )
+    await userEvent.selectOptions(
+      screen.getByLabelText('Transaction type'),
+      kind,
+    )
+    if (kind === 'TRANSFER') {
+      await userEvent.selectOptions(
+        screen.getByLabelText('From account'),
+        'checking',
+      )
+      await userEvent.selectOptions(
+        screen.getByLabelText('To account'),
+        'savings',
+      )
+    } else {
+      await userEvent.selectOptions(
+        screen.getByLabelText('Account'),
+        'checking',
+      )
+      await userEvent.type(
+        screen.getByLabelText('Description'),
+        'Synthetic entry',
+      )
+    }
+    await userEvent.type(screen.getByLabelText('Amount'), '123.456789')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await screen.findByText('Saved.')
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(fetch.mock.calls[0][0]).toBe(
+      kind === 'TRANSFER' ? '/api/transfers' : '/api/transactions',
+    )
+    const payload = JSON.parse(fetch.mock.calls[0][1].body)
+    expect(payload.amount).toBe('123.456789')
+    if (kind !== 'TRANSFER') expect(payload.transaction_type).toBe(kind)
+    expect(saved).toHaveBeenCalledOnce()
+  })
+}

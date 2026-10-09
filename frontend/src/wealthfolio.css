@@ -1,0 +1,521 @@
+/* Adapted layout measurements and Flexoki tokens from Wealthfolio v3.9.1.
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * See THIRD_PARTY_NOTICES.md for exact upstream sources. */
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
+.reference-shell {
+  --background: hsl(48 100% 97%);
+  --foreground: hsl(0 3% 6%);
+  --card: hsl(51 59% 95%);
+  --sidebar: var(--background);
+  --muted: hsl(51 21% 88%);
+  --muted-foreground: hsl(50 3% 42%);
+  --border: hsl(51 21% 88%);
+  --input: hsl(50 14% 83%);
+  --nav-active: hsl(50 14% 83%);
+  --positive: hsl(73 84% 27%);
+  --negative: hsl(3 62% 42%);
+  --chart-line: var(--positive);
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'JetBrains Mono', monospace;
+}
+:root[data-theme='dark'] .reference-shell {
+  --background: hsl(0 3% 6%);
+  --foreground: hsl(55 10% 79%);
+  --card: hsl(30 4% 11%);
+  --muted: hsl(30 3% 15%);
+  --muted-foreground: hsl(43 3% 52%);
+  --border: hsl(30 3% 15%);
+  --input: hsl(40 3% 20%);
+  --nav-active: hsl(40 3% 20%);
+  --positive: hsl(72 46% 41%);
+  --negative: hsl(5 61% 54%);
+}
+.reference-shell .desktop-sidebar {
+  width: 220px;
+  padding: 48px 8px 8px;
+  overflow-y: auto;
+}
+.reference-shell.sidebar-collapsed .desktop-sidebar {
+  width: 70px;
+}
+.reference-shell .brand {
+  height: 72px;
+  padding: 8px 7px 24px;
+  flex-shrink: 0;
+}
+.reference-shell .brand-label {
+  font-size: 13px;
+  white-space: nowrap;
+}
+.reference-shell .brand-label .metadata {
+  font-size: 9px;
+}
+.reference-shell .project-mark {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--muted);
+  border: 0;
+}
+.reference-shell .primary-nav {
+  padding-top: 64px;
+  min-height: 520px;
+}
+.reference-shell .primary-nav > :nth-child(5),
+.reference-shell .primary-nav > :nth-child(7) {
+  margin-top: 0;
+}
+.reference-shell .sidebar-search {
+  position: absolute;
+  top: 120px;
+  left: 8px;
+  width: calc(100% - 16px);
+}
+.page-finder {
+  margin: 12vh auto auto;
+  width: min(440px, calc(100vw - 32px));
+  max-height: 75vh;
+  overflow-y: auto;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+}
+.page-finder::backdrop {
+  background: #0008;
+}
+.reference-shell .nav-item {
+  height: 48px;
+  flex-shrink: 0;
+  padding: 12px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+.reference-shell .nav-item svg {
+  flex-shrink: 0;
+}
+.reference-shell .nav-item[aria-current='page'] {
+  background: var(--nav-active);
+}
+.reference-shell.sidebar-collapsed .desktop-sidebar .nav-item {
+  justify-content: center;
+}
+.reference-shell.sidebar-collapsed
+  .desktop-sidebar
+  :is(.nav-label, .nav-preview, .brand-label) {
+  display: none;
+}
+.reference-shell .sidebar-footer {
+  margin: 4px 0 0;
+  padding: 0;
+}
+.reference-shell .sidebar-toggle {
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  margin-top: 4px;
+}
+.reference-shell .workspace-avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--muted-foreground);
+  border-radius: 50%;
+  margin: 12px auto 10px;
+  font-size: 10px;
+}
+.reference-shell .main-content {
+  margin-left: 220px;
+  max-width: none;
+}
+.reference-shell.sidebar-collapsed .main-content {
+  margin-left: 70px;
+}
+.reference-shell .main-content.overview-main {
+  padding: 0;
+}
+.overview-reference {
+  min-height: 100vh;
+}
+.overview-toolbar {
+  position: relative;
+  height: 76px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.overview-tabs {
+  display: flex;
+  padding: 4px;
+  gap: 0;
+  border-radius: 24px;
+  background: var(--card);
+  height: 40px;
+}
+.overview-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+.overview-tabs button[aria-current='page'] {
+  color: var(--foreground);
+  background: var(--background);
+}
+.overview-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+.overview-round,
+.overview-info {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: var(--card);
+  border-radius: 50%;
+  color: var(--muted-foreground);
+}
+.overview-info {
+  color: hsl(45 82% 45%);
+}
+.overview-options {
+  position: absolute;
+  z-index: 30;
+  right: 16px;
+  top: 60px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  box-shadow: 0 4px 16px #0003;
+}
+.overview-headline {
+  padding: 8px 32px 4px;
+  height: 70px;
+}
+.overview-balance {
+  font-size: 30px;
+  line-height: 36px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+.balance-fraction {
+  color: var(--muted-foreground);
+}
+.overview-change {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  height: 22px;
+  font-size: 14px;
+  line-height: 20px;
+}
+.overview-change .period-change {
+  margin: 0;
+  font-size: 14px;
+}
+.overview-change .period-change .metadata {
+  display: none;
+}
+.overview-change > .metadata {
+  font-size: 14px;
+}
+.overview-landscape {
+  min-height: calc(100vh - 146px);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--positive) 30%, transparent),
+    color-mix(in srgb, var(--positive) 15%, transparent) 50%,
+    transparent 100%
+  );
+}
+.overview-chart {
+  height: 280px;
+  margin: 0;
+}
+.overview-reference .range-tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  height: 34px;
+  padding: 2px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.overview-reference .range-tabs button {
+  font-size: 12px;
+  padding: 6px 14px;
+  height: 32px;
+  line-height: 20px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--foreground);
+  background: none;
+}
+.overview-reference .range-tabs button[aria-pressed='true'] {
+  background: var(--background);
+  color: var(--foreground);
+}
+.overview-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 80px;
+  padding: 22px 40px 32px;
+}
+.overview-accounts {
+  grid-column: span 2;
+}
+.overview-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding-bottom: 8px;
+  gap: 8px;
+}
+.overview-section-heading h2 {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.overview-accounts > .overview-section-heading {
+  height: 44px;
+}
+.overview-reference .account-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 20px;
+  align-items: center;
+  gap: 16px;
+  min-height: 82px;
+  padding: 16px 20px;
+  border: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  margin-bottom: 12px;
+}
+.overview-reference .account-summary strong {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+.overview-reference .account-summary small {
+  font-size: 14px;
+  line-height: 20px;
+  margin-top: 4px;
+}
+.overview-reference .account-summary .money {
+  font-size: 16px;
+  font-weight: 600;
+  align-self: start;
+  line-height: 24px;
+  max-width: none;
+  overflow: visible;
+  letter-spacing: normal;
+}
+.overview-reference .account-summary > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--muted-foreground);
+}
+.overview-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.overview-secondary .overview-section-heading {
+  min-height: 32px;
+  height: 32px;
+}
+.overview-secondary > section:first-child .overview-section-heading {
+  min-height: 28px;
+  height: 28px;
+}
+.overview-flow {
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--card);
+}
+.overview-flow .summary-metric {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0;
+  min-height: calc(64px / 3);
+}
+.overview-flow .summary-metric h2 {
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--muted-foreground);
+}
+.overview-flow .summary-metric > div {
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+}
+.overview-flow .summary-metric .money {
+  font-size: 14px;
+}
+.overview-flow .summary-metric h2 {
+  margin: 0;
+}
+.overview-flow .summary-metric .metadata {
+  display: none;
+}
+.overview-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.overview-reference .activity-list {
+  padding: 0 16px;
+  background: var(--card);
+  border-radius: 12px;
+}
+.overview-reference .activity-list li {
+  padding: 12px 0;
+  gap: 12px;
+}
+.overview-reference .activity-list strong {
+  font-size: 12px;
+}
+.overview-reference .activity-list .metadata {
+  font-size: 10px;
+}
+.overview-reference .activity-list .money {
+  font-size: 12px;
+}
+.overview-tooltip {
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px #0003;
+  font-size: 12px;
+}
+.overview-tooltip > p {
+  margin-bottom: 6px;
+  color: var(--muted-foreground);
+}
+.overview-tooltip > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+}
+.overview-tooltip .money {
+  margin-left: 0;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.chart-key {
+  width: 12px;
+  height: 2px;
+  background: var(--positive);
+}
+.overview-data {
+  margin: 16px 40px 0;
+  max-height: 260px;
+  background: var(--card);
+}
+@media (max-width: 1023px) {
+  .reference-shell .desktop-sidebar {
+    display: none;
+  }
+  .reference-shell .main-content,
+  .reference-shell.sidebar-collapsed .main-content {
+    margin-left: 0;
+  }
+  .reference-shell .drawer-content .primary-nav {
+    padding-top: 16px;
+    min-height: 0;
+  }
+  .reference-shell .drawer-content .sidebar-search {
+    position: static;
+    width: 100%;
+  }
+  .reference-shell .drawer-content .sidebar-toggle {
+    display: none;
+  }
+  .overview-columns {
+    gap: 24px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+@media (max-width: 767px) {
+  .overview-toolbar {
+    height: auto;
+    min-height: 76px;
+    padding: 12px;
+    flex-wrap: wrap;
+  }
+  .overview-tabs button {
+    padding: 6px 8px;
+    font-size: 12px;
+    gap: 5px;
+  }
+  .overview-headline {
+    padding-left: 16px;
+    padding-right: 16px;
+    height: auto;
+    min-height: 70px;
+  }
+  .overview-balance {
+    font-size: 26px;
+    overflow-wrap: anywhere;
+  }
+  .overview-change {
+    gap: 8px;
+    height: auto;
+    flex-wrap: wrap;
+  }
+  .overview-change .period-change,
+  .overview-change > .metadata {
+    font-size: 12px;
+  }
+  .overview-columns {
+    display: flex;
+    flex-direction: column;
+    padding: 22px 16px;
+    gap: 24px;
+  }
+  .overview-reference .account-summary {
+    padding: 12px;
+    gap: 8px;
+  }
+  .overview-reference .account-summary strong,
+  .overview-reference .account-summary .money {
+    font-size: 13px;
+  }
+  .overview-reference .account-summary small {
+    font-size: 11px;
+  }
+  .overview-data {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+}

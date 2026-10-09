@@ -3,7 +3,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import case, func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import schemas
@@ -29,14 +29,18 @@ def posting_account(session: Session, account_id: UUID) -> FinancialAccount:
 
 
 def balances(session: Session) -> dict[UUID, Decimal]:
-    signed = case((Transaction.direction == "IN", Transaction.amount), else_=-Transaction.amount)
-    return dict(
-        session.execute(
-            select(Transaction.account_id, func.sum(signed))
-            .where(Transaction.deleted_at.is_(None))
-            .group_by(Transaction.account_id)
-        ).all()
+    # SQLite SUM/NUMERIC can introduce floating point; aggregate exact decoded Decimals.
+    totals = {}
+    rows = session.execute(
+        select(Transaction.account_id, Transaction.direction, Transaction.amount).where(
+            Transaction.deleted_at.is_(None)
+        )
     )
+    for account_id, direction, amount in rows:
+        totals[account_id] = totals.get(account_id, Decimal("0")) + (
+            amount if direction == "IN" else -amount
+        )
+    return totals
 
 
 def accounts(session: Session) -> list[schemas.AccountOutput]:
@@ -132,7 +136,7 @@ def delete_transaction(session: Session, record_id: UUID):
 def create_transfer(session: Session, data: schemas.TransferCreate) -> Transfer:
     if data.source_account_id == data.destination_account_id:
         raise HTTPException(422, "Choose two different accounts")
-    # Consistent lock order avoids deadlocks for simultaneous opposite transfers.
+    # SQLite acquires its writer reservation before any reads in the API unit of work.
     locked = {
         key: posting_account(session, key)
         for key in sorted([data.source_account_id, data.destination_account_id])
@@ -142,12 +146,13 @@ def create_transfer(session: Session, data: schemas.TransferCreate) -> Transfer:
     transfer = Transfer(**data.model_dump())
     session.add(transfer)
     session.flush()
-    for account_id, direction in [
-        (data.source_account_id, "OUT"),
-        (data.destination_account_id, "IN"),
+    for account_id, direction, entry_id in [
+        (data.source_account_id, "OUT", transfer.source_entry_id),
+        (data.destination_account_id, "IN", transfer.destination_entry_id),
     ]:
         session.add(
             Transaction(
+                id=entry_id,
                 account_id=account_id,
                 direction=direction,
                 transfer_id=transfer.id,
@@ -201,17 +206,16 @@ def dashboard(session: Session, month: str) -> schemas.DashboardOutput:
     for account in account_list:
         totals[account.currency].total_balance += account.balance
     rows = session.execute(
-        select(Transaction.currency, Transaction.transaction_type, func.sum(Transaction.amount))
-        .where(
+        select(Transaction.currency, Transaction.transaction_type, Transaction.amount).where(
             Transaction.deleted_at.is_(None),
             Transaction.transaction_type.in_(["INCOME", "EXPENSE"]),
             Transaction.transaction_date >= start,
             Transaction.transaction_date < end,
         )
-        .group_by(Transaction.currency, Transaction.transaction_type)
     )
     for currency, kind, amount in rows:
-        setattr(totals[currency], "income" if kind == "INCOME" else "expenses", amount)
+        field = "income" if kind == "INCOME" else "expenses"
+        setattr(totals[currency], field, getattr(totals[currency], field) + amount)
     return schemas.DashboardOutput(
         month=month,
         totals=sorted(totals.values(), key=lambda t: t.currency),

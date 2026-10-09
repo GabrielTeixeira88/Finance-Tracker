@@ -1,48 +1,26 @@
 from pathlib import Path
-from uuid import uuid4
 
 import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, text
+from sqlalchemy import URL
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
-from app.database import get_session
+from app.database import get_session, make_engine
 from app.main import app
 
 
-@pytest.fixture(scope="session")
-def postgres_engine():
-    # Only this freshly generated database is ever reset or dropped.
-    name = "finance_tracker_test_" + uuid4().hex
-    url = get_settings().database_url
-    admin = create_engine(url.set(database="postgres"), isolation_level="AUTOCOMMIT")
-    with admin.connect() as conn:
-        conn.execute(text(f'CREATE DATABASE "{name}"'))
-    engine = create_engine(url.set(database=name))
-    try:
-        config = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
-        config.attributes["database_url"] = engine.url
-        command.upgrade(config, "head")
-        command.check(config)
-        yield engine
-    finally:
-        engine.dispose()
-        with admin.connect() as conn:
-            conn.execute(text(f'DROP DATABASE "{name}" WITH (FORCE)'))
-        admin.dispose()
-
-
 @pytest.fixture
-def db_engine(postgres_engine):
-    assert postgres_engine.url.database.startswith("finance_tracker_test_")
-    with postgres_engine.begin() as conn:
-        conn.execute(
-            text("TRUNCATE transactions, transfers, financial_accounts, categories CASCADE")
-        )
-    return postgres_engine
+def db_engine(tmp_path):
+    url = URL.create("sqlite+pysqlite", database=str(tmp_path / "synthetic.db"))
+    config = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+    config.attributes["database_url"] = url
+    command.upgrade(config, "head")
+    command.check(config)
+    engine = make_engine(url)
+    yield engine
+    engine.dispose()
 
 
 @pytest.fixture

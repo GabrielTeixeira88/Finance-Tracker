@@ -1,90 +1,33 @@
 # Finance Tracker
 
-A local-first, self-hosted personal finance and investment management application.
-Initially single-user, with persistent financial data kept on the user's machine
-and PostgreSQL as the durable source of truth. No cloud persistence, telemetry,
-or analytics are included.
+A single-user, local-first, self-hosted personal finance application. All durable
+financial data stays on your machine in **SQLite**. No cloud persistence, telemetry,
+analytics, authentication, or external financial integrations are included.
 
-**Phase 1** implements financial accounts, categories, income and expenses, linked
-transfers, opening-balance history, and a basic dashboard. Balances are calculated
-from financial records, never edited independently. Money uses exact decimals and
-currency totals stay separate. See [DATA_MODEL.md](docs/DATA_MODEL.md) for conventions.
-Imports, Gmail, budgets, recurring transactions, investments/holdings, market data,
-authentication, Redis, and Celery remain intentionally absent.
+Implemented: accounts, categories, income/expenses, atomic linked transfers, opening
+balances, reconstructed account balances, and a historical overview. Investment accounts
+contain ledger cash only. Phase 1.6 adds an opt-in 18-month synthetic workspace and
+clearly labeled Budget, Investments, Performance, Net Worth, and Reports previews.
+These are visual scaffolding, not budget, investment, valuation, or reporting engines.
+Other Phase 2 functionality remains out of scope.
 
-**Phase 1.5** adds a persistent account sidebar, responsive navigation drawer,
-light/dark themes, compact ledger views, account details, and a month-oriented
-dashboard. See [UI foundation](docs/UI_FOUNDATION.md) for reusable conventions,
-navigation behavior, and the investigation/correction of the local demo balances.
+## Run locally (no Docker or PostgreSQL required)
 
-## Stack and layout
+Prerequisites: Python 3.12+ (3.13 used for validation), uv, Node.js 22.13+ or 24+, npm.
+From the repository root, optionally copy `.env.example` to `.env` to customize paths
+or ports. Defaults work without an environment file. On PowerShell use
+`Copy-Item .env.example .env`, and `npm.cmd` if script execution is restricted.
 
-- `frontend/`: React, TypeScript, Vite, Tailwind CSS, shadcn/ui, TanStack Query,
-  Zod, Recharts; Vitest, Testing Library, ESLint, and Prettier.
-- `backend/`: Python 3.13, FastAPI, Pydantic, SQLAlchemy, Psycopg, Alembic;
-  Pytest and Ruff. Dependencies are locked with uv.
-- `docker-compose.yml`: PostgreSQL 17, migrations, API, and Nginx serving the built UI.
-- `docs/`: architecture decisions and engineering context.
-- `data/`: ignored local storage; only `.gitkeep` is tracked.
-- `AGENTS.md`: rules for future development and financial-data handling.
-
-## Run with Docker (recommended)
-
-Install Docker Engine with Compose v2, or Docker Desktop using Linux containers.
-From the repository root, copy the example environment file:
+Terminal 1:
 
 ```sh
-cp .env.example .env
-```
-
-On Windows PowerShell, use `Copy-Item .env.example .env`. Edit the development-only
-database password in `.env` before first startup. Keep `.env` out of Git. Then run:
-
-```sh
-docker compose up --build -d --wait
-docker compose ps -a
-```
-
-- Frontend: <http://127.0.0.1:5173>
-- API docs: <http://127.0.0.1:8000/docs>
-- API liveness: <http://127.0.0.1:8000/api/health>
-- Database readiness: <http://127.0.0.1:8000/api/health/ready>
-- Frontend health: <http://127.0.0.1:5173/health.json>
-- API through the frontend: <http://127.0.0.1:5173/api/health>
-
-The page opens the dashboard, with navigation to accounts, transactions, transfers,
-and categories. A new database starts empty. The `migrate` container exits with
-code 0 on success; the three long-running services should be healthy. The API waits
-for migration success before starting. Override published ports in `.env` if needed.
-
-```sh
-docker compose logs backend migrate
-docker compose stop
-docker compose down
-```
-
-Stopping or removing containers preserves `data/postgres/`. Do not delete that
-directory: it contains the database. Changing PostgreSQL credentials in `.env` does
-not change roles/passwords in an already initialized database; manage those through
-PostgreSQL rather than deleting data. Backups and exports must remain local and
-ignored. Ports bind to loopback; this unauthenticated application is not configured
-for public hosting.
-
-## Run development servers locally
-
-Prerequisites: Python 3.13, [uv](https://docs.astral.sh/uv/getting-started/installation/),
-Node.js 22.13+ (22 LTS or 24+), npm, and PostgreSQL (Compose can run just the database).
-Create `.env` as above, then:
-
-```sh
-docker compose up -d --wait db
 cd backend
 uv sync --frozen
 uv run alembic upgrade head
-uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-In a second terminal:
+Terminal 2:
 
 ```sh
 cd frontend
@@ -92,93 +35,171 @@ npm ci
 npm run dev
 ```
 
-Vite proxies `/api` to the local API, using `BACKEND_PORT` from the root `.env`.
-If you change that port, also change the Uvicorn `--port` argument. Vite uses
-`FRONTEND_PORT` from `.env`; PostgreSQL settings are loaded by the API and Alembic.
-Stop the Compose frontend/backend before starting local servers on the same ports.
-On PowerShell with script execution disabled, use `npm.cmd` in place of `npm`.
+Open <http://127.0.0.1:5173>. Vite proxies `/api` to FastAPI. API documentation is at
+<http://127.0.0.1:8000/docs>; readiness is `/api/health/ready`. If BACKEND_PORT changes,
+also change the Uvicorn `--port` argument. Services must stay bound to loopback.
 
-## Tests and quality checks
+`DATABASE_PATH` defaults to `data/finance-tracker.db`, resolved relative to the
+repository root regardless of the working directory. Absolute paths are supported
+for user-selected local storage. No password or database service is required.
+SQLite uses foreign keys, WAL, synchronous FULL, and a 5-second busy timeout.
+Keep the database on a local disk, not a shared/network filesystem.
 
-Backend (from `backend/`):
+## Deterministic historical demo
+
+Choose a **new, separate local file** using `DATABASE_PATH=data/finance-tracker-demo.db`
+in the root `.env`, then from `backend/` run:
 
 ```sh
-uv sync --frozen
+uv run alembic upgrade head
+uv run python -m app.seed_demo
+```
+
+Restart the API after changing the database path. To return to your original workspace,
+restore its path; do not delete or overwrite either database. Existing SQLite databases
+only need `alembic upgrade head`; no ledger reset is required.
+
+The fixed fictional history covers April 2025 through September 2026, plus five
+opening entries on March 31, 2025. It contains **500 ledger entries, 72 atomic
+transfers, five accounts, and 15 categories**. Salaries, rent, groceries, utilities,
+card purchases/payments, savings and investment **cash** contributions all pass
+through the normal domain services. All institutions and merchants are clearly fake.
+IDs, timestamps, dates, amounts, and preview fixtures are deterministic.
+
+The seed runs in one transaction, refuses a populated workspace, and becomes a no-op
+once its version marker exists. Repeating it preserves subsequent user edits. It never
+runs at application startup. `python -m app.seed` still adds example categories;
+do not run it before the historical seed, which requires empty tables. The older
+`app.seed --demo` is a small current-date smoke fixture, not the historical workspace.
+
+Expected September 30, 2026 balances:
+
+| Account | BRL balance |
+| --- | ---: |
+| Checking | 62,330.60 |
+| Savings | 36,000.00 |
+| Cash | 1,166.00 |
+| Credit Card | -2,341.64 |
+| Investment Account (cash only) | 19,500.00 |
+| **Total** | **116,654.96** |
+
+September income is **9,650.00**, expenses **5,771.73**, net cash flow **3,878.27**.
+Credit-card payments and contributions are transfers, never expenses. Preview holdings
+are separate illustrations and are not added to these balances.
+
+The demo Overview initially ends at the fixed September 2026 date; a normal workspace
+uses the local current date. Select 1M/3M/YTD/1Y/ALL or move the ending month to inspect
+actual ledger history. User edits remain persisted, so a modified demo may naturally
+differ from these reference values.
+
+The mandatory automated scenario remains Checking **5,300**, Savings **2,500**,
+income **1,000**, expenses **200**. Transfers and openings never enter flow totals.
+
+## Navigation
+
+- **Overview:** prominent total balance, ledger-derived daily closing chart, calendar
+  period controls, cash flow, category spending, account balances, and recent activity.
+- **Accounts:** calculated balances and administration; selecting an account opens its
+  filtered ledger. Deactivation preserves history.
+- **Transactions:** dense ledger and filters; **+ Add Transaction** selects Expense,
+  Income, or Transfer. Transfers still use one atomic backend operation.
+- **Settings:** Categories and safe deletion rules.
+- **Preview sections:** Budget targets versus ledger spending; fictional investment
+  allocation/activity and a Performance illustration; Net Worth and Reports layouts
+  reusing actual account history. No editing or final financial engines are provided.
+  Fictional fixtures are available only in an explicitly seeded demo database.
+
+The Wealthfolio-based sidebar starts collapsed at 70px and expands to 220px. It uses
+Lucide icons; preview destinations retain accessible names and hover titles when
+collapsed, and visible Preview labels when expanded. Overview defaults to 3M;
+ending-month and currency controls are available through Overview options.
+Dark mode is the default, light mode remains available, and a keyboard-accessible
+mobile drawer replaces the sidebar below 1024px. Existing state navigation is retained;
+URL deep links/back-forward routing remain deferred. All core assets run locally.
+
+## Tests and checks
+
+Backend, from `backend/`:
+
+```sh
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 uv run alembic check
 ```
 
-Frontend (from `frontend/`):
+Tests migrate a separate temporary SQLite file for each database test. No application
+data, PostgreSQL server, credentials, or Docker are needed. Migration drift checking
+uses the configured local database; apply `alembic upgrade head` first.
+
+Frontend, from `frontend/`:
 
 ```sh
-npm ci
 npm test
 npm run lint
 npm run format:check
 npm run build
 ```
 
-Apply formatting with `uv run ruff format .` and `npm run format`, respectively.
-Frontend tests need no database. Backend business-rule tests require local PostgreSQL
-and the root `.env`: run `docker compose up -d --wait db` first. The test role needs
-permission to create databases (the Compose development role has this). Tests create
-a fresh randomly named `finance_tracker_test_*` database, apply all migrations,
-exercise real constraints/commits, and drop only that generated database afterward.
-They never reset the application's database. If an interrupted run leaves a test
-database, inspect its name before any manual cleanup.
+Apply formatters with `uv run ruff format .` and `npm run format`. Browser write tests
+must use a separate temporary DATABASE_PATH and isolated local server ports.
 
-After starting Compose, verify the actual services and proxy:
+## Optional Docker packaging
+
+Docker is optional, not part of the native database requirement. Stop native servers
+before reusing their ports, then run:
 
 ```sh
-curl --fail http://127.0.0.1:5173/health.json
-curl --fail http://127.0.0.1:5173/api/health
-curl --fail http://127.0.0.1:5173/api/health/ready
-docker compose run --rm migrate alembic current
+docker compose up --build -d --wait
+docker compose ps
+docker compose stop
 ```
 
-On Windows use `curl.exe`. The last response should report database status `ok`,
-and Alembic should report `ee7da7580aa0 (head)`.
+Compose contains only backend and frontend. The backend applies migrations before
+starting and mounts `./data` at `/app/data`; it uses the same default database file.
+Compose uses `/app/data/finance-tracker.db` independently of the native `DATABASE_PATH`.
+For a different file, explicitly override the backend's container path under `/app/data`;
+native demo instructions above do not silently change the container's selected file.
+Do not run native and container writers against the same file simultaneously.
+Linux bind mounts must be writable by the container's `appuser`. No PostgreSQL
+service or database volume is defined. Old stopped containers may appear as orphans;
+do not delete their data as a routine fix.
 
-## Synthetic categories and demo
+## Storage transition and backups
 
-Nothing is seeded automatically. To add the example categories (safe to repeat):
+This correction starts a new SQLite Alembic lineage (`sqlite_0001`). Original
+PostgreSQL migrations are preserved byte-for-byte in `backend/migrations_legacy/`
+and in the `pre-sqlite-refactor` Git checkpoint. `sqlite_0002` adds an isolated
+preview-fixture table without changing existing financial history. Do not apply SQLite migrations to
+an existing PostgreSQL database or stamp old databases to the new revision.
 
-```sh
-docker compose exec backend python -m app.seed
-```
+The local historical demo was created in a separate SQLite file. The previous small
+SQLite demo remains untouched. Old PostgreSQL files and
+the pre-transition local dump remain untouched and ignored. The earlier oversized
+demo transfer and its compensating entry were deliberately not copied. This is not
+a general PostgreSQL data importer; real data would require a separately reviewed
+conversion with reconciliation before switching storage.
 
-To create a complete fake demo **only in an empty financial database**:
+SQLite WAL/SHM files belong to the database. For a simple local backup, stop writers
+and close the application before copying the database; otherwise use SQLite's
+backup API. Never copy only the main file during an active write. Keep backups local
+and out of Git. Do not reset or overwrite a populated database.
 
-```sh
-docker compose exec backend python -m app.seed --demo
-```
+## Stack and engineering docs
 
-The demo marks each institution as `SYNTHETIC DEMO`, creates Checking (5,000 BRL),
-Savings (2,000 BRL), Cash (300 BRL), and Investment Account (zero), then adds 1,000
-salary, 200 groceries, 35 Uber, and a 500 Checking-to-Savings transfer. Expected
-balances: Checking **5,265**, Savings **2,500**, Cash **300**, Investment Account **0**;
-monthly income **1,000**, expenses **235**, total account value **8,065 BRL**.
-The demo uses the execution machine's current date and refuses to run if any accounts
-or financial entries already exist. It does not wipe or replace data.
-For native development, run `uv run python -m app.seed --demo` from `backend/`.
+React, TypeScript, Vite, Tailwind, shadcn/ui, TanStack Query, Zod, Recharts; Python,
+FastAPI, Pydantic, SQLAlchemy, Alembic, SQLite; Pytest, Vitest, Ruff, ESLint, Prettier.
+Dependency lockfiles remain checked in. PostgreSQL can be reintroduced later through
+reviewed storage/migration changes; it is not a supported runtime in this phase.
 
-Use Accounts to create opening history; Transactions to enter income/expenses and
-filter or correct ordinary entries; Transfers to post both sides atomically;
-Categories to manage labels. Account deletion means deactivation. Ordinary transaction
-deletion is soft deletion; transfers and openings are read-only in this phase.
+Read [AGENTS.md](AGENTS.md), [architecture](docs/architecture.md),
+[data model](docs/DATA_MODEL.md), and [UI conventions](docs/UI_FOUNDATION.md).
+Never commit real financial records, databases, secrets, tokens, exports, or backups.
+Only `data/.gitkeep` is tracked under data. The original LICENSE placeholder has
+explicit exceptions for the adapted AGPL frontend and bundled OFL font; see
+[third-party attribution](THIRD_PARTY_NOTICES.md).
 
-The mandatory automated scenario omits the demo's Uber expense and Cash account:
-its expected balances are Checking **5,300**, Savings **2,500**, income **1,000**,
-expenses **200**. Transfers and openings contribute to balances, never to income/expenses.
-
-## Privacy and contribution rules
-
-Read [AGENTS.md](AGENTS.md) and [the architecture notes](docs/architecture.md) before
-major changes. Never commit real financial records, credentials, OAuth tokens,
-CSV/OFX exports, Gmail data, local database files, or backups. `.gitignore` covers
-these and reserves explicit synthetic-fixture directories for clearly fake data.
-Ignore rules are a guardrail, not a substitute for reviewing Git changes.
-
-The project owner has not selected an open-source license. See [LICENSE](LICENSE).
+Phase 1.7 changes only the application shell and Overview for visual review against
+the running Wealthfolio reference. See the [side-by-side captures](docs/visual/phase17/index.html)
+at 1440×900 and 1920×1080 and the [comparison report](docs/PHASE_1_7_VISUAL_REVIEW.md).
+Future page layouts and all backend/API/database behavior remain unchanged in this pass.

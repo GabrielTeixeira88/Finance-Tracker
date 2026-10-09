@@ -1,21 +1,18 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { ArrowLeftRight } from 'lucide-react'
-import { AccountForm, CategoryForm, TransferForm } from '@/components/forms'
+import { ArrowUpRight, Landmark } from 'lucide-react'
+import { AccountForm, CategoryForm } from '@/components/forms'
 import {
   Badge,
   EmptyState,
   ErrorState,
-  LoadingState,
   Money,
   PageHeader,
   Panel,
 } from '@/components/primitives'
 import { Button } from '@/components/ui/button'
-import { TransactionTable } from '@/components/transaction-table'
 import type { Navigate } from '@/components/app-shell'
 import { useWrite } from '@/lib/use-write'
-import { getTransactions, label, type Account, type Category } from '@/lib/api'
+import { label, type Account, type Category } from '@/lib/api'
 
 export function Accounts({
   accounts,
@@ -53,7 +50,7 @@ export function Accounts({
       )}
       <Panel
         title="All accounts"
-        detail="Balances are calculated from your ledger, including opening entries."
+        detail="All recorded dates, including future entries and opening balances."
       >
         {!accounts.length ? (
           <EmptyState
@@ -61,69 +58,52 @@ export function Accounts({
             detail="Add your first account and its optional opening balance."
           />
         ) : (
-          <div
-            className="table-scroll"
-            tabIndex={0}
-            role="region"
-            aria-label="Accounts table"
-          >
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Account</th>
-                  <th scope="col">Type</th>
-                  <th scope="col">Institution</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Currency</th>
-                  <th scope="col" className="amount-cell">
-                    Balance
-                  </th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {accounts.map((a) => (
-                  <tr key={a.id}>
-                    <th scope="row">
-                      <button
-                        className="text-action"
-                        onClick={() => navigate('Account', a.id)}
-                      >
-                        {a.name}
-                      </button>
-                    </th>
-                    <td className="capitalize">{label(a.type)}</td>
-                    <td>{a.institution ?? '—'}</td>
-                    <td>
-                      <Badge>{a.active ? 'Active' : 'Inactive'}</Badge>
-                    </td>
-                    <td>{a.currency}</td>
-                    <td className="amount-cell">
-                      <Money
-                        value={a.balance}
-                        currency={a.currency}
-                        tone={
-                          a.balance.startsWith('-') ? 'negative' : 'neutral'
-                        }
-                      />
-                    </td>
-                    <td>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        aria-label={`Edit ${a.name}`}
-                        onClick={() => {
-                          setEditing(a)
-                          setCreating(false)
-                        }}
-                      >
-                        Edit
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="accounts-list">
+            <div className="accounts-list-labels" aria-hidden="true">
+              <span>Account</span>
+              <span>Balance</span>
+              <span />
+            </div>
+            {accounts.map((a) => (
+              <div className="account-row" key={a.id}>
+                <button
+                  className="account-identity"
+                  onClick={() => navigate('Account', a.id)}
+                  aria-label={`Open ${a.name}`}
+                >
+                  <span className="account-icon">
+                    <Landmark size={19} aria-hidden="true" />
+                  </span>
+                  <span>
+                    <strong>{a.name}</strong>
+                    <small>
+                      {label(a.type)} · {a.currency}
+                      {a.institution && ` · ${a.institution}`}
+                    </small>
+                  </span>
+                  <ArrowUpRight size={14} aria-hidden="true" />
+                </button>
+                <div className="account-value">
+                  <Money
+                    value={a.balance}
+                    currency={a.currency}
+                    tone={a.balance.startsWith('-') ? 'negative' : 'neutral'}
+                  />
+                  {!a.active && <Badge>Inactive</Badge>}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label={`Edit ${a.name}`}
+                  onClick={() => {
+                    setEditing(a)
+                    setCreating(false)
+                  }}
+                >
+                  Edit
+                </Button>
+              </div>
+            ))}
           </div>
         )}
         <p className="metadata mt-4">
@@ -135,15 +115,15 @@ export function Accounts({
   )
 }
 
-export function Categories({ categories }: { categories: Category[] }) {
+export function Settings({ categories }: { categories: Category[] }) {
   const [editing, setEditing] = useState<Category>()
   const [creating, setCreating] = useState(false)
   const mutation = useWrite()
   return (
     <>
       <PageHeader
-        title="Categories"
-        description="Simple labels for income and expenses."
+        title="Settings"
+        description="Configure how you organize your finances."
       >
         <Button
           onClick={() => {
@@ -166,7 +146,7 @@ export function Categories({ categories }: { categories: Category[] }) {
       )}
       {mutation.isError && <ErrorState text={mutation.error.message} />}
       <Panel
-        title="Your categories"
+        title="Categories"
         detail="Categories referenced by transaction history cannot be deleted."
       >
         {!categories.length && (
@@ -210,65 +190,6 @@ export function Categories({ categories }: { categories: Category[] }) {
             </div>
           ))}
         </div>
-      </Panel>
-    </>
-  )
-}
-
-export function Transfers({
-  accounts,
-  categories,
-}: {
-  accounts: Account[]
-  categories: Category[]
-}) {
-  const recent = useQuery({
-    queryKey: ['transactions', 'transfers'],
-    queryFn: ({ signal }) =>
-      getTransactions(
-        new URLSearchParams({ transaction_type: 'TRANSFER', limit: '20' }),
-        signal,
-      ),
-  })
-  return (
-    <>
-      <PageHeader
-        title="Transfers"
-        description="Move money between your accounts, without recording income or spending."
-      />
-      <div className="transfer-layout">
-        <TransferForm accounts={accounts} />
-        <aside className="transfer-explanation">
-          <ArrowLeftRight size={24} aria-hidden="true" />
-          <h2>One move. Two linked entries.</h2>
-          <p className="metadata">
-            The source balance decreases and the destination balance increases
-            by the same amount. Your total account value stays the same.
-          </p>
-          <p className="metadata">
-            Choose two active accounts with matching currencies. Transfers
-            remain in history and cannot be edited in this phase.
-          </p>
-        </aside>
-      </div>
-      <Panel
-        title="Recent transfers"
-        detail="Latest 20 ledger sides · Matching transfer IDs identify each pair"
-      >
-        {recent.isPending ? (
-          <LoadingState text="Loading transfers…" />
-        ) : recent.isError ? (
-          <ErrorState
-            text="Unable to load transfers."
-            retry={() => void recent.refetch()}
-          />
-        ) : (
-          <TransactionTable
-            rows={recent.data}
-            accounts={accounts}
-            categories={categories}
-          />
-        )}
       </Panel>
     </>
   )

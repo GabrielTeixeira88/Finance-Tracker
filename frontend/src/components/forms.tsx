@@ -82,7 +82,7 @@ function Editor({
     }
   }
   return (
-    <section className="panel">
+    <section className="editor-surface">
       <h2>{title}</h2>
       <form onSubmit={(event) => void submit(event)}>
         <fieldset disabled={mutation.isPending} className="form-grid">
@@ -233,11 +233,13 @@ export function AccountForm({
 
 export function TransactionForm({
   transaction,
+  kind,
   accounts,
   categories,
   onSaved,
 }: {
   transaction?: Transaction
+  kind?: 'INCOME' | 'EXPENSE'
   accounts: Account[]
   categories: Category[]
   onSaved: () => void
@@ -284,15 +286,19 @@ export function TransactionForm({
             ))}
         </select>
       </Field>
-      <Field label="Type">
-        <select
-          name="transaction_type"
-          defaultValue={transaction?.transaction_type ?? 'EXPENSE'}
-        >
-          <option value="EXPENSE">Expense</option>
-          <option value="INCOME">Income</option>
-        </select>
-      </Field>
+      {kind ? (
+        <input type="hidden" name="transaction_type" value={kind} />
+      ) : (
+        <Field label="Type">
+          <select
+            name="transaction_type"
+            defaultValue={transaction?.transaction_type ?? 'EXPENSE'}
+          >
+            <option value="EXPENSE">Expense</option>
+            <option value="INCOME">Income</option>
+          </select>
+        </Field>
+      )}
       <Field label="Amount">
         <input
           name="amount"
@@ -341,14 +347,23 @@ export function TransactionForm({
   )
 }
 
-export function TransferForm({ accounts }: { accounts: Account[] }) {
+export function TransferForm({
+  accounts,
+  onSaved,
+}: {
+  accounts: Account[]
+  onSaved?: () => void
+}) {
   const [source, setSource] = useState('')
   const selected = accounts.find((a) => a.id === source)
   return (
     <Editor
       title="Transfer between accounts"
       path="/transfers"
-      onSaved={() => setSource('')}
+      onSaved={() => {
+        setSource('')
+        onSaved?.()
+      }}
       payload={(form) => {
         const from = accounts.find(
           (a) => a.id === value(form, 'source') && a.active,
@@ -447,5 +462,42 @@ export function CategoryForm({
         />
       </Field>
     </Editor>
+  )
+}
+
+export function TransactionComposer({
+  accounts,
+  categories,
+  onSaved,
+}: {
+  accounts: Account[]
+  categories: Category[]
+  onSaved: () => void
+}) {
+  const [kind, setKind] = useState<'EXPENSE' | 'INCOME' | 'TRANSFER'>('EXPENSE')
+  return (
+    <div className="transaction-composer">
+      <Field label="Transaction type">
+        <select
+          value={kind}
+          onChange={(e) => setKind(e.target.value as typeof kind)}
+        >
+          <option value="EXPENSE">Expense</option>
+          <option value="INCOME">Income</option>
+          <option value="TRANSFER">Transfer</option>
+        </select>
+      </Field>
+      {kind === 'TRANSFER' ? (
+        <TransferForm accounts={accounts} onSaved={onSaved} />
+      ) : (
+        <TransactionForm
+          key={kind}
+          kind={kind}
+          accounts={accounts}
+          categories={categories}
+          onSaved={onSaved}
+        />
+      )}
+    </div>
   )
 }

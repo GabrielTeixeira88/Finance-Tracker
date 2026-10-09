@@ -1,94 +1,128 @@
-# Application architecture — Phase 1
+# Application architecture
 
-For the Phase 1.5 sidebar, account navigation, themes, dashboard hierarchy, and
-shared presentation conventions, see [UI foundation](UI_FOUNDATION.md). These
-changes preserve the Phase 1 API, database schema, and accounting rules.
+## Local storage and deployment
 
-Finance Tracker is a single-user, local-first, self-hosted application. PostgreSQL
-is the durable source of truth. Phase 1 adds accounts, categories, ledger entries,
-atomic linked transfers, opening balances, and a basic dashboard. See
-[DATA_MODEL.md](DATA_MODEL.md) for financial conventions and relationships.
+React -> same-origin /api proxy -> FastAPI -> SQLAlchemy -> SQLite.
+SQLite is the canonical local durable store because this is a single-user application
+with low-frequency writers. Native Python and Node startup needs no Docker, database
+server, credentials, or cloud service. Optional Compose packages only API and frontend.
+Keep published/listening services on loopback; authentication is intentionally absent.
 
-## Request and storage flow
+`DATABASE_PATH` defaults to `data/finance-tracker.db`, relative to the repository root.
+Settings also accept an absolute user-selected path. Parent directories are created
+by the engine factory. No user-specific path is checked into code.
 
-The browser loads React from the frontend. Relative `/api/*` requests are proxied
-to FastAPI by Vite during development or Nginx in Compose. Both paths preserve the
-same origin, so permissive CORS is unnecessary. No secrets belong in `VITE_*`
-variables, browser storage, or frontend bundles.
+## Connections and transactions
 
-FastAPI uses Pydantic settings loaded from the root `.env` or environment variables.
-SQLAlchemy uses the synchronous Psycopg driver and a session per request; synchronous
-database endpoints run in FastAPI's thread pool. Sessions close on exit and roll back
-uncommitted work. The API unit-of-work dependency commits before returning a success
-response and rolls back any failed operation, including deferred-constraint failures.
-Services flush within that shared transaction and never commit individual transfer sides.
-Passwords are represented as secret values and database URLs are built structurally
-to support reserved characters safely.
+The shared SQLAlchemy engine factory configures every SQLite connection:
 
-PostgreSQL 17 stores files in the ignored `data/postgres/` bind mount on this machine
-(through Docker Desktop's local VM on Windows/macOS). All published ports bind to
-`127.0.0.1`. There is no authentication in this phase, so this configuration is for
-trusted local access only. Do not expose it publicly.
+- `foreign_keys=ON`: foreign-key enforcement, including deferred transfer pointers.
+- `journal_mode=WAL`: local readers can coexist with the writer.
+- `synchronous=FULL`: durable commit synchronization.
+- `busy_timeout=5000`: bounded waiting for a writer (configurable from 1 to 60000 ms).
+- `recursive_triggers=ON`: history protection also applies to replacement deletes.
 
-## Schema lifecycle
+SQLAlchemy explicitly issues BEGIN, avoiding sqlite3 legacy transaction behavior for
+DDL and SELECT. API writes reserve the writer with BEGIN IMMEDIATE before reading
+accounts. This avoids deferred read-to-write snapshot upgrades. Read requests use
+BEGIN. The request unit of work commits once before returning success and rolls back
+all failures, including deferred foreign-key failures. Lock exhaustion returns a
+sanitized 503 with Retry-After; the frontend never automatically retries a write.
 
-Compose waits for PostgreSQL, runs the one-shot `migrate` service, then starts the
-API and frontend. Revision `0001_foundation` establishes history; revision
-`ee7da7580aa0` adds the Phase 1 tables, indexes, constraints, and transfer-integrity
-triggers. Application startup never implicitly creates schema. Demo/category seeds
-are separate opt-in commands. The Phase 1 downgrade refuses to drop populated tables.
+One local application writer process is the intended deployment. Keep transactions
+short. Future ingestion should serialize work or apply bounded retry/backoff to a
+whole rolled-back unit of work. No queue, Redis, Celery, or automatic write replay is
+implemented. WAL is not a network-filesystem or distributed-writer solution.
 
-For later model changes, import model metadata into the migration environment,
-generate a revision, review the SQL and data-preservation implications, and apply it:
+## Exact money and integrity
 
-```sh
-cd backend
-uv run alembic revision --autogenerate -m "describe the change"
-uv run alembic upgrade head
-```
+SQLite NUMERIC affinity may become binary floating point, and its INTEGER cannot
+hold the previous full NUMERIC(24,6) range. ExactMoney therefore stores a zero-padded
+24-digit TEXT representation of millionths and decodes to Python Decimal. Money
+never enters SQLite REAL or JavaScript Number. SQL SUM is not used for money;
+SQLAlchemy selects exact decoded amounts for Python aggregation. This preserves all
+18 whole digits and six fractional digits accepted before the migration.
 
-Do not rewrite applied migrations or use database resets as routine maintenance.
-Dependency versions are recorded in `backend/uv.lock` and `frontend/package-lock.json`.
-Container image tags pin major/runtime series; immutable digest pinning is a future
-release-hardening decision.
+The storage adapter has an explicit PostgreSQL NUMERIC branch for future reuse,
+but current checks/migrations are SQLite-specific. Returning to PostgreSQL requires
+reviewed DDL and data conversion; it is not a configuration toggle today. Domain
+services and API schemas continue to use Decimal, UUIDs, dates, and SQLAlchemy.
 
-## Health checks
+A transfer parent points to two preallocated transaction IDs through deferred foreign
+keys. Both sides must exist at commit. Insert triggers verify their IDs, directions,
+accounts, amounts, currencies, dates, and descriptions against the parent. Unique
+constraints prevent extra sides. Reserved IDs cannot become ordinary transactions.
+Immutable-history triggers reject changes/deletes of transfers and opening entries,
+and physical deletion of ordinary transactions. See DATA_MODEL.md.
 
-| Endpoint | Meaning |
-| --- | --- |
-| Frontend `/health.json` | Static web server is serving the frontend build |
-| API `/api/health` | API process responds with a validated service identity |
-| API `/api/health/ready` | API can execute `SELECT 1` against PostgreSQL |
+## Migration lineage and transition
 
-Readiness returns HTTP 503 without connection details when PostgreSQL is unavailable.
-The UI reads the financial API with TanStack Query, validates responses and monetary
-input using Zod, and invalidates queries after successful mutations. Monetary values
-remain decimal strings in the browser; no financial data is persisted in browser
-storage. Compose uses readiness for the backend health check. Frontend tests mock
-transport; live smoke verification also goes through the frontend proxy to the real API.
+New SQLite files run `sqlite_0001` and `sqlite_0002` through Alembic. It contains an explicit schema and
+integrity triggers; application startup never invokes metadata.create_all(). The
+optional container runs Alembic before Uvicorn. Native startup runs Alembic explicitly.
+Old PostgreSQL revisions remain unchanged under migrations_legacy/postgresql and
+are excluded from active Alembic discovery. The checkpoint tag preserves that runtime.
+Downgrading the new ledger refuses destructive table removal.
 
-## Boundaries for later phases
+The review database was freshly seeded with synthetic data. PostgreSQL was stopped,
+not deleted; its bind directory and a local pre-transition dump remain ignored under
+data. The old anomalous demo transfer is not imported. No real financial conversion
+was attempted. Never use this demo transition as a procedure for real user data.
 
-External providers will live behind adapters, with provider schemas mapped into
-independent domain models. Preserve currency, decimal precision, and source
-provenance; never count transfers as income or expenses. Investment activities will
-eventually drive holdings. Domain models now exist; no provider integrations exist.
-Transaction-source provenance, imports, reconciliation, and duplicate detection are
-deliberately deferred. An INVESTMENT account currently holds only ordinary cash ledger
-entries; its balance is not a portfolio valuation.
+Tests use independent temporary SQLite files and real migrations, constraints, and
+commits. Engine-restart persistence and lock-contention tests run without services.
+Browser tests also use a separate database. The normal review demo stays unpolluted.
 
-Recharts is installed for future UI work, but no charts or financial analytics are
-implemented. FastAPI's native tracing, metrics, log instrumentation, and automatic
-telemetry configuration are explicitly disabled. Its transitive OpenTelemetry API
-dependency has no exporter configured. shadcn/ui is configured with a local Button component, Tailwind v4, and
-the `@/` alias. The frontend loads no third-party runtime assets, analytics, or telemetry.
-FastAPI's optional interactive API documentation uses its default CDN assets.
-Dependency and image downloads require internet during setup; financial persistence
-does not use external services.
+## Frontend and boundaries
 
-The LICENSE is an explicit all-rights-reserved placeholder pending the owner's choice;
-this setup does not assume permission to select an open-source license.
+TanStack Query fetches the local API; Zod validates transport and input. Money is
+exchanged as exact strings. Only theme preference is stored in localStorage.
+Functional navigation is Overview / Accounts / Transactions / Settings. Explicitly
+labeled read-only preview sections expose future information architecture. Transfers are a
+transaction creation mode; Categories are configuration under Settings.
+[UI_FOUNDATION.md](UI_FOUNDATION.md) documents the Wealthfolio reference and hierarchy.
 
-Configuration references: [Tailwind with Vite](https://tailwindcss.com/docs/installation/using-vite),
-[shadcn/ui with Vite](https://ui.shadcn.com/docs/installation/vite), and
-[SQLAlchemy's Psycopg dialect](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.psycopg).
+External integrations will eventually live behind adapters. No imports, Gmail,
+provenance, budget engines, recurring entries, investment accounting, market data, auth,
+cloud sync, or background workers are implemented. FastAPI telemetry remains off;
+interactive API docs use the framework's default CDN assets. There are no remote
+runtime assets in the financial UI.
+
+References: [SQLite affinity](https://www.sqlite.org/datatype3.html),
+[foreign keys](https://www.sqlite.org/foreignkeys.html),
+[WAL](https://www.sqlite.org/wal.html),
+[SQLAlchemy SQLite transactions](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html).
+
+## Phase 1.6 history and demo boundaries
+
+`app.history` reads non-deleted ledger records through an inclusive ending date and
+aggregates exact Decimal amounts with a 60-digit calculation context. Daily closing
+points apply both transfer sides together. No SQL floating-point aggregation,
+snapshots, external valuation, or historical chart fixtures enter Overview.
+`GET /api/history?period=1Y&end=2026-09-30` returns currency-separated points, flows,
+category spending, closing account balances, and eight recent entries. The existing
+Phase 1 dashboard and account endpoints retain their original behavior.
+
+The historical demo is an explicit `python -m app.seed_demo` operation against an
+empty migrated file. A versioned `demo_fixtures` record and all 500 ledger entries
+commit together under BEGIN IMMEDIATE. UUID5 identities and fixed timestamps make
+fresh seeds reproducible. A repeated run with that marker is a no-op, even after
+user edits; it does not restore or reset records.
+
+`GET /api/demo` exposes only this optional synthetic fixture. Budget targets,
+illustrative holdings/activity, and Performance chart points are stored as JSON
+with decimal strings in that isolated table. They have no financial-model relationships,
+write APIs, or influence on ledger totals. Net Worth and Reports previews instead
+reuse the ledger-history API. Real workspaces show a demo-required empty state for
+fictional investment/budget layouts.
+
+Frontend charts normalize exact BigInt amounts to bounded dimensionless coordinates;
+only these coordinates and timestamps become Number. Tooltip labels and accessible
+chart tables retain original decimal strings. Period changes do not imply investment
+returns. Query keys include period and end date; writes invalidate history as well as
+accounts and transactions. The single-user history query scans ledger records in
+memory; high-volume analytics and caching remain future work.
+
+Reference roles: Wealthfolio for visual hierarchy, Actual Budget for future budgeting
+workflows, Securo for future backend/ingestion adapter architecture. No external
+reference application is a runtime dependency.

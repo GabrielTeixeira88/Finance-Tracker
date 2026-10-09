@@ -19,3 +19,10 @@ afterEach(() => {
   localStorage.clear()
   delete document.documentElement.dataset.theme
 })
+
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+globalThis.ResizeObserver = ResizeObserverMock

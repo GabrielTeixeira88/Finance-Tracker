@@ -1,90 +1,102 @@
-# UI foundation (Phase 1.5)
+﻿# UI foundation - Phase 1.7 shell / Overview review
+
+## References and hierarchy
+
+[Wealthfolio](https://github.com/wealthfolio/wealthfolio) is the primary visual
+reference. Phase 1.7 uses the running v3.9.1 application and its exact frontend
+revision, not a generic dashboard interpretation. See [visual comparison](PHASE_1_7_VISUAL_REVIEW.md)
+and [source attribution](../THIRD_PARTY_NOTICES.md). Actual Budget remains the
+future budgeting/workflow reference; Securo remains the future ingestion reference.
+
+Overview matches the reference's compact section tabs, 30px JetBrains Mono balance,
+280px edge-to-edge chart, centered range selector, and two-to-one lower grid. The
+left column contains account rows; the right contains existing Cash flow and Recent
+activity instead of unimplemented holdings/goals. Spending is a related Overview
+view; Net Worth opens the existing explicitly labeled preview. Other page layouts
+remain unchanged in this visual review phase.
+
+The headline represents **Total balance**, never investment valuation or investment
+return. Its change compares closing and opening ledger values. The chart carries
+closing values across inactive days and renders the reference's monotone curve;
+intermediate curve geometry is not additional financial data. Hover and the exact
+data table display actual decimal strings. Range controls (1M, 3M, YTD, 1Y, ALL)
+query the existing API. Overview options contains ending-month navigation and currency
+selection when needed. The initial range is 3M; the synthetic demo is anchored to its
+fixed end date, identified by the information control and options popover.
+
+Currencies remain separate. Account rows show their own currency, including account
+type metadata. Opening entries and transfers affect balances but not income/expense
+totals. Investment accounts contain cash only. Accounts administration retains
+all-recorded-date balances; Overview uses the selected ending date.
 
 ## Shell and navigation
 
-AppShell owns a persistent 244px desktop sidebar at widths of 1024px and above.
-Primary navigation contains Dashboard, Transactions, Transfers, and Categories.
-The Accounts section provides management navigation and active account balances.
-Selecting an account opens its detail view: calculated balance, metadata, and the
-existing ledger filtered to that account. Inactive accounts remain available in
-management and dashboard totals, but do not crowd the sidebar.
+Desktop starts with the reference's 70px collapsed sidebar; the footer control expands
+it to 220px. Accessible names and hover titles remain available when labels collapse.
+Find a page filters navigation destinations only, not financial records. The existing
+Overview, Accounts, Transactions, Budget, Investments, Performance, Net Worth, Reports,
+and Settings destinations remain; future sections retain Preview labels in expanded
+navigation, accessible names, tooltips, and their pages. Settings stays at the bottom.
+Account rows open the existing filtered account ledger. React state navigation remains;
+URL deep links/back-forward are deferred.
 
-Below 1024px, navigation uses a native modal dialog with focus trapping, Escape,
-an explicit close button, and dismissal after navigation. Tables scroll within
-their containers. The existing React state navigation model is retained; deep links
-and browser back/forward routing are intentionally deferred.
+Transactions has one Add Transaction action with Expense / Income / Transfer modes.
+Transfer mode submits once to the atomic backend operation; there is no top-level
+Transfers item. Settings contains Categories, not unrelated configuration.
 
-Light and dark themes use shared CSS surface, border, text, and semantic tokens.
-The initial theme follows the system preference. Only the chosen appearance is
-stored in localStorage; financial records come from the local API. No placeholder
-future pages or external assets/services were added.
+Dark mode is the initial default, with the reference Flexoki dark/light palette and its olive
+chart/landscape gradient. Existing saved light preference is respected. Semantic income/expense
+colors supplement signs; transfers remain neutral with explicit direction labels.
+The sidebar is session-local. Only theme preference is stored in localStorage. All financial data comes from the API.
 
-## Financial hierarchy
+Below 1024px the sidebar becomes a native modal drawer: trapped focus, Escape,
+close button, dismissal after navigation, and focus restoration. Tables scroll in
+bounded regions; forms and two-column layouts reflow on narrow screens. The primary
+validation widths are 1440, 1280, 1024, 768, and 390 pixels.
 
-The dashboard presents total account value, monthly income, monthly expenses, and
-net cash flow in a compact strip, separately for each currency. Total account value
-includes all recorded dates and inactive accounts; it is not a historical snapshot
-for the selected month. Investment accounts show ledger cash only.
+## Reusable components
 
-Previous/next month controls query the existing dashboard and transaction APIs.
-Activity bars compare actual income and expenses for that month. Transfers and
-opening entries are excluded. Net cash flow is exact income minus expenses.
-Account balances and the latest eight monthly ledger entries complete the overview.
-There is no fabricated history, exchange conversion, or investment valuation.
+- AppShell, PageHeader, SectionHeader, Panel (borderless section), SummaryMetric,
+  Money, Badge, and compact loading/error/empty states keep spacing consistent.
+- DateRangeTabs, PercentageChange, AccountRows, RecentActivity, SpendingList, and
+  BalanceChart serve related previews. OverviewChart is scoped to Overview. useHistory centralizes
+  range/end-date queries, currency selection, and the explicit demo date anchor.
+- ChartTooltip rendering uses exact monetary strings. BigInt normalization produces
+  dimensionless plotting coordinates; no money becomes a binary float. The expandable
+  chart-data table provides a keyboard-accessible exact-value alternative to hover.
+- TransactionComposer reuses ordinary and transfer editors, associated labels and Zod
+  validation. TransactionTable has semantic headers, right-aligned tabular amounts,
+  neutral linked transfer indicators, and compact metadata.
+- Currency formatting is centralized, locale-aware, and preserves up to six fractional
+  digits. Detailed values are not abbreviated. Financial arithmetic uses exact strings
+  and BigInt. The reference shell/Overview tokens live in wealthfolio.css; other layouts retain index.css.
 
-## Reusable conventions
+## Preview boundaries
 
-- Use PageHeader, Panel, SectionHeader, SummaryMetric, and shared state components
-  from `components/primitives.tsx`. Keep padding and spacing compact.
-- Use TransactionTable for ledgers. Amounts align right. Income and expenses have
-  explicit signs plus semantic colors; transfers use neutral amounts, Sent/Received
-  labels, and linked transfer identifiers. Color is never the only cue.
-- Use Money and `lib/money.ts` for formatting. Exact decimal strings go to
-  Intl.NumberFormat.formatToParts; do not coerce money to JavaScript Number.
-  Subtraction uses scaled BigInt. Only dimensionless chart percentages become
-  numbers. Compact balances expose full values via title and accessible label.
-- Use labeled fields and existing Zod-backed editors. Forms appear on explicit
-  add/edit actions; account administration stays separate from navigation.
-- Preserve keyboard focus, semantic headers, loading/error/empty states, and local
-  scroll regions. Do not hide financial errors with formatting.
-- Recent transfers show 20 ledger sides; a pair may cross that boundary. Transfer
-  IDs identify relationships. A grouped transfer browser is deferred.
+Budget compares separately stored fictional monthly targets with actual demo expenses.
+It offers no budget editing or persistence domain. Investments displays fictional
+allocation, holdings, activity, and a link to a Performance illustration. Those
+fixtures are deliberately independent of investment-account cash and cannot affect it.
+Performance points illustrate a chart only, with no TWR, benchmark, or valuation claim.
+Net Worth uses actual ledger history and account breakdown, labeled Total balance.
+Reports composes the existing spending, flows, and balance information; no report
+builder, exports, or reporting engine is implemented.
 
-## Balance investigation and local demo correction
+Budget/Investments/Performance require the explicit historical demo fixture; an ordinary
+workspace gets a compact demo-required state. All preview payloads come through
+`/api/demo` from an isolated SQLite record, never hardcoded financial arrays in React.
+The seed is fixed through September 2026; Overview information/options and preview notices expose this context.
+User edits are persisted. Re-running the seed never undoes them.
 
-On 2026-10-05, the synthetic demo contained an additional BRL 56,745,747 transfer
-from Investment Account to Savings. PostgreSQL recorded two correctly linked sides.
-The local frontend access log matched its creation at 15:16:26 UTC (12:16:26 Sao
-Paulo) to a successful browser POST /api/transfers. This identifies the request's
-entry point, not who submitted it or their intent.
+## Data continuity and validation
 
-This was not a Decimal, aggregation, seed, or test-isolation defect. The seed creates
-one BRL 500 transfer and refuses a nonempty financial database. Backend tests use
-separate generated databases. The extra transfer explains both anomalous balances
-and why the overall total stayed unchanged.
+The former oversized PostgreSQL balances were caused by a large browser-submitted
+transfer and its auditable correction, not Decimal formatting. Those development
+entries were not carried forward. The old PostgreSQL storage, backup, checkpoint,
+and earlier small SQLite demo remain preserved. The Phase 1.6 historical workspace
+uses a new ignored `data/finance-tracker-demo.db` file; tests use separate databases.
 
-After a local backup, an equal opposite transfer was posted through the existing
-API, with a description identifying the original transfer. No history was deleted,
-no balances were overwritten, and no schema or accounting rules changed. The
-backup is ignored at `data/backups/phase15-before-demo-correction.dump`. Both the
-original and correction remain visible, including their large historical amounts.
-This is a one-time synthetic demo correction, not a new reversal feature or an
-automatic startup repair.
-
-Restored balances: Checking BRL 5,265; Savings BRL 2,500; Cash BRL 300; Investment
-Account BRL 0. Total BRL 8,065; October income BRL 1,000; expenses BRL 235. A new seed
-regression test verifies those values and exactly one transfer in a fresh demo.
-
-## Validation
-
-Phase 1 accounting and integrity tests remain in place. Frontend tests cover shell
-navigation, account details/balances, real month queries, summary values, neutral
-transfers, exact localized money, theme switching, and drawer dismissal.
-
-Browser verification used a separate generated PostgreSQL database and local
-Compose frontend/backend to keep test activity out of the review demo. It exercised
-account creation/edit/activation, category CRUD, income/expense creation/edit/soft
-deletion, filters, transfers, account navigation, and dashboard calculations.
-Desktop widths 1440, 1280, and 1024 and narrow widths 768 and 390 were checked,
-including dialog focus trapping, Escape, navigation, and theme persistence.
-Future browser write checks must likewise use an isolated database.
+Preserve Phase 1 financial tests. Verify exact history, seed repeatability/rollback,
+preview labeling, ranges, navigation, category configuration, transfer creation, and
+responsive layouts. Never write browser test activity into the review demo. See
+README for native startup, expected balances, and validation commands.
