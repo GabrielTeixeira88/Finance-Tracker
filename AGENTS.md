@@ -33,9 +33,9 @@
 - Do not silently redesign the architecture.
 - Keep SQLAlchemy and Alembic. Preserve foreign keys, WAL, bounded lock waits, and atomic linked transfers.
 - Functional navigation is Overview, Accounts, Transactions, Settings. Transfers belong to Add Transaction; Categories belong to Settings. Budget, Investments, Performance, Net Worth, and Reports are explicitly labeled read-only previews, not completed engines.
-- Wealthfolio is the primary UI reference for hierarchy and restrained surfaces; do not copy branding/assets or invent financial history.
-- Preserve the Phase 1.7 adapted-source attribution and AGPL/OFL notices in THIRD_PARTY_NOTICES.md and frontend/public/licenses. Reference screenshots in docs are comparison evidence, not application branding assets.
-- Actual Budget is the budgeting/workflow reference; Securo is the backend/ingestion architecture reference for future phases.
+- Preserve the approved application hierarchy and restrained surfaces; do not copy third-party branding/assets or invent financial history.
+- Preserve adapted-source attribution and AGPL/OFL notices in THIRD_PARTY_NOTICES.md and frontend/public/licenses.
+- Keep product documentation focused on Finance Tracker. Third-party product names belong only in legal/source-attribution notices, not README, roadmap, design guidance, or promotional screenshots.
 - Historical displays must derive from ledger entries. Keep currencies separate and exclude transfers/openings from cash flow. Never convert monetary values to JavaScript Number, even for charts; normalize dimensionless coordinates and retain exact labels.
 - The opt-in Phase 1.6 demo is deterministic and synthetic. Seed only an empty database; repeated runs must preserve edits. Preview fixtures stay separate from the ledger and must never affect real balances. Do not reset data for screenshots or tests.
 - Keep dependency lockfiles updated with dependency changes.

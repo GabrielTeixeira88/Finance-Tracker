@@ -109,7 +109,7 @@ income **1,000**, expenses **200**. Transfers and openings never enter flow tota
   reusing actual account history. No editing or final financial engines are provided.
   Fictional fixtures are available only in an explicitly seeded demo database.
 
-The Wealthfolio-based sidebar starts collapsed at 70px and expands to 220px. It uses
+The application sidebar starts collapsed at 70px and expands to 220px. It uses
 Lucide icons; preview destinations retain accessible names and hover titles when
 collapsed, and visible Preview labels when expanded. Overview defaults to 3M;
 ending-month and currency controls are available through Overview options.
@@ -199,7 +199,8 @@ Only `data/.gitkeep` is tracked under data. The original LICENSE placeholder has
 explicit exceptions for the adapted AGPL frontend and bundled OFL font; see
 [third-party attribution](THIRD_PARTY_NOTICES.md).
 
-Phase 1.7 changes only the application shell and Overview for visual review against
-the running Wealthfolio reference. See the [side-by-side captures](docs/visual/phase17/index.html)
-at 1440×900 and 1920×1080 and the [comparison report](docs/PHASE_1_7_VISUAL_REVIEW.md).
-Future page layouts and all backend/API/database behavior remain unchanged in this pass.
+Phase 1.7 establishes the approved application shell and Overview. See the
+[UI screenshots](docs/visual/phase17/index.html) and
+[validation report](docs/PHASE_1_7_VISUAL_REVIEW.md).
+The `phase-2a` branch prepares the next development phase; no Phase 2A features
+have been implemented yet.

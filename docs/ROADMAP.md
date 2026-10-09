@@ -1,13 +1,13 @@
-﻿# Roadmap boundaries
+# Roadmap boundaries
 
 Phase 1.6 delivers local SQLite persistence, Phase 1 ledger operations, a deterministic
-18-month demo, read-only ledger history, and the Wealthfolio-inspired application shell.
+18-month demo, read-only ledger history, and the application shell.
 Budget, Investments, Performance, Net Worth, and Reports are explicitly preview layouts.
 
 Phase 1.7 completes the approved application-shell and Overview visual checkpoint
-against the running Wealthfolio reference. It preserves the Phase 1 financial model
-and Phase 1.6 synthetic/history APIs. Comparison screenshots and remaining intentional
-domain differences are recorded in PHASE_1_7_VISUAL_REVIEW.md.
+with its desktop sidebar and ledger-backed dashboard. It preserves the Phase 1 financial
+model and Phase 1.6 synthetic/history APIs. Validation and screenshots are documented
+in PHASE_1_7_VISUAL_REVIEW.md. The `phase-2a` branch is ready for a separately scoped specification.
 
 Next, define and approve a separately scoped development phase before adding features.
 Budget workflows, ingestion, and investment accounting remain future candidates;
@@ -19,8 +19,7 @@ valuation and return calculations, reporting, imports, ingestion adapters, prove
 reconciliation, and automation. Preview fixtures are not a starting production domain
 model and must not silently become real financial records.
 
-Design references: Wealthfolio for visual hierarchy; Actual Budget for budgeting and
-workflows; Securo for backend/ingestion boundaries. Core operation remains offline and
+Core operation remains offline and
 local. Authentication, cloud sync, Redis, Celery, market APIs, and AI are not part of
 this foundation. PostgreSQL remains a future reviewed migration option if deployment
 needs change, not a current runtime requirement.

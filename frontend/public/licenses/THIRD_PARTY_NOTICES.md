@@ -18,7 +18,7 @@ are identified with `SPDX-License-Identifier: AGPL-3.0-only`:
 | `frontend/src/components/app-shell.tsx`      | `apps/frontend/src/pages/layouts/navigation/app-sidebar.tsx`, `app-layout.tsx`                          |
 | `frontend/src/pages/dashboard.tsx`           | `apps/frontend/src/pages/dashboard/portfolio-page.tsx`, `dashboard-content.tsx`, `accounts-summary.tsx` |
 | `frontend/src/components/overview-chart.tsx` | `apps/frontend/src/components/history-chart.tsx`                                                        |
-| `frontend/src/wealthfolio.css`               | `apps/frontend/src/globals.css` and the layout components above                                         |
+| `frontend/src/application.css`               | `apps/frontend/src/globals.css` and the layout components above                                         |
 
 Changes: Finance Tracker's existing navigation, local API hooks, exact decimal
 formatting, normalized chart coordinates, cash-flow reporting, and account-detail
@@ -29,9 +29,8 @@ Any redistribution or network deployment of the combined adapted frontend must
 retain the applicable AGPL notices and corresponding-source obligations.
 
 No upstream logos, product marks, illustrations, investment engines, or complete
-source components were copied into the application. Reference screenshots under
-`docs/visual/phase17/` show the unmodified Wealthfolio application for comparison,
-including its own branding; they are not Finance Tracker UI assets.
+source components were copied into the application. Product documentation and
+screenshots now show Finance Tracker only; source attribution is retained here.
 
 ## JetBrains Mono
 

@@ -80,7 +80,7 @@ exchanged as exact strings. Only theme preference is stored in localStorage.
 Functional navigation is Overview / Accounts / Transactions / Settings. Explicitly
 labeled read-only preview sections expose future information architecture. Transfers are a
 transaction creation mode; Categories are configuration under Settings.
-[UI_FOUNDATION.md](UI_FOUNDATION.md) documents the Wealthfolio reference and hierarchy.
+[UI_FOUNDATION.md](UI_FOUNDATION.md) documents the application shell and information hierarchy.
 
 External integrations will eventually live behind adapters. No imports, Gmail,
 provenance, budget engines, recurring entries, investment accounting, market data, auth,
@@ -123,6 +123,5 @@ returns. Query keys include period and end date; writes invalidate history as we
 accounts and transactions. The single-user history query scans ledger records in
 memory; high-volume analytics and caching remain future work.
 
-Reference roles: Wealthfolio for visual hierarchy, Actual Budget for future budgeting
-workflows, Securo for future backend/ingestion adapter architecture. No external
-reference application is a runtime dependency.
+Future budgeting workflows and ingestion adapters require separately reviewed designs.
+No external finance application is a runtime dependency.
