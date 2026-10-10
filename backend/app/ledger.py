@@ -95,15 +95,26 @@ def check_category(session: Session, category_id: UUID | None) -> None:
         require(session, Category, category_id)
 
 
-def create_transaction(session: Session, data: schemas.TransactionCreate) -> Transaction:
+def create_transaction(
+    session: Session, data: schemas.TransactionCreate, *, inferred_metadata: dict | None = None
+) -> Transaction:
     account = posting_account(session, data.account_id)
     if data.currency != account.currency:
         raise HTTPException(422, "Transaction currency must match the account")
     check_category(session, data.category_id)
     if data.payee_id is not None:
         require(session, Payee, data.payee_id)
+    values = data.model_dump()
+    # Ingestion defaults are not manual corrections or learning evidence.
+    for key, value in (inferred_metadata or {}).items():
+        if key not in {"payee_id", "review_status"}:
+            raise ValueError("Inference may supply only payee/review defaults")
+        if key not in data.model_fields_set:
+            values[key] = value
+    if values["payee_id"] is not None:
+        require(session, Payee, values["payee_id"])
     transaction = Transaction(
-        **data.model_dump(),
+        **values,
         direction="IN" if data.transaction_type == "INCOME" else "OUT",
         manual_fields=sorted(data.model_fields_set & {"payee_id", "category_id", "review_status"}),
     )

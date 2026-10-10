@@ -246,3 +246,20 @@ ordinary metadata is protected because assignment origin was unknown. Schedule
 amounts/tolerances reuse ExactMoney; completion links and rules never become balances.
 See [automation contracts](TRANSACTION_AUTOMATION.md) for fields, relationships,
 constraints, allowlisted rules, precedence, learning, recurrence and API semantics.
+
+## Phase 3 ingestion provenance
+
+```mermaid
+erDiagram
+    FinancialAccount ||--o{ ImportBatch : targets
+    ImportBatch ||--o{ SourceRecord : observes
+    Transaction o|--o{ SourceRecord : explains
+    FinancialAccount o|--o{ ImportProfile : defaults
+```
+
+`sqlite_0005` adds ImportBatch, SourceRecord and ImportProfile. Source-record links
+are many-to-one with ledger transactions; external bank rows never directly imply a
+new posting. Unique successful file/external claims prevent repeated source identity
+from posting twice. Candidate money remains decimal strings in JSON and ExactMoney in
+the ledger. Existing financial tables and history are unchanged. See [field definitions,
+API and duplicate decision contracts](IMPORTS.md).

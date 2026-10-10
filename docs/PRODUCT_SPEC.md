@@ -18,12 +18,12 @@ Functional destinations remain Overview, Accounts, Transactions, and Settings. C
 are configuration; transfers belong to Add Transaction. Budget, Investments, Performance,
 Net Worth, and Reports remain read-only previews, not finished financial engines.
 
-Future ingestion may follow raw source -> parsing/normalization -> payee identification
--> candidate -> rules -> review -> ledger. This pipeline is design context only.
+Phase 3 implements raw source -> parsing/normalization -> payee identification
+-> candidate -> rules -> review -> ledger for local CSV/OFX files.
 Phase 2B implements metadata-only rules, user-approved learning suggestions and expected
 schedules with explicit match/post operations. Settings contains Categories and Rules;
-Transactions contains All Activity and Scheduled. See [automation contracts](TRANSACTION_AUTOMATION.md).
-CSV/OFX/Gmail ingestion, provenance, reconciliation, real budgeting, investment accounting,
+Transactions contains All Activity, Scheduled and Imports. See [automation contracts](TRANSACTION_AUTOMATION.md).
+Gmail ingestion, automatic reconciliation, real budgeting, investment accounting,
 market data and cloud sync remain excluded. Future budgets are monthly category spending
 targets independent of available cash; no envelopes or zero-based allocation.
 
@@ -70,4 +70,36 @@ Existing harmless Zod dependency annotation warnings remain in the production bu
 Current limits: learning deliberately requires consistent payee **and** category;
 historical previews scan ordinary local history and display at most 50 examples;
 occurrence ranges cover at most 367 days/5,000 events. No automatic schedule posting,
-bank reconciliation, import adapters or budgeting engine is included.
+bank reconciliation or budgeting engine is included. Phase 3 adds the file adapters
+described in [IMPORTS.md](IMPORTS.md).
+
+## Phase 3 validation
+
+- 129 backend tests and 53 frontend tests pass (46 backend and four frontend additions).
+  Coverage includes parsers/locales, invalid fields, repeat imports, concurrent drafts,
+  explicit cross-source links, unique claims, foreign keys, rollback, rule priority,
+  manual overrides, schedule matching, preview UI, exclusions and confirmation errors.
+- Final audit adds reordered/overlapping exports with and without reliable IDs,
+  equivalent decimal spellings, CSV/OFX many-source provenance, the explicit Uber rule
+  and description variants, and retrying the same batch after a rolled-back interruption.
+  Duplicate comparisons now treat `5` and `5.00` as the same monetary value without
+  automatically collapsing two legitimate purchases.
+- Fresh migrations and a populated Phase 2B demo upgrade preserve all 500 ledger entries,
+  accounts, transfers, payees, rules, schedules and completions. Alembic drift check passes.
+- Ruff/ESLint, formatter checks, TypeScript and the production build pass. Existing
+  non-blocking Zod dependency annotation warnings remain.
+- Isolated Edge workflows exercised CSV mapping/preview/confirmation, exact re-import,
+  OFX, explicit duplicate linking, rule suggestions, schedule matching, invalid-row
+  exclusion, import history, imported review/editing and combined transaction filters.
+  Saved CSV profiles were created, selected, restored and deleted; returning from preview
+  preserved the draft without changing balances.
+- Transfer creation through the existing UI confirmed Checking 5,300, Savings 2,500,
+  income 1,000 and expenses 200. Imported metadata edits preserved balances. SQLite
+  balances survived a real API restart. Overview and Accounts remained functional.
+- Desktop checks used 1440×900 and 1920×1080; 390px checks verified containment and
+  drawer navigation to Settings. Screenshots and browser scripts remain ignored in
+  `.tmp`. The user's normal database was not migrated, seeded, reset or overwritten.
+
+Before running this version against an existing workspace, run `uv sync --frozen` and
+`uv run alembic upgrade head` from `backend/`. Import limitations and fixture settings
+are documented in [IMPORTS.md](IMPORTS.md).

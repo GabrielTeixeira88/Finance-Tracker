@@ -89,6 +89,7 @@ source = { editable = "." }
 dependencies = [
     { name = "alembic" },
     { name = "fastapi" },
+    { name = "ofxtools" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "sqlalchemy" },
@@ -106,6 +107,7 @@ dev = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.14,<2" },
     { name = "fastapi", specifier = ">=0.142.2,<0.143" },
+    { name = "ofxtools", specifier = ">=1.0,<2" },
     { name = "pydantic", specifier = ">=2.10,<3" },
     { name = "pydantic-settings", specifier = ">=2.7,<3" },
     { name = "sqlalchemy", specifier = ">=2.0,<2.1" },
@@ -399,6 +401,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/81/99/157e10966b033b363aeda5263e82596ee232a0b1d082fdbf90aa417ff083/markupsafe-3.0.4-cp315-cp315t-win32.whl", hash = "sha256:e49fb0d1ce92cfa0cb198cc5b1b11cdf9d0638658e2a2db2687e39db7c87fc78", size = 14300, upload-time = "2026-10-02T23:06:53.241Z" },
     { url = "https://files.pythonhosted.org/packages/33/05/55884815414c9706a23deca150b72c25a62109e65b0b6ce232077802c719/markupsafe-3.0.4-cp315-cp315t-win_amd64.whl", hash = "sha256:4f6e0852a0283b1b1fd776eeb7b766a5f440b3e2bd31ab51af3b400585f3965c", size = 14522, upload-time = "2026-10-02T23:06:54.729Z" },
     { url = "https://files.pythonhosted.org/packages/92/f9/ecbde7149e95b8a0f18e16d5d747f7dc06049d5da2e4f77f6f5e4a1f46a8/markupsafe-3.0.4-cp315-cp315t-win_arm64.whl", hash = "sha256:39dbacefc411633db5b4378b066a9aca70a3d7e2922c9e578d825f844026eeba", size = 14417, upload-time = "2026-10-02T23:06:56.246Z" },
+]
+
+[[package]]
+name = "ofxtools"
+version = "1.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0d/15/12ce2de32fbdeb26ef20510f9d8dba1c5a408c3061e0a4cd20d28140ecb9/ofxtools-1.1.1.tar.gz", hash = "sha256:b55803e622539e59d04209ec0a289338557973c331d86031e9868d84592912a6", size = 196023, upload-time = "2026-06-12T18:51:39.777Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0a/12/2033cdcf76d05cd4cdab318074428e74c2be4536377bb62832148b034609/ofxtools-1.1.1-py3-none-any.whl", hash = "sha256:4c6a80cfd08d8a6ce7e791ce3bc317e203f36359a0961b20df667cf91a9560e9", size = 236779, upload-time = "2026-06-12T18:51:38.343Z" },
 ]
 
 [[package]]

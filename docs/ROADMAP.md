@@ -23,7 +23,7 @@ Future budgeting uses monthly category spending targets, independent of account 
 not envelopes, zero-based allocation, or balance-constrained assignment. It remains
 unimplemented.
 
-## Next: Phase 3 — CSV/OFX Imports (planned, not implemented)
+## Phase 3 — Local CSV/OFX imports (completed and validated)
 
 Bank CSV and OFX parsing, column mapping, import profiles, transaction previews,
 validation, duplicate detection, import history and safe repeat imports. Reuse payee
@@ -41,7 +41,7 @@ decision remains monthly category spending targets, not envelopes or mandatory a
 of available account balances.
 
 Later phases must separately specify budget editing, investment activities/holdings,
-valuation and return calculations, reporting, imports, ingestion adapters, provenance,
+valuation and return calculations, reporting, additional ingestion adapters,
 reconciliation, and automation. Preview fixtures are not a starting production domain
 model and must not silently become real financial records.
 
@@ -49,3 +49,15 @@ Core operation remains offline and
 local. Authentication, cloud sync, Redis, Celery, market APIs, and AI are not part of
 this foundation. PostgreSQL remains a future reviewed migration option if deployment
 needs change, not a current runtime requirement.
+
+## Next: Phase 4 — Spending & Budgets (planned, not implemented)
+
+Spending & Budgets — Wealthfolio-style monthly category targets, spending progress,
+category groups, monthly overrides, optional rollovers and spending insights.
+The current Budget screen remains a read-only preview until this separately scoped
+phase is implemented. Do not adopt Actual Budget's envelope budgeting or mandatory
+allocation of available money. Targets are independent of account cash.
+
+Gmail, automatic reconciliation and background posting remain later, separately scoped
+work. Reuse [implemented import contracts and limitations](IMPORTS.md) without silently
+expanding the ingestion pipeline during Spending & Budgets work.

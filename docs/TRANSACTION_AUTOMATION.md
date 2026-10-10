@@ -95,8 +95,9 @@ POST `/post`, DELETE `/match`. Schedule deletion with completions returns 409.
 
 ## Future boundaries
 
-Imports may later normalize candidates and evaluate rules before posting, but no source
-records/import parser/Gmail/reconciliation workflow is included. Review remains separate
+Phase 3 imports normalize candidates and reuse these rules and schedule matching before
+explicit posting; see [import contracts](IMPORTS.md). Gmail and bank reconciliation
+remain unimplemented. Review remains separate
 from bank clearing and schedule completion. Future budgeting will use monthly category
 spending targets, independent of available cash: not envelopes, zero-based allocation or
 balance-constrained assignment. No budget editing engine is implemented in this phase.

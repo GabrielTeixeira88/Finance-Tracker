@@ -1,0 +1,10 @@
+date,description,amount
+2026-10-07,NETFLIX.COM,-55.00
+2026-10-08,UBER *TRIP,-32.50
+2026-10-09,Fictional coffee,-5.00
+2026-10-09,Fictional coffee,-5.00
+2026-10-10,Transfer to fictional savings,-500.00
+2026-10-10,Fictional credit card payment,-300.00
+2026-10-11,Fictional refund,20.00
+2026-02-31,Invalid synthetic date,-1.00
+2026-10-12,Invalid synthetic amount,not-money

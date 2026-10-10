@@ -46,6 +46,8 @@
 - Phase 2B rules may mutate only classification metadata. Explicit manual choices outrank rules; protect unknown legacy origins. Learning uses distinct explicit corrections, never automation outputs; suggestions require user approval.
 - Schedules are expectations, not ledger movements. Posting and candidate matching require explicit user actions; retain unique completion links and financial-edit guards. Do not add automatic schedule posting.
 - Future budgeting uses monthly category spending targets independent of available cash; do not introduce envelope or zero-based allocation.
-- Phase 1 includes accounts, categories, income/expense transactions, linked transfers, opening balances, and a basic dashboard. Phase 1.6 adds read-only ledger history and synthetic preview screens only. Do not implement authentication, full budget/investment/reporting engines, imports, Gmail, Pluggy, real holdings, market-data APIs, or portfolio analytics without a separately requested phase.
+- Phase 1 includes accounts, categories, income/expense transactions, linked transfers, opening balances, and a basic dashboard. Phase 1.6 adds read-only ledger history and synthetic preview screens only. Do not implement authentication, full budget/investment/reporting engines, Gmail, Pluggy, real holdings, market-data APIs, or portfolio analytics without a separately requested phase.
 - Do not add Redis or Celery until a later phase requires background processing.
 - Do not commit or push unless explicitly requested.
+
+- Phase 3 parsers must never post ledger entries. Keep raw provenance separate, enforce bounded local uploads, and confirm through the existing ledger service. Exact source identities are account/context scoped; weak content matches require explicit decisions. Preserve atomic confirmation and many-source-to-one-transaction links; never log imported payloads.

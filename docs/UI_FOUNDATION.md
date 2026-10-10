@@ -122,3 +122,11 @@ Scheduled shows expected cash flow separately from balances, a compact schedule 
 and occurrence rows with dates/status/expected amounts. Inspect offers candidate
 confirmation or explicit actual posting, with approximate actual amounts initially empty.
 Existing styles, semantic controls, exact Money displays and mobile table scroll remain.
+
+## Phase 3 imports
+
+Transactions adds Imports alongside All Activity and Scheduled. The local workflow is
+file/account selection, CSV format/profile and mapping, preview, explicit row decisions,
+then account confirmation and atomic posting. Import history reopens drafts or committed
+outcomes. Rules and schedule matches appear as proposals; uncertain rows block posting
+until resolved. Existing shell, theme and financial formatting remain unchanged.
