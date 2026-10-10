@@ -275,3 +275,60 @@ class ScheduleCompletion(Record, Base):
     transaction_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("transactions.id"), unique=True)
     expected: Mapped[dict] = mapped_column(JSON)
     __table_args__ = (UniqueConstraint("schedule_id", "due_date"),)
+
+
+class ImportProfile(Record, Base):
+    __tablename__ = "import_profiles"
+    name: Mapped[str] = mapped_column(String(120))
+    configuration: Mapped[dict] = mapped_column(JSON)
+    default_account_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("financial_accounts.id")
+    )
+
+
+class ImportBatch(Record, Base):
+    __tablename__ = "import_batches"
+    source_type: Mapped[str] = mapped_column(String(32))
+    filename: Mapped[str] = mapped_column(String(200))
+    file_hash: Mapped[str] = mapped_column(String(64))
+    account_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("financial_accounts.id"), index=True)
+    status: Mapped[str] = mapped_column(String(16), default="DRAFT")
+    configuration: Mapped[dict] = mapped_column(JSON)
+    source_context: Mapped[dict] = mapped_column(JSON)
+    counts: Mapped[dict] = mapped_column(JSON, default=dict)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    __table_args__ = (CheckConstraint("status IN ('DRAFT','COMPLETED')", name="status"),)
+
+
+class SourceRecord(Record, Base):
+    __tablename__ = "source_records"
+    import_batch_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("import_batches.id"), index=True)
+    row_number: Mapped[int] = mapped_column(Integer)
+    source_type: Mapped[str] = mapped_column(String(32))
+    external_id: Mapped[str | None] = mapped_column(String(255))
+    source_fingerprint: Mapped[str] = mapped_column(String(64), index=True)
+    external_fingerprint: Mapped[str | None] = mapped_column(String(64), index=True)
+    # Claims are set only on successful posting/linking. Re-import observations retain
+    # their own provenance without claiming the same economic event a second time.
+    file_claim: Mapped[str | None] = mapped_column(String(64), unique=True)
+    external_claim: Mapped[str | None] = mapped_column(String(64), unique=True)
+    raw_data: Mapped[dict] = mapped_column(JSON)
+    normalized_data: Mapped[dict] = mapped_column(JSON)
+    validation_errors: Mapped[list] = mapped_column(JSON)
+    decision: Mapped[dict] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(20), default="PENDING")
+    transaction_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("transactions.id"), index=True
+    )
+    __table_args__ = (
+        UniqueConstraint("import_batch_id", "row_number"),
+        CheckConstraint("row_number > 0", name="row_number"),
+        CheckConstraint(
+            "status IN ('PENDING','IMPORTED','LINKED','DUPLICATE','SKIPPED','INVALID')",
+            name="status",
+        ),
+        CheckConstraint(
+            "(file_claim IS NULL AND external_claim IS NULL) OR transaction_id IS NOT NULL",
+            name="claim_link",
+        ),
+    )

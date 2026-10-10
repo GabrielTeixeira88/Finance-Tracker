@@ -179,6 +179,17 @@ def require_occurrence(session, schedule, due):
         raise HTTPException(409, "Occurrence is already completed")
 
 
+def matches_candidate(schedule, row):
+    """Shared identity/amount policy for ledger and unposted ingestion candidates."""
+    identity = (
+        row.payee_id == schedule.payee_id
+        if schedule.payee_id
+        else normalize(row.description) == normalize(schedule.description)
+    )
+    tolerance = schedule.amount_tolerance if schedule.amount_is_approximate else Decimal(0)
+    return identity and abs(row.amount - schedule.amount) <= tolerance
+
+
 def candidates(session, schedule, due):
     require_occurrence(session, schedule, due)
     days = get_settings().schedule_match_days
@@ -200,12 +211,7 @@ def candidates(session, schedule, due):
     matches = []
     tolerance = schedule.amount_tolerance if schedule.amount_is_approximate else Decimal(0)
     for row in session.scalars(query):
-        identity = (
-            row.payee_id == schedule.payee_id
-            if schedule.payee_id
-            else normalize(row.description) == normalize(schedule.description)
-        )
-        if identity and abs(row.amount - schedule.amount) <= tolerance:
+        if matches_candidate(schedule, row):
             matches.append(schemas.TransactionOutput.model_validate(row))
     return {
         "candidates": matches,

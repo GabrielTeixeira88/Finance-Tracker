@@ -12,7 +12,8 @@ These are visual scaffolding, not budget, investment, valuation, or reporting en
 Phase 2A adds normalized payees, transaction review, combined search/filters, stable
 server pagination, and atomic bulk metadata updates. Phase 2B adds deterministic metadata
 rules, opt-in suggestions learned from explicit corrections, and informational schedules.
-Imports remain future work. Scheduled amounts do not affect balances until explicitly posted.
+Phase 3 adds local CSV/OFX imports with mapping profiles, review, duplicate decisions and
+source history. Scheduled amounts do not affect balances until explicitly posted.
 
 ## Run locally (no Docker or PostgreSQL required)
 
@@ -86,6 +87,14 @@ workspaces remain untouched, including user edits. To inspect the refreshed demo
 choose a new separate database file; do not reset an existing one. Existing workspaces
 gain the new tables through `uv run alembic upgrade head`. Legacy transaction metadata
 is protected against automation until explicitly released in the transaction editor.
+
+## Local CSV/OFX imports
+
+After `uv sync --frozen` and `uv run alembic upgrade head`, open **Transactions → Imports**.
+Choose a local statement and account, inspect CSV mappings, preview, resolve duplicates
+and errors, then explicitly confirm. No upload posts automatically. Files stay local;
+new imported entries default to Needs review. Exact repeats do not post again.
+See [formats, profiles, identity rules and synthetic fixtures](docs/IMPORTS.md).
 
 ## Rules and schedules
 
@@ -214,7 +223,8 @@ and in the `pre-sqlite-refactor` Git checkpoint. `sqlite_0002` adds an isolated
 preview-fixture table without changing existing financial history. `sqlite_0003` adds
 payees and review metadata without rebuilding the ledger. `sqlite_0004` adds metadata
 automation, correction evidence and informational schedules with protected completion
-links. Do not apply SQLite migrations to
+links. `sqlite_0005` adds import profiles, batches and source provenance without changing
+existing postings. Do not apply SQLite migrations to
 an existing PostgreSQL database or stamp old databases to the new revision.
 
 The local historical demo was created in a separate SQLite file. The previous small
@@ -247,5 +257,5 @@ Phase 1.7 establishes the approved application shell and Overview. See the
 [UI screenshots](docs/visual/phase17/index.html) and
 [validation report](docs/PHASE_1_7_VISUAL_REVIEW.md).
 Phases 2A and 2B implement transaction intelligence and automation foundations. Phase 3
-will add CSV/OFX imports; no import implementation is included yet. See the
+adds CSV/OFX imports with explicit preview/confirmation. See the
 [product scope](docs/PRODUCT_SPEC.md) and [roadmap](docs/ROADMAP.md) for boundaries.

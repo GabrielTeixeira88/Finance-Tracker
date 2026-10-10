@@ -14,6 +14,7 @@ dependencies = [
   "pydantic-settings>=2.7,<3",
   "sqlalchemy>=2.0,<2.1",
   "alembic>=1.14,<2",
+  "ofxtools>=1.0,<2",
 ]
 
 [dependency-groups]
