@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     )
     database_path: Path = Path("data/finance-tracker.db")
     sqlite_busy_timeout_ms: int = Field(default=5000, ge=1, le=60000)
+    learning_min_examples: int = Field(default=3, ge=3, le=100)
+    schedule_match_days: int = Field(default=3, ge=0, le=14)
 
     @property
     def resolved_database_path(self) -> Path:

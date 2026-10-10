@@ -4,7 +4,7 @@ import { AppShell, type Page } from '@/components/app-shell'
 import { ErrorState, LoadingState, PageHeader } from '@/components/primitives'
 import { getAccounts, getCategories } from '@/lib/api'
 import Dashboard from '@/pages/dashboard'
-import Transactions from '@/pages/transactions'
+import Transactions from '@/pages/transaction-workspace'
 import { Accounts, Settings } from '@/pages/management'
 import Preview, { type PreviewPage } from '@/pages/previews'
 
@@ -75,7 +75,7 @@ export default function App() {
               />
             ))}
           {route.page === 'Settings' && (
-            <Settings categories={categories.data} />
+            <Settings categories={categories.data} accounts={accounts.data} />
           )}
           {[
             'Budget',

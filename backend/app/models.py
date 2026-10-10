@@ -11,12 +11,13 @@ from sqlalchemy import (
     ForeignKey,
     ForeignKeyConstraint,
     Index,
+    Integer,
     String,
     UniqueConstraint,
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.database import Base
 from app.storage_types import ExactMoney, UTCDateTime
@@ -71,6 +72,19 @@ class Category(Record, Base):
     )
 
 
+class Payee(Record, Base):
+    __tablename__ = "payees"
+    name: Mapped[str] = mapped_column(String(120))
+    normalized_name: Mapped[str] = mapped_column(String(360), unique=True)
+    __table_args__ = (CheckConstraint("length(trim(name)) > 0", name="nonempty_name"),)
+
+    @validates("name")
+    def normalize_name(self, _key, value):
+        value = " ".join(value.split())
+        self.normalized_name = value.casefold()
+        return value
+
+
 class Transfer(Record, Base):
     __tablename__ = "transfers"
     source_account_id: Mapped[uuid.UUID]
@@ -119,9 +133,20 @@ class Transaction(Record, Base):
     description: Mapped[str] = mapped_column(String(500))
     merchant: Mapped[str | None] = mapped_column(String(120))
     category_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("categories.id"))
+    payee_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("payees.id"))
+    payee: Mapped[Payee | None] = relationship(lazy="selectin")
+    review_status: Mapped[str] = mapped_column(
+        String(20), default="REVIEWED", server_default="REVIEWED"
+    )
     transfer_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("transfers.id"))
     deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    manual_fields: Mapped[list] = mapped_column(JSON, default=list, server_default="[]")
+    rule_assignments: Mapped[dict] = mapped_column(JSON, default=dict, server_default="{}")
     __table_args__ = (
+        CheckConstraint("review_status IN ('NEEDS_REVIEW','REVIEWED')", name="review_status"),
+        CheckConstraint(
+            "payee_id IS NULL OR transaction_type IN ('INCOME','EXPENSE')", name="payee_type"
+        ),
         ForeignKeyConstraint(
             ["account_id", "currency"], ["financial_accounts.id", "financial_accounts.currency"]
         ),
@@ -157,4 +182,96 @@ class Transaction(Record, Base):
         Index("ix_transactions_type_date", "transaction_type", "transaction_date"),
         Index("ix_transactions_category", "category_id"),
         Index("ix_transactions_date", "transaction_date"),
+        Index("ix_transactions_payee", "payee_id"),
+        Index("ix_transactions_review_date", "review_status", "transaction_date"),
     )
+
+
+class TransactionRule(Record, Base):
+    __tablename__ = "transaction_rules"
+    name: Mapped[str] = mapped_column(String(120))
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    priority: Mapped[int] = mapped_column(Integer, default=100)
+    match_mode: Mapped[str] = mapped_column(String(3))
+    conditions: Mapped[list] = mapped_column(JSON)
+    actions: Mapped[dict] = mapped_column(JSON)
+    __table_args__ = (CheckConstraint("match_mode IN ('ALL','ANY')", name="match_mode"),)
+
+
+class RuleApplication(Record, Base):
+    __tablename__ = "rule_applications"
+    transaction_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("transactions.id"), index=True)
+    # Historical identity/name remain readable after the editable rule is deleted.
+    rule_id: Mapped[str] = mapped_column(String(36))
+    rule_name: Mapped[str] = mapped_column(String(120))
+    changes: Mapped[dict] = mapped_column(JSON)
+
+
+class TransactionCorrection(Record, Base):
+    __tablename__ = "transaction_corrections"
+    transaction_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("transactions.id"), index=True)
+    source: Mapped[str] = mapped_column(String(12))
+    context: Mapped[dict] = mapped_column(JSON)
+    changes: Mapped[dict] = mapped_column(JSON)
+    __table_args__ = (CheckConstraint("source IN ('USER','DEMO_USER')", name="source"),)
+
+
+class RuleSuggestion(Record, Base):
+    __tablename__ = "rule_suggestions"
+    fingerprint: Mapped[str] = mapped_column(String(64), unique=True)
+    name: Mapped[str] = mapped_column(String(120))
+    conditions: Mapped[list] = mapped_column(JSON)
+    actions: Mapped[dict] = mapped_column(JSON)
+    support_count: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(12), default="PENDING")
+    __table_args__ = (
+        CheckConstraint("status IN ('PENDING','ACCEPTED','DISMISSED','STALE')", name="status"),
+    )
+
+
+class Schedule(Record, Base):
+    __tablename__ = "schedules"
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str] = mapped_column(String(500))
+    transaction_type: Mapped[str] = mapped_column(String(20))
+    account_id: Mapped[uuid.UUID]
+    currency: Mapped[str] = mapped_column(String(3))
+    payee_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("payees.id"))
+    category_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("categories.id"))
+    amount: Mapped[Decimal] = mapped_column(ExactMoney())
+    amount_is_approximate: Mapped[bool] = mapped_column(Boolean, default=False)
+    amount_tolerance: Mapped[Decimal] = mapped_column(ExactMoney(), default=Decimal("0"))
+    frequency: Mapped[str] = mapped_column(String(12))
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date | None] = mapped_column(Date)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["account_id", "currency"], ["financial_accounts.id", "financial_accounts.currency"]
+        ),
+        CheckConstraint("transaction_type IN ('INCOME','EXPENSE')", name="type"),
+        CheckConstraint(
+            "frequency IN ('ONCE','WEEKLY','BIWEEKLY','MONTHLY','YEARLY')", name="frequency"
+        ),
+        CheckConstraint("end_date IS NULL OR end_date >= start_date", name="dates"),
+        CheckConstraint(
+            "typeof(amount)='text' AND length(amount)=24 "
+            "AND amount NOT GLOB '*[^0-9]*' "
+            "AND amount > '000000000000000000000000'",
+            name="amount",
+        ),
+        CheckConstraint(
+            "typeof(amount_tolerance)='text' AND length(amount_tolerance)=24 "
+            "AND amount_tolerance NOT GLOB '*[^0-9]*'",
+            name="tolerance",
+        ),
+    )
+
+
+class ScheduleCompletion(Record, Base):
+    __tablename__ = "schedule_completions"
+    schedule_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schedules.id"))
+    due_date: Mapped[date] = mapped_column(Date)
+    transaction_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("transactions.id"), unique=True)
+    expected: Mapped[dict] = mapped_column(JSON)
+    __table_args__ = (UniqueConstraint("schedule_id", "due_date"),)

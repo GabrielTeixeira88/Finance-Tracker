@@ -94,3 +94,31 @@ Preserve Phase 1 financial tests. Verify exact history, seed repeatability/rollb
 preview labeling, ranges, navigation, category configuration, transfer creation, and
 responsive layouts. Never write browser test activity into the review demo. See
 README for native startup, expected balances, and validation commands.
+
+## Phase 2A ledger interactions
+
+The global shell, theme, navigation, Overview charts, and spacing system are unchanged.
+Transactions adds payee/raw-description rows, review badges, search, combined filters,
+date ordering, server counts, and current-page checkboxes. Amounts retain exact formatting
+and transfers retain their neutral direction/link indicators. Existing editors now expose
+payee search/create/rename and review state. Payee renaming is explicitly confirmed because
+it affects all associated labels; it does not edit raw descriptions.
+
+Bulk actions confirm the selection count and transfer counterpart behavior. Selection
+clears when filters/pages change. Transfers/openings offer review only; ordinary records
+retain amount/type corrections. Categories stay in Settings. Empty/error/loading states
+and TanStack Query invalidation are reused. No global shell redesign accompanies this work.
+
+## Phase 2B local subviews
+
+Settings now switches between Categories and Rules. Transactions switches between
+All Activity and Scheduled; account detail retains its focused ledger. These are local
+subviews, not new primary navigation. Rule editing uses existing fields/selectors,
+dry-run change/skip summaries, then explicit historical application. Suggestions expose
+accept/edit/dismiss, never automatic enablement. Transaction editors show manual field
+protection and allow explicit release without changing the financial posting.
+
+Scheduled shows expected cash flow separately from balances, a compact schedule list,
+and occurrence rows with dates/status/expected amounts. Inspect offers candidate
+confirmation or explicit actual posting, with approximate actual amounts initially empty.
+Existing styles, semantic controls, exact Money displays and mobile table scroll remain.

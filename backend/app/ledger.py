@@ -3,11 +3,11 @@ from decimal import Decimal
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app import schemas
-from app.models import Category, FinancialAccount, Transaction, Transfer
+from app.models import Category, FinancialAccount, Payee, Transaction, Transfer
 
 
 def require(session: Session, model, record_id: UUID):
@@ -100,11 +100,20 @@ def create_transaction(session: Session, data: schemas.TransactionCreate) -> Tra
     if data.currency != account.currency:
         raise HTTPException(422, "Transaction currency must match the account")
     check_category(session, data.category_id)
+    if data.payee_id is not None:
+        require(session, Payee, data.payee_id)
     transaction = Transaction(
-        **data.model_dump(), direction="IN" if data.transaction_type == "INCOME" else "OUT"
+        **data.model_dump(),
+        direction="IN" if data.transaction_type == "INCOME" else "OUT",
+        manual_fields=sorted(data.model_fields_set & {"payee_id", "category_id", "review_status"}),
     )
     session.add(transaction)
     session.flush()
+    from app.rules import apply_new
+
+    apply_new(session, transaction)
+    session.flush()
+    session.expire(transaction, ["payee"])
     return transaction
 
 
@@ -120,10 +129,30 @@ def editable_transaction(session: Session, record_id: UUID) -> Transaction:
 def update_transaction(session: Session, record_id: UUID, data: schemas.TransactionInput):
     transaction = editable_transaction(session, record_id)
     check_category(session, data.category_id)
-    for key, value in data.model_dump().items():
+    if data.payee_id is not None:
+        require(session, Payee, data.payee_id)
+    # Legacy PUT clients do not erase metadata introduced after their API version.
+    excluded = {"payee_id", "review_status"} - data.model_fields_set
+    from app.payee_learning import manual_change, refresh_suggestions
+    from app.rules import FIELDS
+
+    before = {field: getattr(transaction, field) for field in FIELDS}
+    for key, value in data.model_dump(exclude=excluded).items():
         setattr(transaction, key, value)
     transaction.direction = "IN" if data.transaction_type == "INCOME" else "OUT"
+    manual_change(
+        session,
+        transaction,
+        before,
+        {
+            field
+            for field in data.model_fields_set & FIELDS
+            if before[field] != getattr(transaction, field)
+        },
+    )
     session.flush()
+    refresh_suggestions(session)
+    session.expire(transaction, ["payee"])
     return transaction
 
 
@@ -131,6 +160,9 @@ def delete_transaction(session: Session, record_id: UUID):
     transaction = editable_transaction(session, record_id)
     transaction.deleted_at = datetime.now(UTC)
     session.flush()
+    from app.payee_learning import refresh_suggestions
+
+    refresh_suggestions(session)
 
 
 def create_transfer(session: Session, data: schemas.TransferCreate) -> Transfer:
@@ -168,13 +200,25 @@ def create_transfer(session: Session, data: schemas.TransferCreate) -> Transfer:
 
 
 def transaction_query(
-    account_id=None, transaction_type=None, category_id=None, date_from=None, date_to=None
+    account_id=None,
+    transaction_type=None,
+    category_id=None,
+    date_from=None,
+    date_to=None,
+    payee_id=None,
+    review_status=None,
+    search=None,
+    amount_min=None,
+    amount_max=None,
+    sort="date_desc",
 ):
     query = select(Transaction).where(Transaction.deleted_at.is_(None))
     for column, value in [
         (Transaction.account_id, account_id),
         (Transaction.transaction_type, transaction_type),
         (Transaction.category_id, category_id),
+        (Transaction.payee_id, payee_id),
+        (Transaction.review_status, review_status),
     ]:
         if value is not None:
             query = query.where(column == value)
@@ -182,8 +226,27 @@ def transaction_query(
         query = query.where(Transaction.transaction_date >= date_from)
     if date_to:
         query = query.where(Transaction.transaction_date <= date_to)
+    if search and search.strip():
+        query = query.outerjoin(Payee).where(
+            or_(
+                Transaction.description.icontains(search.strip(), autoescape=True),
+                Transaction.merchant.icontains(search.strip(), autoescape=True),
+                Payee.normalized_name.contains(
+                    " ".join(search.split()).casefold(), autoescape=True
+                ),
+            )
+        )
+    if amount_min is not None:
+        query = query.where(Transaction.amount >= amount_min)
+    if amount_max is not None:
+        query = query.where(Transaction.amount <= amount_max)
+    # ExactMoney's fixed-width nonnegative encoding preserves numeric ordering.
     return query.order_by(
-        Transaction.transaction_date.desc(), Transaction.created_at.desc(), Transaction.id
+        Transaction.transaction_date.asc()
+        if sort == "date_asc"
+        else Transaction.transaction_date.desc(),
+        Transaction.created_at.desc(),
+        Transaction.id,
     )
 
 

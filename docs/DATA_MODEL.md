@@ -1,4 +1,4 @@
-# Phase 1 data model
+# Finance Tracker data model
 
 All financial records stay in local SQLite. The ledger is authoritative; there
 is no editable or cached account-balance column.
@@ -7,6 +7,7 @@ is no editable or cached account-balance column.
 erDiagram
     FinancialAccount ||--o{ Transaction : records
     Category o|--o{ Transaction : labels
+    Payee o|--o{ Transaction : identifies
     FinancialAccount ||--o{ Transfer : source
     FinancialAccount ||--o{ Transfer : destination
     Transfer o|--|{ Transaction : "exactly two linked sides"
@@ -72,8 +73,9 @@ entry atomically with the account. Zero creates no ledger entry, because ledger
 amounts must be positive. A partial unique index permits at most one opening entry
 per account. There is no independently editable starting-balance field.
 
-Opening entries and transfers are immutable through both the API and database
-update/delete triggers. Correcting or reversing them is intentionally deferred.
+Opening entries and transfers have immutable posting fields through both the API and
+database update/delete triggers. Review metadata may change; correcting or reversing
+their financial posting is intentionally deferred.
 Ordinary entries can change type (income/expense), amount, date, description,
 merchant, and category; their account and currency cannot be reassigned. Updates
 retain id/created_at and advance updated_at, but a full revision audit is not yet
@@ -151,6 +153,61 @@ constraint conflicts. Database exception details are not returned to the browser
 
 See FastAPI `/docs` for complete request and response schemas.
 
+## Payees and review (Phase 2A)
+
+`payees`: UUID id, name, unique normalized_name, created_at, updated_at. Names collapse
+whitespace and use Unicode casefold for uniqueness/search. Punctuation and accents are
+not removed; similar names are never merged automatically. There is no delete/merge API.
+`transactions.payee_id` is nullable, indexed, and protected by a foreign key.
+Income/expenses may reference payees; transfers/openings may not. Existing rows receive
+no inferred payee. Lists show the current normalized payee name with the raw description
+underneath; `description` remains independent and is never overwritten by payee assignment.
+
+`transactions.review_status`: NOT NULL, default REVIEWED, constrained to REVIEWED or
+NEEDS_REVIEW. This means user inspection only. Future bank states such as PENDING,
+CLEARED, and RECONCILED are separate concepts and are not implemented or stored here.
+Review never changes amounts, direction, balances, or cash-flow eligibility.
+
+`sqlite_0003` uses additive SQLite columns and a new payees table; no ledger table is
+rebuilt. Existing rows, IDs, descriptions, monetary encodings, timestamps, relationships,
+and soft-deleted history remain intact. Existing rows default to REVIEWED. The updated
+history trigger allows special-entry review changes while retaining posting protections.
+
+Additional APIs (under `/api`):
+
+| Method | Path | Operation |
+| --- | --- | --- |
+| GET | `/payees?search=...&limit=50&offset=0` | Literal normalized-name search, max 200/page |
+| POST | `/payees` | Create normalized payee; duplicate key returns 409 |
+| PATCH | `/payees/{id}` | Rename without modifying raw transaction descriptions |
+| PATCH | `/transactions/{id}` | Partial description/date/merchant/category/payee/review update |
+| PATCH | `/transactions/bulk` | Atomic explicit ID selection with shared metadata changes |
+
+POST transactions accepts optional payee_id and review_status. PUT retains ordinary
+financial corrections and preserves these new fields when legacy clients omit them.
+PATCH rejects monetary/account/type fields; omitted fields remain unchanged. Explicit
+null clears category/payee/merchant; description/date/review cannot be null.
+Transfers/openings allow review changes only. Reviewing either transfer side updates
+both records in one transaction. No one-sided amount/date/category edit is permitted.
+
+Bulk body: `{"transaction_ids": ["uuid"], "changes": {"review_status": "REVIEWED"}}`.
+One to 200 IDs may be submitted; repeated IDs are deduplicated. Allowed changes are
+review_status, category_id, and payee_id, with no deletion or monetary mutation. Mixed
+special/ordinary selections reject category/payee assignments in full. Missing, deleted,
+or invalid references reject the whole batch. Responses include all changed records,
+including transfer counterparts. UI selection is current-page only and clears on paging
+or filter changes; confirmation explicitly describes transfer counterpart expansion.
+
+GET transactions preserves its array response and existing filters/limits. It adds
+`search` (description/merchant/payee), `payee_id`, `review_status`, `amount_min`,
+`amount_max`, and `sort=date_desc|date_asc`. All filters combine with AND; search matches
+any of its three fields. Date and amount boundaries are inclusive; amount bounds are
+nonnegative decimal strings and refer to positive magnitudes, not signed movements.
+Currencies are not converted; constrain account when comparing a single currency.
+Sort uses date, then created_at descending, then UUID ascending. `X-Total-Count` reports
+the filtered count before limit/offset. UI pages contain 50 records. No infinite scroll,
+snapshot pagination across concurrent writes, fuzzy search, or full-text index is added.
+
 ## Historical display (Phase 1.6)
 
 `GET /api/history?period=1M|3M|YTD|1Y|ALL&end=YYYY-MM-DD` is read-only.
@@ -179,3 +236,13 @@ category IDs identify labels for comparison only, not a budget-domain relationsh
 Preview holdings are not `FinancialAccount` assets and never participate in balance
 calculation. GET `/api/demo` returns `enabled: false` on an ordinary workspace.
 There is no preview write API or automatic seeding.
+
+## Phase 2B additions (`sqlite_0004`)
+
+Additive tables: transaction_rules, rule_applications, transaction_corrections,
+rule_suggestions, schedules, schedule_completions. Transactions gain manual_fields
+and rule_assignments JSON; no amounts or posting identities are rewritten. Older
+ordinary metadata is protected because assignment origin was unknown. Schedule
+amounts/tolerances reuse ExactMoney; completion links and rules never become balances.
+See [automation contracts](TRANSACTION_AUTOMATION.md) for fields, relationships,
+constraints, allowlisted rules, precedence, learning, recurrence and API semantics.

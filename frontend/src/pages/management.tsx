@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import type { Navigate } from '@/components/app-shell'
 import { useWrite } from '@/lib/use-write'
 import { label, type Account, type Category } from '@/lib/api'
+import { Rules } from '@/pages/rules'
 
 export function Accounts({
   accounts,
@@ -115,7 +116,43 @@ export function Accounts({
   )
 }
 
-export function Settings({ categories }: { categories: Category[] }) {
+export function Settings({
+  categories,
+  accounts,
+}: {
+  categories: Category[]
+  accounts: Account[]
+}) {
+  const [view, setView] = useState<'categories' | 'rules'>('categories')
+  return (
+    <>
+      <nav className="range-tabs mb-4" aria-label="Settings sections">
+        <button
+          aria-pressed={view === 'categories'}
+          onClick={() => setView('categories')}
+        >
+          Categories
+        </button>
+        <button
+          aria-pressed={view === 'rules'}
+          onClick={() => setView('rules')}
+        >
+          Rules
+        </button>
+      </nav>
+      {view === 'categories' ? (
+        <CategorySettings categories={categories} />
+      ) : (
+        <>
+          <PageHeader title="Settings" description="Transaction automation" />
+          <Rules accounts={accounts} categories={categories} />
+        </>
+      )}
+    </>
+  )
+}
+
+function CategorySettings({ categories }: { categories: Category[] }) {
   const [editing, setEditing] = useState<Category>()
   const [creating, setCreating] = useState(false)
   const mutation = useWrite()

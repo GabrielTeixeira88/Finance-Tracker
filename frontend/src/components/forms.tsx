@@ -9,6 +9,8 @@ import {
 import { useWrite } from '@/lib/use-write'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
+import { PayeePicker } from '@/components/payee-picker'
+import { decimalUnits } from '@/lib/money'
 import {
   accountTypes,
   label,
@@ -45,6 +47,7 @@ function Editor({
   payload,
   onSaved,
   children,
+  method,
 }: {
   title: string
   path: string
@@ -52,6 +55,7 @@ function Editor({
   payload: (form: FormData) => unknown
   onSaved?: () => void
   children: ReactNode
+  method?: (form: FormData) => 'PUT' | 'PATCH'
 }) {
   const mutation = useWrite()
   const [error, setError] = useState('')
@@ -62,10 +66,11 @@ function Editor({
     setError('')
     setSaved(false)
     try {
-      const data = payload(new FormData(form))
+      const fields = new FormData(form)
+      const data = payload(fields)
       await mutation.mutateAsync({
         path,
-        method: editing ? 'PUT' : 'POST',
+        method: method?.(fields) ?? (editing ? 'PUT' : 'POST'),
         data,
       })
       form.reset()
@@ -244,12 +249,22 @@ export function TransactionForm({
   categories: Category[]
   onSaved: () => void
 }) {
+  const financialChange = (form: FormData) =>
+    !!transaction &&
+    (decimalUnits(moneyInput.parse(value(form, 'amount'))) !==
+      decimalUnits(transaction.amount) ||
+      value(form, 'transaction_type') !== transaction.transaction_type)
   return (
     <Editor
       title={transaction ? 'Edit transaction' : 'Add income or expense'}
       path={transaction ? `/transactions/${transaction.id}` : '/transactions'}
       editing={!!transaction}
       onSaved={onSaved}
+      method={
+        transaction
+          ? (form) => (financialChange(form) ? 'PUT' : 'PATCH')
+          : undefined
+      }
       payload={(form) => {
         const base = {
           transaction_type: value(form, 'transaction_type'),
@@ -258,13 +273,47 @@ export function TransactionForm({
           description: value(form, 'description'),
           merchant: optional(form, 'merchant'),
           category_id: optional(form, 'category_id'),
+          payee_id: optional(form, 'payee_id'),
+          review_status: z
+            .enum(['REVIEWED', 'NEEDS_REVIEW', 'AUTO'])
+            .parse(value(form, 'review_status')),
         }
-        if (transaction) return base
+        if (transaction) {
+          if (financialChange(form)) return base
+          const metadata = {
+            transaction_date: base.transaction_date,
+            description: base.description,
+            merchant: base.merchant,
+            category_id: base.category_id,
+            payee_id: base.payee_id,
+            review_status: base.review_status,
+          }
+          return {
+            ...Object.fromEntries(
+              Object.entries(metadata).filter(
+                ([key, next]) => next !== transaction[key as keyof Transaction],
+              ),
+            ),
+            unlock_fields: ['payee_id', 'category_id', 'review_status'].filter(
+              (field) => form.get(`unlock_${field}`) === 'on',
+            ),
+          }
+        }
         const account = accounts.find(
           (a) => a.id === value(form, 'account_id') && a.active,
         )
         if (!account) throw new Error('Choose an active account.')
-        return { ...base, account_id: account.id, currency: account.currency }
+        return {
+          ...Object.fromEntries(
+            Object.entries(base).filter(
+              ([key, next]) =>
+                !(['payee_id', 'category_id'].includes(key) && next === null) &&
+                !(key === 'review_status' && next === 'AUTO'),
+            ),
+          ),
+          account_id: account.id,
+          currency: account.currency,
+        }
       }}
     >
       <Field label="Account">
@@ -330,6 +379,19 @@ export function TransactionForm({
           defaultValue={transaction?.merchant ?? ''}
         />
       </Field>
+      <PayeePicker initial={transaction?.payee} />
+      <Field label="Review status">
+        <select
+          name="review_status"
+          defaultValue={transaction?.review_status ?? 'AUTO'}
+        >
+          {!transaction && (
+            <option value="AUTO">Use rules / default Reviewed</option>
+          )}
+          <option value="REVIEWED">Reviewed</option>
+          <option value="NEEDS_REVIEW">Needs review</option>
+        </select>
+      </Field>
       <Field label="Category">
         <select
           name="category_id"
@@ -343,6 +405,26 @@ export function TransactionForm({
           ))}
         </select>
       </Field>
+      {transaction && (
+        <div className="field">
+          <span className="metadata">
+            Manual assignments take precedence over rules.
+          </span>
+          {(transaction.manual_fields ?? []).map((field) => (
+            <label key={field}>
+              <input type="checkbox" name={`unlock_${field}`} /> Allow rules to
+              update {field.replace('_id', '').replace('_', ' ')}
+            </label>
+          ))}
+          {Object.values(transaction.rule_assignments ?? {}).map(
+            (assignment) => (
+              <small key={assignment.rule_id}>
+                Assigned by rule: {assignment.rule_name}
+              </small>
+            ),
+          )}
+        </div>
+      )}
     </Editor>
   )
 }

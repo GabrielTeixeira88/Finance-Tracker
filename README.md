@@ -9,7 +9,10 @@ balances, reconstructed account balances, and a historical overview. Investment 
 contain ledger cash only. Phase 1.6 adds an opt-in 18-month synthetic workspace and
 clearly labeled Budget, Investments, Performance, Net Worth, and Reports previews.
 These are visual scaffolding, not budget, investment, valuation, or reporting engines.
-Other Phase 2 functionality remains out of scope.
+Phase 2A adds normalized payees, transaction review, combined search/filters, stable
+server pagination, and atomic bulk metadata updates. Phase 2B adds deterministic metadata
+rules, opt-in suggestions learned from explicit corrections, and informational schedules.
+Imports remain future work. Scheduled amounts do not affect balances until explicitly posted.
 
 ## Run locally (no Docker or PostgreSQL required)
 
@@ -64,13 +67,43 @@ opening entries on March 31, 2025. It contains **500 ledger entries, 72 atomic
 transfers, five accounts, and 15 categories**. Salaries, rent, groceries, utilities,
 card purchases/payments, savings and investment **cash** contributions all pass
 through the normal domain services. All institutions and merchants are clearly fake.
-IDs, timestamps, dates, amounts, and preview fixtures are deterministic.
+IDs, timestamps, dates, amounts, and preview fixtures are deterministic. Fresh
+seeds add five normalized payees and mixed review states without changing ledger amounts.
+Merchant-like descriptions (including Uber variants) are fictional examples, not real purchases.
 
 The seed runs in one transaction, refuses a populated workspace, and becomes a no-op
 once its version marker exists. Repeating it preserves subsequent user edits. It never
 runs at application startup. `python -m app.seed` still adds example categories;
 do not run it before the historical seed, which requires empty tables. The older
 `app.seed --demo` is a small current-date smoke fixture, not the historical workspace.
+
+Fresh demos also contain four rules, one pending suggestion supported by three synthetic
+corrections, and six schedules with two confirmed existing transactions. The Scheduled
+view uses the fixed September 30, 2026 demo calendar; ordinary workspaces use today's date.
+
+The new seed marker is `phase2b-synthetic-v3`. Existing `phase16-synthetic-v1` and `phase2a-synthetic-v2`
+workspaces remain untouched, including user edits. To inspect the refreshed demo,
+choose a new separate database file; do not reset an existing one. Existing workspaces
+gain the new tables through `uv run alembic upgrade head`. Legacy transaction metadata
+is protected against automation until explicitly released in the transaction editor.
+
+## Rules and schedules
+
+In **Settings → Rules**, create a narrow condition and metadata actions. Lower priority
+numbers win per field; explicit manual choices always win. Saving a rule affects future
+ordinary entries. Use **Preview history**, inspect changes/skips, then explicitly apply
+to existing entries. No rule can change amounts, accounts, dates, or transfer postings.
+Suggestions require at least three consistent corrections on distinct transactions;
+accept, edit, or dismiss them. Nothing is enabled without your action.
+
+In **Transactions → Scheduled**, maintain expected events and inspect upcoming/overdue
+occurrences. Match an existing eligible entry or explicitly post the actual amount/date.
+Approximate amounts require actual-amount confirmation. Matching creates no movement;
+posting does. Completed postings require unlinking before financial correction/deletion.
+No background posting, scheduler worker, or automatic reconciliation is included.
+
+Optional backend environment settings: `LEARNING_MIN_EXAMPLES` (default 3, minimum 3)
+and `SCHEDULE_MATCH_DAYS` (default 3, maximum 14). See [automation contracts](docs/TRANSACTION_AUTOMATION.md).
 
 Expected September 30, 2026 balances:
 
@@ -102,8 +135,16 @@ income **1,000**, expenses **200**. Transfers and openings never enter flow tota
 - **Accounts:** calculated balances and administration; selecting an account opens its
   filtered ledger. Deactivation preserves history.
 - **Transactions:** dense ledger and filters; **+ Add Transaction** selects Expense,
-  Income, or Transfer. Transfers still use one atomic backend operation.
-- **Settings:** Categories and safe deletion rules.
+  Income, or Transfer. Transfers still use one atomic backend operation. Search raw
+  descriptions, merchants, or normalized payees; combine account/category/type/review,
+  date and exact amount filters. Results use 50-entry pages and newest/oldest ordering.
+  Edit a transaction to search/create/rename its payee and change review state. Renaming
+  a payee updates its display everywhere without changing raw descriptions.
+  Select rows on the current page to review or assign category/payee with confirmation.
+  Transfer review updates both linked sides; transfers/openings cannot receive category
+  or payee assignments. Review means user checking, not bank reconciliation.
+- **Settings:** Categories and safe deletion rules; Rules with preview/application and
+  user-approved learning suggestions. Transactions also contains the Scheduled subview.
 - **Preview sections:** Budget targets versus ledger spending; fictional investment
   allocation/activity and a Performance illustration; Net Worth and Reports layouts
   reusing actual account history. No editing or final financial engines are provided.
@@ -170,7 +211,10 @@ do not delete their data as a routine fix.
 This correction starts a new SQLite Alembic lineage (`sqlite_0001`). Original
 PostgreSQL migrations are preserved byte-for-byte in `backend/migrations_legacy/`
 and in the `pre-sqlite-refactor` Git checkpoint. `sqlite_0002` adds an isolated
-preview-fixture table without changing existing financial history. Do not apply SQLite migrations to
+preview-fixture table without changing existing financial history. `sqlite_0003` adds
+payees and review metadata without rebuilding the ledger. `sqlite_0004` adds metadata
+automation, correction evidence and informational schedules with protected completion
+links. Do not apply SQLite migrations to
 an existing PostgreSQL database or stamp old databases to the new revision.
 
 The local historical demo was created in a separate SQLite file. The previous small
@@ -202,5 +246,6 @@ explicit exceptions for the adapted AGPL frontend and bundled OFL font; see
 Phase 1.7 establishes the approved application shell and Overview. See the
 [UI screenshots](docs/visual/phase17/index.html) and
 [validation report](docs/PHASE_1_7_VISUAL_REVIEW.md).
-The `phase-2a` branch prepares the next development phase; no Phase 2A features
-have been implemented yet.
+Phases 2A and 2B implement transaction intelligence and automation foundations. Phase 3
+will add CSV/OFX imports; no import implementation is included yet. See the
+[product scope](docs/PRODUCT_SPEC.md) and [roadmap](docs/ROADMAP.md) for boundaries.

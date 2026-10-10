@@ -159,7 +159,7 @@ export function RecentActivity({
                   {transfer && (
                     <ArrowLeftRight size={12} aria-label="Transfer" />
                   )}
-                  {row.description}
+                  {row.payee?.name ?? row.description}
                 </strong>
                 <p className="metadata">
                   {row.transaction_date} ·{' '}

@@ -1,17 +1,17 @@
 from collections.abc import Iterator
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 
 from app import history as history_service
-from app import ledger, schemas
+from app import ledger, schemas, transaction_metadata
 from app.database import get_session
-from app.models import Category, DemoFixture, FinancialAccount, Transaction, Transfer
+from app.models import Category, DemoFixture, FinancialAccount, Payee, Transaction, Transfer
 
 router = APIRouter(prefix="/api")
 
@@ -109,31 +109,104 @@ def delete_category(record_id: UUID, db: DB):
     category = ledger.require(db, Category, record_id)
     if db.scalar(select(Transaction.id).where(Transaction.category_id == record_id).limit(1)):
         raise HTTPException(409, "Category is referenced by transaction history")
+    from app.models import RuleSuggestion, TransactionRule
+
+    for rule in db.scalars(select(TransactionRule)):
+        if rule.actions.get("category_id") == str(record_id) or any(
+            c["field"] == "category_id" and c["value"] == str(record_id) for c in rule.conditions
+        ):
+            raise HTTPException(409, "Category is referenced by a rule")
+    for suggestion in db.scalars(select(RuleSuggestion).where(RuleSuggestion.status == "PENDING")):
+        if suggestion.actions.get("category_id") == str(record_id):
+            raise HTTPException(409, "Category is referenced by a pending suggestion")
     db.delete(category)
     db.flush()
     return Response(status_code=204)
 
 
+@router.get("/payees", response_model=list[schemas.PayeeOutput])
+def list_payees(
+    db: DB,
+    search: str = Query("", max_length=120),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
+    query = select(Payee)
+    if search.strip():
+        query = query.where(
+            Payee.normalized_name.contains(" ".join(search.split()).casefold(), autoescape=True)
+        )
+    return list(
+        db.scalars(query.order_by(Payee.normalized_name, Payee.id).limit(limit).offset(offset))
+    )
+
+
+@router.post("/payees", response_model=schemas.PayeeOutput, status_code=201)
+def create_payee(data: schemas.PayeeInput, db: DB):
+    payee = Payee(name=data.name)
+    db.add(payee)
+    db.flush()
+    return payee
+
+
+@router.patch("/payees/{record_id}", response_model=schemas.PayeeOutput)
+def rename_payee(record_id: UUID, data: schemas.PayeeInput, db: DB):
+    payee = ledger.require(db, Payee, record_id)
+    payee.name = data.name
+    db.flush()
+    return payee
+
+
 @router.get("/transactions", response_model=list[schemas.TransactionOutput])
 def list_transactions(
     db: DB,
+    response: Response,
     account_id: UUID | None = None,
     transaction_type: schemas.TransactionType | None = None,
     category_id: UUID | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
+    payee_id: UUID | None = None,
+    review_status: schemas.ReviewStatus | None = None,
+    search: str | None = Query(None, max_length=500),
+    amount_min: schemas.OpeningMoney | None = None,
+    amount_max: schemas.OpeningMoney | None = None,
+    sort: Literal["date_desc", "date_asc"] = "date_desc",
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ):
     if date_from and date_to and date_from > date_to:
         raise HTTPException(422, "Start date must not follow end date")
-    return list(
-        db.scalars(
-            ledger.transaction_query(account_id, transaction_type, category_id, date_from, date_to)
-            .limit(limit)
-            .offset(offset)
-        )
+    if amount_min is not None and amount_max is not None and amount_min > amount_max:
+        raise HTTPException(422, "Minimum amount must not exceed maximum amount")
+    query = ledger.transaction_query(
+        account_id,
+        transaction_type,
+        category_id,
+        date_from,
+        date_to,
+        payee_id,
+        review_status,
+        search,
+        amount_min,
+        amount_max,
+        sort,
     )
+    response.headers["X-Total-Count"] = str(
+        db.scalar(select(func.count()).select_from(query.order_by(None).subquery()))
+    )
+    return list(db.scalars(query.limit(limit).offset(offset)))
+
+
+@router.patch("/transactions/bulk", response_model=list[schemas.TransactionOutput])
+def bulk_metadata(data: schemas.BulkMetadata, db: DB):
+    return transaction_metadata.update_metadata(db, data.transaction_ids, data.changes)
+
+
+@router.patch("/transactions/{record_id}", response_model=schemas.TransactionOutput)
+def patch_transaction(record_id: UUID, data: schemas.TransactionPatch, db: DB):
+    transaction_metadata.update_metadata(db, [record_id], data)
+    return ledger.require(db, Transaction, record_id)
 
 
 @router.get("/transactions/{record_id}", response_model=schemas.TransactionOutput)
