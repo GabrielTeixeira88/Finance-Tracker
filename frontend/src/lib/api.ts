@@ -31,7 +31,10 @@ const accountSchema = z.object({
   balance: decimal,
 })
 const categorySchema = z.object({ id: z.string(), name: z.string() })
-const transactionSchema = z.object({
+const payeeSchema = z.object({ id: z.string(), name: z.string() })
+export type Payee = z.infer<typeof payeeSchema>
+export const reviewStatuses = ['NEEDS_REVIEW', 'REVIEWED'] as const
+export const transactionSchema = z.object({
   id: z.string(),
   account_id: z.string(),
   transaction_type: z.enum(transactionTypes),
@@ -42,8 +45,24 @@ const transactionSchema = z.object({
   description: z.string(),
   merchant: z.string().nullable(),
   category_id: z.string().nullable(),
+  payee_id: z.string().nullable().default(null),
+  payee: payeeSchema.nullable().default(null),
+  review_status: z.enum(reviewStatuses).default('REVIEWED'),
   transfer_id: z.string().nullable(),
   deleted_at: z.string().nullable(),
+  manual_fields: z
+    .array(z.enum(['payee_id', 'category_id', 'review_status']))
+    .optional(),
+  rule_assignments: z
+    .record(
+      z.string(),
+      z.object({
+        rule_id: z.string(),
+        rule_name: z.string(),
+        base_value: z.string().nullable(),
+      }),
+    )
+    .optional(),
 })
 const dashboardSchema = z.object({
   month: z.string(),
@@ -135,7 +154,11 @@ export const getHistory = async (
 export const getDemo = async (signal?: AbortSignal) =>
   demoSchema.parse(await request('/demo', { signal }))
 
-export async function request(path: string, options: RequestInit = {}) {
+export async function request(
+  path: string,
+  options: RequestInit = {},
+  onResponse?: (response: Response) => void,
+) {
   const response = await fetch(`/api${path}`, {
     ...options,
     headers: { 'Content-Type': 'application/json', ...options.headers },
@@ -148,7 +171,27 @@ export async function request(path: string, options: RequestInit = {}) {
         : 'Check the submitted fields and try again.',
     )
   }
+  onResponse?.(response)
   return response.status === 204 ? null : response.json()
+}
+export const getPayees = async (search: string, signal?: AbortSignal) =>
+  z.array(payeeSchema).parse(
+    await request(`/payees?search=${encodeURIComponent(search)}&limit=50`, {
+      signal,
+    }),
+  )
+export async function getTransactionPage(
+  params: URLSearchParams,
+  signal?: AbortSignal,
+) {
+  let total: number | undefined
+  const rows = z.array(transactionSchema).parse(
+    await request(`/transactions?${params}`, { signal }, (response) => {
+      const count = response.headers.get('X-Total-Count')
+      if (count !== null) total = Number(count) // Record count, never money.
+    }),
+  )
+  return { rows, total: total ?? rows.length }
 }
 export const getAccounts = async (signal?: AbortSignal) =>
   z.array(accountSchema).parse(await request('/accounts', { signal }))

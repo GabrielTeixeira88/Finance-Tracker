@@ -828,6 +828,24 @@ tbody tr:hover {
   margin-top: 24px;
   max-width: 420px;
 }
+.bulk-actions {
+  padding: 12px 0;
+  margin: 12px 0;
+  border-block: 1px solid var(--border);
+}
+.payee-picker {
+  min-width: 0;
+}
+.payee-picker details {
+  font-size: 12px;
+}
+.payee-picker summary {
+  cursor: pointer;
+  margin-block: 6px;
+}
+.payee-picker small {
+  color: var(--muted-foreground);
+}
 .spending-row {
   padding: 7px 0;
   font-size: 12px;
@@ -867,6 +885,24 @@ tbody tr:hover {
   gap: 6px;
   font-weight: 500;
   font-size: 12px;
+}
+.automation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.automation-row > :first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 699px) {
+  .automation-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 .activity-list p {
   font-size: 10px;

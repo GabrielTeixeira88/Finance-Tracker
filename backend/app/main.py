@@ -9,6 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.automation_routes import router as automation_router
 from app.database import get_engine, get_session
 from app.routes import router
 
@@ -34,6 +35,7 @@ app = FastAPI(
     },
 )
 app.include_router(router)
+app.include_router(automation_router)
 
 
 class HealthResponse(BaseModel):

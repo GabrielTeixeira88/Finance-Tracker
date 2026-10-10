@@ -52,12 +52,12 @@ A transfer parent points to two preallocated transaction IDs through deferred fo
 keys. Both sides must exist at commit. Insert triggers verify their IDs, directions,
 accounts, amounts, currencies, dates, and descriptions against the parent. Unique
 constraints prevent extra sides. Reserved IDs cannot become ordinary transactions.
-Immutable-history triggers reject changes/deletes of transfers and opening entries,
+Immutable-history triggers reject financial changes/deletes of transfers and opening entries,
 and physical deletion of ordinary transactions. See DATA_MODEL.md.
 
 ## Migration lineage and transition
 
-New SQLite files run `sqlite_0001` and `sqlite_0002` through Alembic. It contains an explicit schema and
+New SQLite files run `sqlite_0001` through `sqlite_0003` using Alembic. These contain an explicit schema and
 integrity triggers; application startup never invokes metadata.create_all(). The
 optional container runs Alembic before Uvicorn. Native startup runs Alembic explicitly.
 Old PostgreSQL revisions remain unchanged under migrations_legacy/postgresql and
@@ -80,7 +80,7 @@ exchanged as exact strings. Only theme preference is stored in localStorage.
 Functional navigation is Overview / Accounts / Transactions / Settings. Explicitly
 labeled read-only preview sections expose future information architecture. Transfers are a
 transaction creation mode; Categories are configuration under Settings.
-[UI_FOUNDATION.md](UI_FOUNDATION.md) documents the Wealthfolio reference and hierarchy.
+[UI_FOUNDATION.md](UI_FOUNDATION.md) documents the application shell and information hierarchy.
 
 External integrations will eventually live behind adapters. No imports, Gmail,
 provenance, budget engines, recurring entries, investment accounting, market data, auth,
@@ -123,6 +123,42 @@ returns. Query keys include period and end date; writes invalidate history as we
 accounts and transactions. The single-user history query scans ledger records in
 memory; high-volume analytics and caching remain future work.
 
-Reference roles: Wealthfolio for visual hierarchy, Actual Budget for future budgeting
-workflows, Securo for future backend/ingestion adapter architecture. No external
-reference application is a runtime dependency.
+Future budgeting workflows and ingestion adapters require separately reviewed designs.
+No external finance application is a runtime dependency.
+
+## Phase 2A transaction metadata
+
+`app.transaction_metadata` handles partial metadata updates separately from posting in
+`app.ledger`. API writes retain the same BEGIN IMMEDIATE unit of work. Bulk operations
+validate the complete explicit selection before mutation and commit once. Missing/deleted
+records or invalid references fail the entire request. Both sides of a transfer are
+reviewed together, including a side outside the current UI filter. Special-entry triggers
+permit review/timestamp changes only; all original posting fields remain protected.
+
+Payee names are trimmed, internal Unicode whitespace collapsed, and casefolded into a
+unique lookup key by the SQLAlchemy model. API/ORM callers must use that model instead
+of writing unnormalized keys. Name changes affect associated display labels only.
+Raw descriptions and the existing optional merchant field remain independent.
+No fuzzy matching, aliases, or import provenance is introduced. Phase 2B adds explicit
+deterministic classification, described below.
+
+Transaction filters and stable pagination execute in SQL. ExactMoney's fixed-width,
+nonnegative representation supports exact amount comparisons without casts to REAL.
+The response remains an array; X-Total-Count adds pagination metadata. Payee relationships
+are batch-loaded, avoiding per-row list lookups. Search escapes SQL wildcard characters;
+payee search uses Unicode casefold, while description/merchant case-insensitive matching
+uses SQLite's built-in ASCII case folding. Full-text indexing remains deferred.
+
+The UI sends PATCH for metadata-only edits, existing PUT for amount/type corrections,
+and one PATCH for a confirmed bulk selection. Query invalidation refreshes ledger,
+accounts, history, and payees without page reloads. No change to the shell or navigation.
+
+## Phase 2B automation boundary
+
+`rules.py` separates pure evaluation from metadata application. `payee_learning.py`
+uses explicit corrections only. `schedules.py` computes expectations without posting;
+user-confirmed actual entries use the existing ledger service. Mutation routes retain
+one `BEGIN IMMEDIATE` unit of work, including audits and completions. No worker/queue
+or external provider is involved. Database triggers protect completed financial records.
+Local Settings/Transactions subviews reuse TanStack Query and shared forms; the global
+shell is unchanged. See [contracts and limitations](TRANSACTION_AUTOMATION.md).

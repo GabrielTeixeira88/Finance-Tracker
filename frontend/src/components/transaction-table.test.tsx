@@ -24,6 +24,9 @@ const row: Transaction = {
   category_id: 'c',
   transfer_id: null,
   deleted_at: null,
+  payee_id: null,
+  payee: null,
+  review_status: 'REVIEWED',
 }
 
 it('renders income and expense amounts with consistent signs, semantics and columns', () => {
@@ -54,10 +57,11 @@ it('renders income and expense amounts with consistent signs, semantics and colu
     screen.getAllByRole('columnheader').map((el) => el.textContent),
   ).toEqual([
     'Date',
-    'Description / merchant',
+    'Payee / Description',
     'Category',
     'Account',
     'Type',
+    'Status',
     'Amount',
   ])
 })

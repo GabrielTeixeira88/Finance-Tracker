@@ -1,19 +1,13 @@
 ﻿# UI foundation - Phase 1.7 shell / Overview review
 
-## References and hierarchy
+## Application hierarchy
 
-[Wealthfolio](https://github.com/wealthfolio/wealthfolio) is the primary visual
-reference. Phase 1.7 uses the running v3.9.1 application and its exact frontend
-revision, not a generic dashboard interpretation. See [visual comparison](PHASE_1_7_VISUAL_REVIEW.md)
-and [source attribution](../THIRD_PARTY_NOTICES.md). Actual Budget remains the
-future budgeting/workflow reference; Securo remains the future ingestion reference.
-
-Overview matches the reference's compact section tabs, 30px JetBrains Mono balance,
-280px edge-to-edge chart, centered range selector, and two-to-one lower grid. The
-left column contains account rows; the right contains existing Cash flow and Recent
-activity instead of unimplemented holdings/goals. Spending is a related Overview
-view; Net Worth opens the existing explicitly labeled preview. Other page layouts
-remain unchanged in this visual review phase.
+Overview uses compact section tabs, a 30px JetBrains Mono balance, a 280px
+edge-to-edge chart, a centered range selector, and a two-to-one lower grid.
+The left column contains account rows; the right contains Cash flow and Recent
+activity. Spending is a related Overview view; Net Worth opens the existing
+explicitly labeled preview. See the [validation report](PHASE_1_7_VISUAL_REVIEW.md)
+and [source attribution](../THIRD_PARTY_NOTICES.md).
 
 The headline represents **Total balance**, never investment valuation or investment
 return. Its change compares closing and opening ledger values. The chart carries
@@ -31,7 +25,7 @@ all-recorded-date balances; Overview uses the selected ending date.
 
 ## Shell and navigation
 
-Desktop starts with the reference's 70px collapsed sidebar; the footer control expands
+Desktop starts with a 70px collapsed sidebar; the footer control expands
 it to 220px. Accessible names and hover titles remain available when labels collapse.
 Find a page filters navigation destinations only, not financial records. The existing
 Overview, Accounts, Transactions, Budget, Investments, Performance, Net Worth, Reports,
@@ -44,7 +38,7 @@ Transactions has one Add Transaction action with Expense / Income / Transfer mod
 Transfer mode submits once to the atomic backend operation; there is no top-level
 Transfers item. Settings contains Categories, not unrelated configuration.
 
-Dark mode is the initial default, with the reference Flexoki dark/light palette and its olive
+Dark mode is the initial default, with the Flexoki dark/light palette and its olive
 chart/landscape gradient. Existing saved light preference is respected. Semantic income/expense
 colors supplement signs; transfers remain neutral with explicit direction labels.
 The sidebar is session-local. Only theme preference is stored in localStorage. All financial data comes from the API.
@@ -69,7 +63,7 @@ validation widths are 1440, 1280, 1024, 768, and 390 pixels.
   neutral linked transfer indicators, and compact metadata.
 - Currency formatting is centralized, locale-aware, and preserves up to six fractional
   digits. Detailed values are not abbreviated. Financial arithmetic uses exact strings
-  and BigInt. The reference shell/Overview tokens live in wealthfolio.css; other layouts retain index.css.
+  and BigInt. The shell/Overview tokens live in application.css; other layouts retain index.css.
 
 ## Preview boundaries
 
@@ -100,3 +94,31 @@ Preserve Phase 1 financial tests. Verify exact history, seed repeatability/rollb
 preview labeling, ranges, navigation, category configuration, transfer creation, and
 responsive layouts. Never write browser test activity into the review demo. See
 README for native startup, expected balances, and validation commands.
+
+## Phase 2A ledger interactions
+
+The global shell, theme, navigation, Overview charts, and spacing system are unchanged.
+Transactions adds payee/raw-description rows, review badges, search, combined filters,
+date ordering, server counts, and current-page checkboxes. Amounts retain exact formatting
+and transfers retain their neutral direction/link indicators. Existing editors now expose
+payee search/create/rename and review state. Payee renaming is explicitly confirmed because
+it affects all associated labels; it does not edit raw descriptions.
+
+Bulk actions confirm the selection count and transfer counterpart behavior. Selection
+clears when filters/pages change. Transfers/openings offer review only; ordinary records
+retain amount/type corrections. Categories stay in Settings. Empty/error/loading states
+and TanStack Query invalidation are reused. No global shell redesign accompanies this work.
+
+## Phase 2B local subviews
+
+Settings now switches between Categories and Rules. Transactions switches between
+All Activity and Scheduled; account detail retains its focused ledger. These are local
+subviews, not new primary navigation. Rule editing uses existing fields/selectors,
+dry-run change/skip summaries, then explicit historical application. Suggestions expose
+accept/edit/dismiss, never automatic enablement. Transaction editors show manual field
+protection and allow explicit release without changing the financial posting.
+
+Scheduled shows expected cash flow separately from balances, a compact schedule list,
+and occurrence rows with dates/status/expected amounts. Inspect offers candidate
+confirmation or explicit actual posting, with approximate actual amounts initially empty.
+Existing styles, semantic controls, exact Money displays and mobile table scroll remain.

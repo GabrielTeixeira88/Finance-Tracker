@@ -11,7 +11,20 @@ from test_ledger import account, entry, transfer
 
 from app.database import make_engine
 from app.history import history
-from app.models import Category, DemoFixture, FinancialAccount, Transaction, Transfer
+from app.models import (
+    Category,
+    DemoFixture,
+    FinancialAccount,
+    Payee,
+    RuleApplication,
+    RuleSuggestion,
+    Schedule,
+    ScheduleCompletion,
+    Transaction,
+    TransactionCorrection,
+    TransactionRule,
+    Transfer,
+)
 from app.seed_demo import END, VERSION, seed_demo
 
 
@@ -79,7 +92,20 @@ def snapshot(engine):
                 {column.name: getattr(row, column.name) for column in model.__table__.columns}
                 for row in session.scalars(select(model).order_by(model.id))
             ]
-            for model in (FinancialAccount, Category, Transaction, Transfer, DemoFixture)
+            for model in (
+                FinancialAccount,
+                Category,
+                Payee,
+                Transaction,
+                Transfer,
+                DemoFixture,
+                TransactionRule,
+                RuleSuggestion,
+                Schedule,
+                TransactionCorrection,
+                RuleApplication,
+                ScheduleCompletion,
+            )
         }
 
 
@@ -91,6 +117,18 @@ def test_demo_deterministic_repeatable_and_persisted(db_engine, tmp_path, api):
     assert len(first["transfers"]) == 72
     assert len(first["financial_accounts"]) == 5
     assert len(first["categories"]) == 15
+    assert len(first["payees"]) == 5
+    assert len(first["transaction_rules"]) == 4
+    assert len(first["schedules"]) == 6
+    assert len(first["schedule_completions"]) == 2
+    assert len(first["rule_suggestions"]) == 1
+    assert first["rule_suggestions"][0]["status"] == "PENDING"
+    assert {r["review_status"] for r in first["transactions"]} == {"REVIEWED", "NEEDS_REVIEW"}
+    uber = next(p for p in first["payees"] if p["name"] == "Uber")
+    assert {r["description"] for r in first["transactions"] if r["payee_id"] == uber["id"]} == {
+        "Synthetic / UBER *TRIP",
+        "Synthetic / Uber BV",
+    }
     with Session(db_engine) as session, session.begin():
         assert not seed_demo(session)
     assert snapshot(db_engine) == first
@@ -139,6 +177,23 @@ def test_demo_refuses_existing_workspace(api, db_engine):
     with Session(db_engine) as session:
         assert session.scalar(select(func.count()).select_from(FinancialAccount)) == 1
         assert session.scalar(select(func.count()).select_from(DemoFixture)) == 0
+
+
+def test_old_demo_marker_preserves_edited_workspace(api, db_engine):
+    account(api, "Edited legacy synthetic account", "123")
+    with Session(db_engine) as session, session.begin():
+        session.add(
+            DemoFixture(
+                id="phase16-synthetic-v1",
+                start_date=date(2025, 4, 1),
+                end_date=END,
+                payload={"synthetic": True},
+            )
+        )
+    before = snapshot(db_engine)
+    with Session(db_engine) as session, session.begin():
+        assert not seed_demo(session)
+    assert snapshot(db_engine) == before
 
 
 def test_demo_seed_failure_is_atomic(db_engine):

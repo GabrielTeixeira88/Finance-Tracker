@@ -1,4 +1,4 @@
-// Layout adapted from Wealthfolio v3.9.1; see THIRD_PARTY_NOTICES.md.
+// Adapted frontend source; provenance and license: THIRD_PARTY_NOTICES.md.
 // SPDX-License-Identifier: AGPL-3.0-only
 import { lazy, Suspense, useState } from 'react'
 import {

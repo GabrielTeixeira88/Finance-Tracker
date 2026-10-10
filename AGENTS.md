@@ -33,13 +33,19 @@
 - Do not silently redesign the architecture.
 - Keep SQLAlchemy and Alembic. Preserve foreign keys, WAL, bounded lock waits, and atomic linked transfers.
 - Functional navigation is Overview, Accounts, Transactions, Settings. Transfers belong to Add Transaction; Categories belong to Settings. Budget, Investments, Performance, Net Worth, and Reports are explicitly labeled read-only previews, not completed engines.
-- Wealthfolio is the primary UI reference for hierarchy and restrained surfaces; do not copy branding/assets or invent financial history.
-- Preserve the Phase 1.7 adapted-source attribution and AGPL/OFL notices in THIRD_PARTY_NOTICES.md and frontend/public/licenses. Reference screenshots in docs are comparison evidence, not application branding assets.
-- Actual Budget is the budgeting/workflow reference; Securo is the backend/ingestion architecture reference for future phases.
+- Preserve the approved application hierarchy and restrained surfaces; do not copy third-party branding/assets or invent financial history.
+- Preserve adapted-source attribution and AGPL/OFL notices in THIRD_PARTY_NOTICES.md and frontend/public/licenses.
+- Keep product documentation focused on Finance Tracker. The roadmap may name the explicitly approved product/workflow references; preserve legal/source-attribution notices and do not copy third-party branding or assets.
 - Historical displays must derive from ledger entries. Keep currencies separate and exclude transfers/openings from cash flow. Never convert monetary values to JavaScript Number, even for charts; normalize dimensionless coordinates and retain exact labels.
 - The opt-in Phase 1.6 demo is deterministic and synthetic. Seed only an empty database; repeated runs must preserve edits. Preview fixtures stay separate from the ledger and must never affect real balances. Do not reset data for screenshots or tests.
 - Keep dependency lockfiles updated with dependency changes.
 - Use Alembic for schema changes; do not use `metadata.create_all()` at application startup.
-- Phase 1 includes accounts, categories, income/expense transactions, linked transfers, opening balances, and a basic dashboard. Phase 1.6 adds read-only ledger history and synthetic preview screens only. Do not implement authentication, full budget/investment/reporting engines, recurring transactions, imports, Gmail, Pluggy, real holdings, market-data APIs, or portfolio analytics.
+- Phase 2A normalizes payee names by Unicode casefold and collapsed whitespace; never infer payees from arbitrary descriptions or erase raw descriptions when assigning a payee.
+- Keep metadata updates separate from financial posting. Review is not bank clearing/reconciliation. Transfer review updates both sides atomically; category/payee assignments apply only to income/expense. Bulk updates must be all-or-nothing and cannot mutate money.
+- Preserve the additive transaction-list API and exact amount filtering. Selection is explicit and page-scoped; do not silently apply a bulk action to all matching history.
+- Phase 2B rules may mutate only classification metadata. Explicit manual choices outrank rules; protect unknown legacy origins. Learning uses distinct explicit corrections, never automation outputs; suggestions require user approval.
+- Schedules are expectations, not ledger movements. Posting and candidate matching require explicit user actions; retain unique completion links and financial-edit guards. Do not add automatic schedule posting.
+- Future budgeting uses monthly category spending targets independent of available cash; do not introduce envelope or zero-based allocation.
+- Phase 1 includes accounts, categories, income/expense transactions, linked transfers, opening balances, and a basic dashboard. Phase 1.6 adds read-only ledger history and synthetic preview screens only. Do not implement authentication, full budget/investment/reporting engines, imports, Gmail, Pluggy, real holdings, market-data APIs, or portfolio analytics without a separately requested phase.
 - Do not add Redis or Celery until a later phase requires background processing.
 - Do not commit or push unless explicitly requested.

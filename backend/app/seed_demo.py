@@ -9,10 +9,24 @@ from sqlalchemy.orm import Session
 
 from app import ledger, schemas
 from app.database import get_engine
-from app.models import Category, DemoFixture, FinancialAccount, Record, Transaction, Transfer
+from app.models import (
+    Category,
+    DemoFixture,
+    FinancialAccount,
+    Payee,
+    Record,
+    RuleApplication,
+    RuleSuggestion,
+    Schedule,
+    ScheduleCompletion,
+    Transaction,
+    TransactionCorrection,
+    TransactionRule,
+    Transfer,
+)
 from app.seed import CATEGORIES
 
-VERSION = "phase16-synthetic-v1"
+VERSION = "phase2b-synthetic-v3"
 START = date(2025, 4, 1)
 END = date(2026, 9, 30)
 
@@ -20,11 +34,27 @@ END = date(2026, 9, 30)
 def seed_demo(session: Session) -> bool:
     """Caller owns the transaction. Repeat runs are no-ops, including after user edits."""
     session.connection(execution_options={"sqlite_write": True})
-    if session.get(DemoFixture, VERSION):
+    if any(
+        session.get(DemoFixture, version)
+        for version in (VERSION, "phase2a-synthetic-v2", "phase16-synthetic-v1")
+    ):
         return False
     if any(
         session.scalar(select(model).limit(1)) is not None
-        for model in (FinancialAccount, Category, Transaction, Transfer, DemoFixture)
+        for model in (
+            FinancialAccount,
+            Category,
+            Payee,
+            Transaction,
+            Transfer,
+            DemoFixture,
+            TransactionRule,
+            RuleSuggestion,
+            Schedule,
+            TransactionCorrection,
+            RuleApplication,
+            ScheduleCompletion,
+        )
     ):
         raise ValueError(
             "Historical demo requires an empty database. Existing data was not changed."
@@ -54,6 +84,12 @@ def seed_demo(session: Session) -> bool:
             session.add(category)
             session.flush()
             categories[name] = category.id
+        payees = {}
+        for name in ("Uber", "Netflix", "Amazon", "Condor", "Fictional Employer"):
+            payee = Payee(name=name)
+            session.add(payee)
+            session.flush()
+            payees[name] = payee.id
         accounts = {}
         for name, kind, opening, direction in [
             ("Checking", "CHECKING", "12000", "IN"),
@@ -89,7 +125,16 @@ def seed_demo(session: Session) -> bool:
                 kind="EXPENSE",
                 year=year,
                 month=month,
+                index=index,
             ):
+                normalized = {
+                    "Metro": ("Uber", "UBER *TRIP"),
+                    "Bus": ("Uber", "Uber BV"),
+                    "Streaming": ("Netflix", "NETFLIX.COM"),
+                    "Online store": ("Amazon", "AMAZON MARKETPLACE"),
+                    "Market": ("Condor", "SUPERMERCADO CONDOR"),
+                    "Salary": ("Fictional Employer", "Salary"),
+                }.get(description)
                 return ledger.create_transaction(
                     session,
                     schemas.TransactionCreate(
@@ -98,9 +143,11 @@ def seed_demo(session: Session) -> bool:
                         transaction_type=kind,
                         amount=amount,
                         transaction_date=date(year, month, day),
-                        description="Synthetic / " + description,
+                        description="Synthetic / " + (normalized[1] if normalized else description),
                         merchant="Fictional " + description,
                         category_id=categories[category],
+                        payee_id=payees[normalized[0]] if normalized else None,
+                        review_status="NEEDS_REVIEW" if (index + day) % 5 == 0 else "REVIEWED",
                     ),
                 )
 
@@ -157,6 +204,10 @@ def seed_demo(session: Session) -> bool:
                 entry(26, "Travel", "Weekend trip", "1450", "Credit Card")
                 card_spending += Decimal("1450")
             previous_card = card_spending
+
+        from app.seed_automation import seed_automation
+
+        seed_automation(session, accounts, categories, payees)
 
         # Illustrations are stored separately: never interpreted as ledger holdings or budgets.
         payload = {

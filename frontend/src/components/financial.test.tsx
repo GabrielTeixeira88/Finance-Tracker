@@ -19,6 +19,9 @@ it('keeps both transfer sides neutral in recent activity', () => {
         category_id: null,
         transfer_id: 'linked',
         deleted_at: null,
+        payee_id: null,
+        payee: null,
+        review_status: 'REVIEWED',
       }))}
     />,
   )

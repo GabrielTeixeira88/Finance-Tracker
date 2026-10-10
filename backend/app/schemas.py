@@ -27,6 +27,8 @@ Description = Annotated[str, Field(min_length=1, max_length=500)]
 Currency = Annotated[str, Field(pattern=r"^[A-Z]{3}$")]
 AccountType = Literal["CHECKING", "SAVINGS", "CASH", "CREDIT_CARD", "INVESTMENT"]
 TransactionType = Literal["INCOME", "EXPENSE", "TRANSFER", "OPENING_BALANCE"]
+ReviewStatus = Literal["NEEDS_REVIEW", "REVIEWED"]
+MetadataField = Literal["payee_id", "category_id", "review_status"]
 
 
 class Input(BaseModel):
@@ -60,6 +62,37 @@ class CategoryInput(Input):
     name: Name
 
 
+class PayeeInput(Input):
+    name: Name
+
+
+class TransactionMetadata(Input):
+    payee_id: UUID | None = None
+    category_id: UUID | None = None
+    review_status: ReviewStatus | None = None
+
+    @model_validator(mode="after")
+    def explicit_fields(self):
+        if not self.model_fields_set:
+            raise ValueError("Choose at least one field to update")
+        for field in self.model_fields_set - {"payee_id", "category_id", "merchant"}:
+            if getattr(self, field) is None:
+                raise ValueError(f"{field} cannot be null")
+        return self
+
+
+class TransactionPatch(TransactionMetadata):
+    description: Description | None = None
+    merchant: Name | None = None
+    transaction_date: date | None = None
+    unlock_fields: list[MetadataField] = Field(default_factory=list, max_length=3)
+
+
+class BulkMetadata(Input):
+    transaction_ids: list[UUID] = Field(min_length=1, max_length=200)
+    changes: TransactionMetadata
+
+
 class TransactionInput(Input):
     transaction_type: Literal["INCOME", "EXPENSE"]
     amount: Money
@@ -67,6 +100,8 @@ class TransactionInput(Input):
     description: Description
     merchant: Name | None = None
     category_id: UUID | None = None
+    payee_id: UUID | None = None
+    review_status: ReviewStatus = "REVIEWED"
 
 
 class TransactionCreate(TransactionInput):
@@ -103,6 +138,10 @@ class CategoryOutput(Output):
     name: str
 
 
+class PayeeOutput(Output):
+    name: str
+
+
 class TransactionOutput(Output):
     account_id: UUID
     transaction_type: TransactionType
@@ -113,8 +152,13 @@ class TransactionOutput(Output):
     description: str
     merchant: str | None
     category_id: UUID | None
+    payee_id: UUID | None
+    payee: PayeeOutput | None
+    review_status: ReviewStatus
     transfer_id: UUID | None
     deleted_at: datetime | None
+    manual_fields: list[MetadataField]
+    rule_assignments: dict
 
 
 class TransferOutput(Output):
