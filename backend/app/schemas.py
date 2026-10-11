@@ -143,6 +143,8 @@ class PayeeOutput(Output):
 
 
 class TransactionOutput(Output):
+    refund_purchase_id: UUID | None = None
+    spending_category_id: UUID | None = None
     account_id: UUID
     transaction_type: TransactionType
     direction: Literal["IN", "OUT"]

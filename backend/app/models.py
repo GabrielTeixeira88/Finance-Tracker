@@ -332,3 +332,58 @@ class SourceRecord(Record, Base):
             name="claim_link",
         ),
     )
+
+
+class BudgetGroup(Record, Base):
+    __tablename__ = "budget_groups"
+    name: Mapped[str] = mapped_column(String(120))
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    __table_args__ = (CheckConstraint("length(trim(name)) > 0", name="name"),)
+
+
+class BudgetTarget(Record, Base):
+    __tablename__ = "budget_targets"
+    category_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("categories.id"))
+    currency: Mapped[str] = mapped_column(String(3))
+    __table_args__ = (
+        UniqueConstraint("category_id", "currency"),
+        CheckConstraint("length(currency)=3 AND currency NOT GLOB '*[^A-Z]*'", name="currency"),
+    )
+
+
+class BudgetConfiguration:
+    target_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("budget_targets.id"))
+    month: Mapped[date] = mapped_column(Date)
+    amount: Mapped[Decimal] = mapped_column(ExactMoney())
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    rollover_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    group_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("budget_groups.id"))
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+def budget_constraints():
+    return (
+        UniqueConstraint("target_id", "month"),
+        CheckConstraint("strftime('%d', month) = '01'", name="month_start"),
+        CheckConstraint(
+            "typeof(amount)='text' AND length(amount)=24 AND amount NOT GLOB '*[^0-9]*'",
+            name="amount",
+        ),
+    )
+
+
+class BudgetVersion(BudgetConfiguration, Record, Base):
+    __tablename__ = "budget_versions"
+    __table_args__ = budget_constraints()
+
+
+class BudgetMonthOverride(BudgetConfiguration, Record, Base):
+    __tablename__ = "budget_month_overrides"
+    __table_args__ = budget_constraints()
+
+
+class RefundLink(Record, Base):
+    __tablename__ = "refund_links"
+    refund_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("transactions.id"), unique=True)
+    purchase_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("transactions.id"), index=True)
+    __table_args__ = (CheckConstraint("refund_id <> purchase_id", name="different_entries"),)

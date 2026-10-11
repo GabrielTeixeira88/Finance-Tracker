@@ -14,8 +14,8 @@ pagination, individual editing, and confirmed atomic bulk review/category/payee 
 Metadata edits must not change monetary postings. Transfer review applies to both sides;
 transfer/opening financial correction remains restricted. Review is not reconciliation.
 
-Functional destinations remain Overview, Accounts, Transactions, and Settings. Categories
-are configuration; transfers belong to Add Transaction. Budget, Investments, Performance,
+Functional destinations are Overview, Accounts, Transactions, Budget, and Settings. Categories
+are configuration; transfers belong to Add Transaction. Investments, Performance,
 Net Worth, and Reports remain read-only previews, not finished financial engines.
 
 Phase 3 implements raw source -> parsing/normalization -> payee identification
@@ -23,9 +23,11 @@ Phase 3 implements raw source -> parsing/normalization -> payee identification
 Phase 2B implements metadata-only rules, user-approved learning suggestions and expected
 schedules with explicit match/post operations. Settings contains Categories and Rules;
 Transactions contains All Activity, Scheduled and Imports. See [automation contracts](TRANSACTION_AUTOMATION.md).
-Gmail ingestion, automatic reconciliation, real budgeting, investment accounting,
-market data and cloud sync remain excluded. Future budgets are monthly category spending
-targets independent of available cash; no envelopes or zero-based allocation.
+Phase 4 implements monthly category targets, groups, effective defaults, one-month
+overrides, optional signed rollover, explicit refunds and ledger-backed spending insights.
+Targets are independent of cash; no envelopes or zero-based allocation. Gmail, automatic
+reconciliation, investment accounting, market data and cloud sync remain excluded.
+See [Spending & Budgets contracts](BUDGETS.md).
 
 See [data model](DATA_MODEL.md) for API and integrity contracts and
 [roadmap](ROADMAP.md) for suggested next work.
@@ -70,7 +72,7 @@ Existing harmless Zod dependency annotation warnings remain in the production bu
 Current limits: learning deliberately requires consistent payee **and** category;
 historical previews scan ordinary local history and display at most 50 examples;
 occurrence ranges cover at most 367 days/5,000 events. No automatic schedule posting,
-bank reconciliation or budgeting engine is included. Phase 3 adds the file adapters
+bank reconciliation was included in Phase 2B. Phase 3 adds the file adapters
 described in [IMPORTS.md](IMPORTS.md).
 
 ## Phase 3 validation
@@ -103,3 +105,13 @@ described in [IMPORTS.md](IMPORTS.md).
 Before running this version against an existing workspace, run `uv sync --frozen` and
 `uv run alembic upgrade head` from `backend/`. Import limitations and fixture settings
 are documented in [IMPORTS.md](IMPORTS.md).
+
+## Phase 4 validation
+
+Spending & Budgets is completed and validated. The checkpoint passes 163
+backend and 61 frontend tests, lint/format/type/build checks, fresh and populated
+migrations, deterministic demo checks and isolated browser workflows. The original
+financial regression is preserved. See [validation details and remaining limits](BUDGETS.md#validation-checkpoint--october-11-2026).
+
+Next is Phase 5 - Investment Foundation, as scoped in the roadmap. Investment activity
+accounting and holdings remain unimplemented; the existing screens are still previews.

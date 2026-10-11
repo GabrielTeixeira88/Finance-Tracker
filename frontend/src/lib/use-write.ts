@@ -17,8 +17,12 @@ export function useWrite() {
         method,
         body: data === undefined ? undefined : JSON.stringify(data),
       }),
-    onSuccess: async () => {
-      await client.invalidateQueries()
+    onSuccess: async (_result, variables) => {
+      // Target configuration never changes the ledger. Financial mutations continue
+      // to refresh all existing dependent views, including spending and refunds.
+      await client.invalidateQueries(
+        variables.path.startsWith('/budgets/') ? { queryKey: ['budgets'] } : {},
+      )
     },
   })
 }

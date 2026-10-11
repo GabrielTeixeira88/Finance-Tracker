@@ -2,7 +2,7 @@
 
 Phase 1.6 delivers local SQLite persistence, Phase 1 ledger operations, a deterministic
 18-month demo, read-only ledger history, and the application shell.
-Budget, Investments, Performance, Net Worth, and Reports are explicitly preview layouts.
+Investments, Performance, Net Worth, and Reports remain preview layouts. Phase 4 replaces Budget.
 
 Phase 1.7 completes the approved application-shell and Overview visual checkpoint
 with its desktop sidebar and ledger-backed dashboard. It preserves the Phase 1 financial
@@ -19,9 +19,8 @@ Schedules require user-confirmed matching or explicit posting; no worker runs th
 Subsequent imports and Gmail ingestion should reuse payees/review through a separately specified candidate
 pipeline, keeping bank reconciliation distinct from user review.
 
-Future budgeting uses monthly category spending targets, independent of account cash;
-not envelopes, zero-based allocation, or balance-constrained assignment. It remains
-unimplemented.
+Phase 4 uses monthly category spending targets, independent of account cash;
+not envelopes, zero-based allocation, or balance-constrained assignment.
 
 ## Phase 3 — Local CSV/OFX imports (completed and validated)
 
@@ -40,7 +39,7 @@ References guide design choices, not branding or wholesale source copying. The b
 decision remains monthly category spending targets, not envelopes or mandatory allocation
 of available account balances.
 
-Later phases must separately specify budget editing, investment activities/holdings,
+Later phases must separately specify investment activities/holdings,
 valuation and return calculations, reporting, additional ingestion adapters,
 reconciliation, and automation. Preview fixtures are not a starting production domain
 model and must not silently become real financial records.
@@ -50,14 +49,21 @@ local. Authentication, cloud sync, Redis, Celery, market APIs, and AI are not pa
 this foundation. PostgreSQL remains a future reviewed migration option if deployment
 needs change, not a current runtime requirement.
 
-## Next: Phase 4 — Spending & Budgets (planned, not implemented)
+## Phase 4 - Spending & Budgets (completed and validated)
 
-Spending & Budgets — Wealthfolio-style monthly category targets, spending progress,
-category groups, monthly overrides, optional rollovers and spending insights.
-The current Budget screen remains a read-only preview until this separately scoped
-phase is implemented. Do not adopt Actual Budget's envelope budgeting or mandatory
-allocation of available money. Targets are independent of account cash.
+Monthly category targets, flat groups/order, historically stable effective defaults,
+one-month overrides, copy previous targets, optional signed rollover, exact spending
+reports, explicit purchase refunds and transaction drill-downs. See [BUDGETS.md](BUDGETS.md).
+No envelopes, cash allocation, FX conversion, automatic refunds or schedule posting.
 
-Gmail, automatic reconciliation and background posting remain later, separately scoped
-work. Reuse [implemented import contracts and limitations](IMPORTS.md) without silently
-expanding the ingestion pipeline during Spending & Budgets work.
+## Next: Phase 5 - Investment Foundation (not implemented)
+
+Planned scope: investment accounts and security master records; BUY/SELL activities,
+dividends, fees and taxes; holdings reconstructed from activities; average cost and
+cost basis; realized/unrealized P&L where prices are available; portfolio aggregation;
+brokerage CSV activity imports; holdings and asset-detail views; investment integrity
+tests. Keep investment activities separate from ordinary expense postings.
+
+Market-data APIs, historical pricing, FX feeds and advanced performance metrics remain
+later work. Gmail, automatic reconciliation and background posting are separately scoped.
+Preparing the Phase 5 branch does not implement or promote the current investment preview.

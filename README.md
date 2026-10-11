@@ -7,13 +7,17 @@ analytics, authentication, or external financial integrations are included.
 Implemented: accounts, categories, income/expenses, atomic linked transfers, opening
 balances, reconstructed account balances, and a historical overview. Investment accounts
 contain ledger cash only. Phase 1.6 adds an opt-in 18-month synthetic workspace and
-clearly labeled Budget, Investments, Performance, Net Worth, and Reports previews.
-These are visual scaffolding, not budget, investment, valuation, or reporting engines.
+clearly labeled Investments, Performance, Net Worth, and Reports previews.
+These remain visual scaffolding; Phase 4 replaces the former Budget preview with real spending targets.
 Phase 2A adds normalized payees, transaction review, combined search/filters, stable
 server pagination, and atomic bulk metadata updates. Phase 2B adds deterministic metadata
 rules, opt-in suggestions learned from explicit corrections, and informational schedules.
 Phase 3 adds local CSV/OFX imports with mapping profiles, review, duplicate decisions and
 source history. Scheduled amounts do not affect balances until explicitly posted.
+Phase 4 adds monthly category targets, groups, overrides, signed optional rollover,
+spending insights and explicitly linked refunds. Targets never allocate account cash.
+Phase 4 is complete and validated; the next planned phase is Investment Foundation.
+Investment screens remain previews until that separately scoped implementation.
 
 ## Run locally (no Docker or PostgreSQL required)
 
@@ -56,7 +60,7 @@ in the root `.env`, then from `backend/` run:
 
 ```sh
 uv run alembic upgrade head
-uv run python -m app.seed_demo
+uv run python -m app.seed_spending_demo
 ```
 
 Restart the API after changing the database path. To return to your original workspace,
@@ -64,13 +68,17 @@ restore its path; do not delete or overwrite either database. Existing SQLite da
 only need `alembic upgrade head`; no ledger reset is required.
 
 The fixed fictional history covers April 2025 through September 2026, plus five
-opening entries on March 31, 2025. It contains **500 ledger entries, 72 atomic
+opening entries on March 31, 2025. The Phase 4 demo contains **502 ledger entries, 72 atomic
 transfers, five accounts, and 15 categories**. Salaries, rent, groceries, utilities,
 card purchases/payments, savings and investment **cash** contributions all pass
 through the normal domain services. All institutions and merchants are clearly fake.
 IDs, timestamps, dates, amounts, and preview fixtures are deterministic. Fresh
 seeds add five normalized payees and mixed review states without changing ledger amounts.
 Merchant-like descriptions (including Uber variants) are fictional examples, not real purchases.
+
+The spending demo also adds ten targets in three groups, an August override, signed
+rollover examples, a partial card refund and an uncategorized expense. The older
+`app.seed_demo` remains a 500-entry base fixture for compatibility.
 
 The seed runs in one transaction, refuses a populated workspace, and becomes a no-op
 once its version marker exists. Repeating it preserves subsequent user edits. It never
@@ -120,12 +128,12 @@ Expected September 30, 2026 balances:
 | --- | ---: |
 | Checking | 62,330.60 |
 | Savings | 36,000.00 |
-| Cash | 1,166.00 |
-| Credit Card | -2,341.64 |
+| Cash | 1,138.50 |
+| Credit Card | -2,295.89 |
 | Investment Account (cash only) | 19,500.00 |
-| **Total** | **116,654.96** |
+| **Total** | **116,673.21** |
 
-September income is **9,650.00**, expenses **5,771.73**, net cash flow **3,878.27**.
+September income is **9,650.00**, expenses **5,753.48**, net cash flow **3,896.52**.
 Credit-card payments and contributions are transfers, never expenses. Preview holdings
 are separate illustrations and are not added to these balances.
 
@@ -154,7 +162,10 @@ income **1,000**, expenses **200**. Transfers and openings never enter flow tota
   or payee assignments. Review means user checking, not bank reconciliation.
 - **Settings:** Categories and safe deletion rules; Rules with preview/application and
   user-approved learning suggestions. Transactions also contains the Scheduled subview.
-- **Preview sections:** Budget targets versus ledger spending; fictional investment
+- **Budget:** Spending & Budgets with Overview, Budgets and Insights tabs, shared month
+  and currency controls, target/group editors, rollover, refunds and ledger drill-downs.
+  See [budget semantics and refund policy](docs/BUDGETS.md).
+- **Preview sections:** fictional investment
   allocation/activity and a Performance illustration; Net Worth and Reports layouts
   reusing actual account history. No editing or final financial engines are provided.
   Fictional fixtures are available only in an explicitly seeded demo database.
@@ -224,7 +235,8 @@ preview-fixture table without changing existing financial history. `sqlite_0003`
 payees and review metadata without rebuilding the ledger. `sqlite_0004` adds metadata
 automation, correction evidence and informational schedules with protected completion
 links. `sqlite_0005` adds import profiles, batches and source provenance without changing
-existing postings. Do not apply SQLite migrations to
+existing postings. `sqlite_0006` adds versioned budgets, groups and guarded refund links
+without rewriting financial records. Do not apply SQLite migrations to
 an existing PostgreSQL database or stamp old databases to the new revision.
 
 The local historical demo was created in a separate SQLite file. The previous small

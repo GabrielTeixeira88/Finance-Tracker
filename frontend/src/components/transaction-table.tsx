@@ -103,8 +103,13 @@ export function TransactionTable({
                   {row.merchant && <small>{row.merchant}</small>}
                 </th>
                 <td>
-                  {categories.find((c) => c.id === row.category_id)?.name ??
-                    '—'}
+                  {categories.find(
+                    (c) =>
+                      c.id ===
+                      (row.refund_purchase_id
+                        ? row.spending_category_id
+                        : row.category_id),
+                  )?.name ?? '—'}
                 </td>
                 <td>
                   {accounts.find((a) => a.id === row.account_id)?.name ??
@@ -115,7 +120,9 @@ export function TransactionTable({
                     {transfer && (
                       <ArrowLeftRight size={12} aria-hidden="true" />
                     )}
-                    {label(row.transaction_type)}
+                    {row.refund_purchase_id
+                      ? 'Refund'
+                      : label(row.transaction_type)}
                   </Badge>
                   {transfer && (
                     <small

@@ -263,3 +263,24 @@ new posting. Unique successful file/external claims prevent repeated source iden
 from posting twice. Candidate money remains decimal strings in JSON and ExactMoney in
 the ledger. Existing financial tables and history are unchanged. See [field definitions,
 API and duplicate decision contracts](IMPORTS.md).
+
+## Phase 4 (`sqlite_0006`)
+
+```mermaid
+erDiagram
+    Category ||--o{ BudgetTarget : plans
+    BudgetTarget ||--o{ BudgetVersion : defaults
+    BudgetTarget ||--o{ BudgetMonthOverride : overrides
+    BudgetGroup o|--o{ BudgetVersion : groups
+    BudgetGroup o|--o{ BudgetMonthOverride : groups
+    Transaction ||--o{ RefundLink : purchase
+    Transaction ||--o| RefundLink : credit
+```
+
+Five additive tables; no ledger columns or existing amounts are rewritten. Target
+identity is unique per category/currency, configurations per target/month. ExactMoney
+stores nonnegative targets, including zero. Group/order, active and rollover flags
+are part of effective configuration. Actuals and signed carryover are calculated.
+Refund links have a unique credit, indexed purchase, foreign keys, relationship
+validation and financial-edit guards. Summed refund limits use exact service validation
+inside the writer transaction. See [full budgeting/refund contracts](BUDGETS.md).

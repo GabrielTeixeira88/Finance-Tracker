@@ -109,12 +109,12 @@ commit together under BEGIN IMMEDIATE. UUID5 identities and fixed timestamps mak
 fresh seeds reproducible. A repeated run with that marker is a no-op, even after
 user edits; it does not restore or reset records.
 
-`GET /api/demo` exposes only this optional synthetic fixture. Budget targets,
+`GET /api/demo` exposes only this optional synthetic fixture. Legacy illustrative targets,
 illustrative holdings/activity, and Performance chart points are stored as JSON
 with decimal strings in that isolated table. They have no financial-model relationships,
 write APIs, or influence on ledger totals. Net Worth and Reports previews instead
 reuse the ledger-history API. Real workspaces show a demo-required empty state for
-fictional investment/budget layouts.
+fictional investment layouts. Budget now uses its own real domain.
 
 Frontend charts normalize exact BigInt amounts to bounded dimensionless coordinates;
 only these coordinates and timestamps become Number. Tooltip labels and accessible
@@ -123,7 +123,7 @@ returns. Query keys include period and end date; writes invalidate history as we
 accounts and transactions. The single-user history query scans ledger records in
 memory; high-volume analytics and caching remain future work.
 
-Future budgeting workflows and ingestion adapters require separately reviewed designs.
+Future ingestion adapters require separately reviewed designs.
 No external finance application is a runtime dependency.
 
 ## Phase 2A transaction metadata
@@ -171,3 +171,17 @@ and schedule policies feed a review-only preview. Explicit confirmation posts th
 `ledger.create_transaction` or attaches provenance to a compatible existing entry, in
 one writer transaction with unique identity claims. No cloud service or worker is used.
 See [import architecture and retry/privacy contracts](IMPORTS.md).
+
+## Phase 4 spending and targets
+
+`app.spending` is the shared exact cash-flow classification service, including explicitly
+linked refunds. `app.budgets` resolves effective defaults, overrides and signed carryover.
+Reports use SQL date/currency filters and streamed Decimal aggregation; no SQLite money
+SUM/REAL, separate spending store, or external services. Budget writes use the existing
+BEGIN IMMEDIATE request unit of work. Refund credits post through the ledger service.
+
+The Budget destination now owns month/currency context and Overview/Budgets/Insights
+subviews. Existing shell, transaction forms, imports and rules stay intact. Paginated
+transaction drill-downs carry additive spending/category/payee/date filters. Budget
+configuration invalidates budget queries; financial writes refresh dependent views.
+See [semantics, endpoints, performance bounds and limitations](BUDGETS.md).

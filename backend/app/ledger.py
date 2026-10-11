@@ -222,17 +222,43 @@ def transaction_query(
     amount_min=None,
     amount_max=None,
     sort="date_desc",
+    currency=None,
+    spending_only=False,
+    uncategorized=False,
+    no_payee=False,
 ):
     query = select(Transaction).where(Transaction.deleted_at.is_(None))
     for column, value in [
         (Transaction.account_id, account_id),
         (Transaction.transaction_type, transaction_type),
-        (Transaction.category_id, category_id),
-        (Transaction.payee_id, payee_id),
+        (Transaction.category_id, category_id if not spending_only else None),
+        (Transaction.payee_id, payee_id if not spending_only else None),
+        (Transaction.currency, currency),
         (Transaction.review_status, review_status),
     ]:
         if value is not None:
             query = query.where(column == value)
+    if spending_only:
+        from app.spending import report_query
+
+        report = report_query(date_from or date.min, date.max, currency).subquery()
+        subset = select(report.c.id).where(
+            or_(report.c.transaction_type == "EXPENSE", report.c.refund_link_id.is_not(None))
+        )
+        if category_id:
+            subset = subset.where(report.c.category_id == category_id)
+        if uncategorized:
+            subset = subset.where(report.c.category_id.is_(None))
+        if payee_id:
+            subset = subset.where(report.c.payee_id == payee_id)
+        if no_payee:
+            subset = subset.where(report.c.payee_id.is_(None))
+        query = query.where(Transaction.id.in_(subset))
+    else:
+        if uncategorized:
+            query = query.where(Transaction.category_id.is_(None))
+        if no_payee:
+            query = query.where(Transaction.payee_id.is_(None))
     if date_from:
         query = query.where(Transaction.transaction_date >= date_from)
     if date_to:
@@ -279,20 +305,16 @@ def dashboard(session: Session, month: str) -> schemas.DashboardOutput:
     }
     for account in account_list:
         totals[account.currency].total_balance += account.balance
-    rows = session.execute(
-        select(Transaction.currency, Transaction.transaction_type, Transaction.amount).where(
-            Transaction.deleted_at.is_(None),
-            Transaction.transaction_type.in_(["INCOME", "EXPENSE"]),
-            Transaction.transaction_date >= start,
-            Transaction.transaction_date < end,
-        )
-    )
-    for currency, kind, amount in rows:
-        field = "income" if kind == "INCOME" else "expenses"
-        setattr(totals[currency], field, getattr(totals[currency], field) + amount)
+    from app.spending import annotate_refunds, calculate
+
+    for currency, values in calculate(session, start, end).items():
+        totals[currency].income = values["income"]
+        totals[currency].expenses = values["expenses"]
     return schemas.DashboardOutput(
         month=month,
         totals=sorted(totals.values(), key=lambda t: t.currency),
         accounts=account_list,
-        recent_transactions=list(session.scalars(transaction_query().limit(10))),
+        recent_transactions=annotate_refunds(
+            session, list(session.scalars(transaction_query().limit(10)))
+        ),
     )

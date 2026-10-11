@@ -3,13 +3,18 @@ import { useQuery } from '@tanstack/react-query'
 import { AppShell, type Page } from '@/components/app-shell'
 import { ErrorState, LoadingState, PageHeader } from '@/components/primitives'
 import { getAccounts, getCategories } from '@/lib/api'
+import Spending from '@/pages/spending'
 import Dashboard from '@/pages/dashboard'
 import Transactions from '@/pages/transaction-workspace'
 import { Accounts, Settings } from '@/pages/management'
 import Preview, { type PreviewPage } from '@/pages/previews'
 
 export default function App() {
-  const [route, setRoute] = useState<{ page: Page; accountId?: string }>({
+  const [route, setRoute] = useState<{
+    page: Page
+    accountId?: string
+    filters?: Record<string, string>
+  }>({
     page: 'Overview',
   })
   const accounts = useQuery({
@@ -55,7 +60,8 @@ export default function App() {
           )}
           {route.page === 'Transactions' && (
             <Transactions
-              key="ledger"
+              key={JSON.stringify(route.filters ?? {})}
+              initialFilters={route.filters}
               accounts={accounts.data}
               categories={categories.data}
             />
@@ -77,13 +83,18 @@ export default function App() {
           {route.page === 'Settings' && (
             <Settings categories={categories.data} accounts={accounts.data} />
           )}
-          {[
-            'Budget',
-            'Investments',
-            'Performance',
-            'Net Worth',
-            'Reports',
-          ].includes(route.page) && (
+          {route.page === 'Budget' && (
+            <Spending
+              accounts={accounts.data}
+              categories={categories.data}
+              onTransactions={(filters) =>
+                setRoute({ page: 'Transactions', filters })
+              }
+            />
+          )}
+          {['Investments', 'Performance', 'Net Worth', 'Reports'].includes(
+            route.page,
+          ) && (
             <Preview
               key={route.page}
               page={route.page as PreviewPage}

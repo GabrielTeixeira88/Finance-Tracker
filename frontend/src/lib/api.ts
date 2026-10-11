@@ -35,6 +35,8 @@ const payeeSchema = z.object({ id: z.string(), name: z.string() })
 export type Payee = z.infer<typeof payeeSchema>
 export const reviewStatuses = ['NEEDS_REVIEW', 'REVIEWED'] as const
 export const transactionSchema = z.object({
+  refund_purchase_id: z.string().nullable().optional(),
+  spending_category_id: z.string().nullable().optional(),
   id: z.string(),
   account_id: z.string(),
   transaction_type: z.enum(transactionTypes),
