@@ -140,6 +140,8 @@ def candidate_row(session, source, account_id, active_rules, payees):
 
 
 def preview(session, batch):
+    if batch.source_type == "BROKERAGE_CSV":
+        raise HTTPException(422, "Use the investment import workflow for brokerage activities")
     sources = source_rows(session, batch)
     if batch.status == "COMPLETED":
         return {
@@ -307,6 +309,8 @@ def preview(session, batch):
 
 
 def decide(session, batch, source_id, decision):
+    if batch.source_type == "BROKERAGE_CSV":
+        raise HTTPException(422, "Use the investment import workflow for brokerage activities")
     if batch.status != "DRAFT":
         raise HTTPException(409, "Completed imports cannot be reprocessed")
     source = ledger.require(session, SourceRecord, source_id)

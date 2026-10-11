@@ -62,6 +62,10 @@ def history(session: Session, period: Period, end: date) -> History:
             .order_by(Transaction.transaction_date, Transaction.id)
         )
     )
+    from app.investments import cash_entries
+
+    entries.extend(cash_entries(session, end))
+    entries.sort(key=lambda entry: (entry.transaction_date, entry.id))
     if period == "ALL":
         start = entries[0].transaction_date if entries else end.replace(day=1)
         if start == date.min:

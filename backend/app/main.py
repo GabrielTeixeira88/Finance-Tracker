@@ -9,10 +9,13 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app._version import __version__
 from app.automation_routes import router as automation_router
 from app.budget_routes import router as budget_router
 from app.database import get_engine, get_session
 from app.ingestion_routes import router as ingestion_router
+from app.investment_import_routes import router as investment_import_router
+from app.investment_routes import router as investment_router
 from app.routes import router
 
 
@@ -26,7 +29,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="Finance Tracker API",
-    version="0.1.0",
+    version=__version__,
     lifespan=lifespan,
     telemetry={
         "tracing": False,
@@ -36,6 +39,8 @@ app = FastAPI(
         "auto_configure": False,
     },
 )
+app.include_router(investment_router)
+app.include_router(investment_import_router)
 app.include_router(router)
 app.include_router(automation_router)
 app.include_router(ingestion_router)

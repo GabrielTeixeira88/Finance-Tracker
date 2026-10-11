@@ -1,5 +1,7 @@
 # Finance Tracker data model
 
+Current release scope: **v0.5.0 - Investment Foundation**. Next: **v0.6.0 - Market Data & Portfolio Valuation**, not implemented. Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+
 All financial records stay in local SQLite. The ledger is authoritative; there
 is no editable or cached account-balance column.
 
@@ -24,7 +26,7 @@ optional institution, active flag, created_at, updated_at. Supported types:
 | SAVINGS | Savings cash account |
 | CASH | Physical cash |
 | CREDIT_CARD | Signed balance; debt is negative |
-| INVESTMENT | Account type only; cash ledger, no holdings or valuation |
+| INVESTMENT | Cash ledger plus activity-derived securities and manual valuation |
 
 Currency is required by the domain and immutable through account updates. BRL is
 only a frontend/demo default. ISO-style codes are shape-validated; no external
@@ -109,7 +111,8 @@ keeps duplicate-name enforcement introspectable by SQLite/Alembic.
 ## Balances and dashboard
 
 Python aggregates decoded Decimal values (never SQLite floating-point SUM).
-For each account, sum non-deleted IN amounts minus non-deleted OUT amounts across
+For each account, sum non-deleted transaction IN amounts minus OUT amounts, plus
+non-void investment activity cash in minus cash out, across
 **all recorded dates**, including future-dated entries, for the Phase 1 accounts and
 dashboard endpoints. The new history endpoint instead calculates as-of-date balances.
 Legacy dashboard total account value is the sum of all-date balances,
@@ -284,3 +287,32 @@ are part of effective configuration. Actuals and signed carryover are calculated
 Refund links have a unique credit, indexed purchase, foreign keys, relationship
 validation and financial-edit guards. Summed refund limits use exact service validation
 inside the writer transaction. See [full budgeting/refund contracts](BUDGETS.md).
+
+## Phase 5 securities and investment history
+
+`assets`: UUID, normalized symbol/exchange/currency identity, name, asset type and
+optional ISIN. `investment_activities`: UUID/request UUID, monotonic sequence, account,
+optional asset, type/date, exact quantity/unit price/gross/fees/taxes/cash, direction,
+currency, notes, timestamps and optional void timestamp. Request IDs are unique.
+Composite foreign keys enforce account/asset currencies; history triggers reject
+financial updates, unvoiding and deletion. Account type cannot change after activity.
+
+`price_observations`: asset, date, exact positive price, currency and MANUAL source;
+one observation per asset/date. `investment_source_links`: source/activity foreign
+keys and unique account/context-scoped file/external claims. Multiple sources may
+link to one activity; no activity is duplicated for repeated source identities.
+
+```mermaid
+erDiagram
+    FinancialAccount ||--o{ InvestmentActivity : records
+    Asset o|--o{ InvestmentActivity : identifies
+    Asset ||--o{ PriceObservation : values
+    SourceRecord ||--o| InvestmentSourceLink : links
+    InvestmentActivity ||--o{ InvestmentSourceLink : provenance
+```
+
+There is no stored holdings, average-cost or market-value table. Reconstruct from
+non-void history; preserve closed-position results. Inputs retain at most six decimal
+places; derived trade gross settles to six using half-even rounding. Weighted-average
+basis uses 60-digit Decimal intermediates and releases residual basis on full closure.
+[INVESTMENTS.md](INVESTMENTS.md) specifies formulas and limitations.

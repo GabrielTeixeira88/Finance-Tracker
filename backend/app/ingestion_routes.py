@@ -14,18 +14,22 @@ from app.routes import DB
 router = APIRouter(prefix="/api/imports", tags=["local imports"])
 
 
-async def bounded_upload(request: Request):
+async def bounded_model_upload(request: Request, model):
     content = bytearray()
     async for chunk in request.stream():
         if len(content) + len(chunk) > MAX_BYTES * 3 // 2:
             raise HTTPException(413, "Upload request exceeds the 2 MiB file limit")
         content.extend(chunk)
     try:
-        return Upload.model_validate_json(content)
+        return model.model_validate_json(content)
     except ValidationError as error:
         raise HTTPException(
             422, "Invalid upload or mapping; check required columns and format settings"
         ) from error
+
+
+async def bounded_upload(request: Request):
+    return await bounded_model_upload(request, Upload)
 
 
 Uploaded = Annotated[Upload, Depends(bounded_upload)]
@@ -46,7 +50,11 @@ def inspect(data: Uploaded, db: DB):
 
 @router.get("/profiles")
 def profiles(db: DB):
-    return list(db.scalars(select(ImportProfile).order_by(ImportProfile.name, ImportProfile.id)))
+    return [
+        p
+        for p in db.scalars(select(ImportProfile).order_by(ImportProfile.name, ImportProfile.id))
+        if p.configuration.get("kind") != "BROKERAGE"
+    ]
 
 
 def save_profile(data, db, profile=None):
@@ -71,7 +79,10 @@ def create_profile(data: ProfileInput, db: DB):
 
 @router.put("/profiles/{record_id}")
 def update_profile(record_id: UUID, data: ProfileInput, db: DB):
-    return save_profile(data, db, ledger.require(db, ImportProfile, record_id))
+    profile = ledger.require(db, ImportProfile, record_id)
+    if profile.configuration.get("kind") == "BROKERAGE":
+        raise HTTPException(409, "Brokerage mappings belong to investment imports")
+    return save_profile(data, db, profile)
 
 
 @router.delete("/profiles/{record_id}", status_code=204)
@@ -87,6 +98,7 @@ def history(db: DB, limit: int = Query(50, ge=1, le=100), offset: int = Query(0,
         ingestion.batch_info(batch)
         for batch in db.scalars(
             select(ImportBatch)
+            .where(ImportBatch.source_type.in_(["CSV", "OFX"]))
             .order_by(ImportBatch.created_at.desc(), ImportBatch.id)
             .limit(limit)
             .offset(offset)

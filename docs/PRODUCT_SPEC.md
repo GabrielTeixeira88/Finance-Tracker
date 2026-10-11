@@ -1,5 +1,7 @@
 # Current product scope
 
+Current release scope: **v0.5.0 - Investment Foundation**. Next: **v0.6.0 - Market Data & Portfolio Valuation**, not implemented. Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+
 Finance Tracker is a single-user, offline-capable local finance application. Financial
 records stay in a local SQLite database. No authentication, cloud persistence, telemetry,
 external financial integration, or worker queue is required.
@@ -14,8 +16,8 @@ pagination, individual editing, and confirmed atomic bulk review/category/payee 
 Metadata edits must not change monetary postings. Transfer review applies to both sides;
 transfer/opening financial correction remains restricted. Review is not reconciliation.
 
-Functional destinations are Overview, Accounts, Transactions, Budget, and Settings. Categories
-are configuration; transfers belong to Add Transaction. Investments, Performance,
+Functional destinations are Overview, Accounts, Transactions, Budget, Investments, and Settings. Categories
+are configuration; transfers belong to Add Transaction. Performance,
 Net Worth, and Reports remain read-only previews, not finished financial engines.
 
 Phase 3 implements raw source -> parsing/normalization -> payee identification
@@ -26,7 +28,7 @@ Transactions contains All Activity, Scheduled and Imports. See [automation contr
 Phase 4 implements monthly category targets, groups, effective defaults, one-month
 overrides, optional signed rollover, explicit refunds and ledger-backed spending insights.
 Targets are independent of cash; no envelopes or zero-based allocation. Gmail, automatic
-reconciliation, investment accounting, market data and cloud sync remain excluded.
+reconciliation, advanced investment performance, market data and cloud sync remain excluded.
 See [Spending & Budgets contracts](BUDGETS.md).
 
 See [data model](DATA_MODEL.md) for API and integrity contracts and
@@ -113,5 +115,17 @@ backend and 61 frontend tests, lint/format/type/build checks, fresh and populate
 migrations, deterministic demo checks and isolated browser workflows. The original
 financial regression is preserved. See [validation details and remaining limits](BUDGETS.md#validation-checkpoint--october-11-2026).
 
-Next is Phase 5 - Investment Foundation, as scoped in the roadmap. Investment activity
-accounting and holdings remain unimplemented; the existing screens are still previews.
+Phase 5 implements investment accounts, securities, exact activities, weighted-average
+holdings, realized results, manual valuation and local brokerage CSV imports.
+Investment cash is integrated into account balances; Overview is explicitly cash-only.
+Performance remains illustrative. Next is v0.6.0 - Market Data & Portfolio Valuation.
+See [investment behavior and validation](INVESTMENTS.md).
+
+
+## Phase 5 validation
+
+190 backend tests and 71 frontend tests pass. Financial reconstruction, import
+atomicity/repeats, migration preservation, deterministic seed and exact cash integration
+are covered. Lint/format/type/build checks, live restart persistence, investment browser
+acceptance and the existing budget/CSV/OFX workflows pass. See
+[results and deliberately deferred limits](INVESTMENTS.md#validation-checkpoint---october-11-2026).

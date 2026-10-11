@@ -1,0 +1,119 @@
+.investment-workspace {
+  max-width: 1680px;
+  margin: 0 auto;
+}
+.investment-toolbar,
+.investment-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+}
+.investment-toolbar .range-tabs {
+  margin-right: auto;
+}
+.investment-toolbar .field {
+  min-width: 160px;
+  max-width: 260px;
+}
+.investment-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 20px 0;
+  border-block: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.investment-editor .investment-actions,
+.investment-editor > p {
+  grid-column: 1/-1;
+}
+.investment-primary {
+  padding: 18px 0;
+  display: grid;
+  gap: 8px;
+}
+.investment-primary strong {
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+.investment-primary small,
+.investment-table small {
+  color: var(--muted-foreground);
+  display: block;
+  font-size: 11px;
+}
+.investment-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px 40px;
+  padding: 12px 0 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.investment-metrics > div {
+  display: grid;
+  gap: 8px;
+}
+.investment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.investment-table th {
+  text-align: left;
+  font-weight: 400;
+  color: var(--muted-foreground);
+  background: var(--secondary);
+  padding: 12px;
+  white-space: nowrap;
+}
+.investment-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.investment-table .number {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.investment-table small {
+  margin-top: 4px;
+}
+.investment-table tbody tr:hover {
+  background: var(--secondary);
+}
+.investment-security {
+  font-weight: 500;
+  text-align: left;
+}
+.investment-security:hover {
+  text-decoration: underline;
+}
+.investment-preview {
+  padding: 12px;
+  background: var(--secondary);
+  border-radius: 6px;
+}
+.investment-workspace .section-header {
+  margin-top: 24px;
+}
+@media (max-width: 700px) {
+  .investment-metrics {
+    gap: 20px;
+  }
+  .investment-toolbar {
+    align-items: stretch;
+  }
+  .investment-toolbar .range-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .investment-table {
+    min-width: 760px;
+  }
+}

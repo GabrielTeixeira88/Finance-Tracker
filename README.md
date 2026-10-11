@@ -1,23 +1,26 @@
 # Finance Tracker
 
+Current version: **0.5.0 - Investment Foundation**. Next planned: **v0.6.0 - Market Data & Portfolio Valuation** (not implemented). See [changelog](CHANGELOG.md) and [version roadmap](docs/ROADMAP.md).
+
 A single-user, local-first, self-hosted personal finance application. All durable
 financial data stays on your machine in **SQLite**. No cloud persistence, telemetry,
 analytics, authentication, or external financial integrations are included.
 
 Implemented: accounts, categories, income/expenses, atomic linked transfers, opening
 balances, reconstructed account balances, and a historical overview. Investment accounts
-contain ledger cash only. Phase 1.6 adds an opt-in 18-month synthetic workspace and
-clearly labeled Investments, Performance, Net Worth, and Reports previews.
-These remain visual scaffolding; Phase 4 replaces the former Budget preview with real spending targets.
-Phase 2A adds normalized payees, transaction review, combined search/filters, stable
-server pagination, and atomic bulk metadata updates. Phase 2B adds deterministic metadata
+now support activity-derived holdings and manual valuation. v0.1.0 adds an opt-in
+18-month synthetic workspace. Performance, Net Worth, and Reports remain previews.
+These remain visual scaffolding; v0.4.0 replaces the former Budget preview with real spending targets.
+v0.2.0 adds normalized payees, transaction review, combined search/filters, stable
+server pagination, and atomic bulk metadata updates. v0.2.0 adds deterministic metadata
 rules, opt-in suggestions learned from explicit corrections, and informational schedules.
-Phase 3 adds local CSV/OFX imports with mapping profiles, review, duplicate decisions and
+v0.3.0 adds local CSV/OFX imports with mapping profiles, review, duplicate decisions and
 source history. Scheduled amounts do not affect balances until explicitly posted.
-Phase 4 adds monthly category targets, groups, overrides, signed optional rollover,
+v0.4.0 adds monthly category targets, groups, overrides, signed optional rollover,
 spending insights and explicitly linked refunds. Targets never allocate account cash.
-Phase 4 is complete and validated; the next planned phase is Investment Foundation.
-Investment screens remain previews until that separately scoped implementation.
+v0.5.0 adds securities, BUY/SELL, dividends, interest, fees/taxes, weighted-average
+cost, realized results, manual prices and confirmed brokerage CSV imports. See
+[investment contracts and limitations](docs/INVESTMENTS.md). Market Data & Valuation is next.
 
 ## Run locally (no Docker or PostgreSQL required)
 
@@ -60,7 +63,7 @@ in the root `.env`, then from `backend/` run:
 
 ```sh
 uv run alembic upgrade head
-uv run python -m app.seed_spending_demo
+uv run python -m app.seed_investment_demo
 ```
 
 Restart the API after changing the database path. To return to your original workspace,
@@ -68,13 +71,19 @@ restore its path; do not delete or overwrite either database. Existing SQLite da
 only need `alembic upgrade head`; no ledger reset is required.
 
 The fixed fictional history covers April 2025 through September 2026, plus five
-opening entries on March 31, 2025. The Phase 4 demo contains **502 ledger entries, 72 atomic
-transfers, five accounts, and 15 categories**. Salaries, rent, groceries, utilities,
+opening entries on March 31, 2025. The Phase 5 demo contains **506 ordinary ledger entries, 74 atomic transfers, six
+accounts, 15 categories, five securities and 14 investment activities**. Salaries, rent, groceries, utilities,
 card purchases/payments, savings and investment **cash** contributions all pass
 through the normal domain services. All institutions and merchants are clearly fake.
 IDs, timestamps, dates, amounts, and preview fixtures are deterministic. Fresh
 seeds add five normalized payees and mixed review states without changing ledger amounts.
 Merchant-like descriptions (including Uber variants) are fictional examples, not real purchases.
+
+The investment seed extends the spending demo with two brokerage accounts, four dated
+manual prices, a deliberately unpriced holding, gains/losses, a closed position,
+income/charges and two brokerage imports proving exact-repeat safety. All activity
+uses the actual APIs/domain services. Existing populated workspaces remain untouched.
+The older `app.seed_spending_demo` remains available with its 502-entry dataset.
 
 The spending demo also adds ten targets in three groups, an August override, signed
 rollover examples, a partial card refund and an uncategorized expense. The older
@@ -122,7 +131,8 @@ No background posting, scheduler worker, or automatic reconciliation is included
 Optional backend environment settings: `LEARNING_MIN_EXAMPLES` (default 3, minimum 3)
 and `SCHEDULE_MATCH_DAYS` (default 3, maximum 14). See [automation contracts](docs/TRANSACTION_AUTOMATION.md).
 
-Expected September 30, 2026 balances:
+Expected September 30, 2026 balances for the **older Phase 4 spending fixture**
+(`app.seed_spending_demo`), before Phase 5 activity:
 
 | Account | BRL balance |
 | --- | ---: |
@@ -134,8 +144,9 @@ Expected September 30, 2026 balances:
 | **Total** | **116,673.21** |
 
 September income is **9,650.00**, expenses **5,753.48**, net cash flow **3,896.52**.
-Credit-card payments and contributions are transfers, never expenses. Preview holdings
-are separate illustrations and are not added to these balances.
+Credit-card payments and contributions are transfers, never expenses. Phase 5 changes
+brokerage cash through activities and values securities separately; Overview remains
+a cash-balance history, not total portfolio valuation.
 
 The demo Overview initially ends at the fixed September 2026 date; a normal workspace
 uses the local current date. Select 1M/3M/YTD/1Y/ALL or move the ending month to inspect
@@ -150,7 +161,7 @@ income **1,000**, expenses **200**. Transfers and openings never enter flow tota
 - **Overview:** prominent total balance, ledger-derived daily closing chart, calendar
   period controls, cash flow, category spending, account balances, and recent activity.
 - **Accounts:** calculated balances and administration; selecting an account opens its
-  filtered ledger. Deactivation preserves history.
+  filtered ledger, or investment workspace for investment accounts. Deactivation preserves history.
 - **Transactions:** dense ledger and filters; **+ Add Transaction** selects Expense,
   Income, or Transfer. Transfers still use one atomic backend operation. Search raw
   descriptions, merchants, or normalized payees; combine account/category/type/review,
@@ -165,8 +176,10 @@ income **1,000**, expenses **200**. Transfers and openings never enter flow tota
 - **Budget:** Spending & Budgets with Overview, Budgets and Insights tabs, shared month
   and currency controls, target/group editors, rollover, refunds and ledger drill-downs.
   See [budget semantics and refund policy](docs/BUDGETS.md).
-- **Preview sections:** fictional investment
-  allocation/activity and a Performance illustration; Net Worth and Reports layouts
+- **Investments:** Overview, Holdings, Activity, Accounts and Imports; add securities,
+  preview/confirm activities, inspect account/security positions and record manual prices.
+  Cash and security value are separate; missing prices never become zero valuations.
+- **Preview sections:** a fictional Performance illustration; Net Worth and Reports layouts
   reusing actual account history. No editing or final financial engines are provided.
   Fictional fixtures are available only in an explicitly seeded demo database.
 
@@ -236,7 +249,9 @@ payees and review metadata without rebuilding the ledger. `sqlite_0004` adds met
 automation, correction evidence and informational schedules with protected completion
 links. `sqlite_0005` adds import profiles, batches and source provenance without changing
 existing postings. `sqlite_0006` adds versioned budgets, groups and guarded refund links
-without rewriting financial records. Do not apply SQLite migrations to
+without rewriting financial records. `sqlite_0007` adds assets, immutable investment
+activities, manual observations and typed source links without rewriting old tables.
+Do not apply SQLite migrations to
 an existing PostgreSQL database or stamp old databases to the new revision.
 
 The local historical demo was created in a separate SQLite file. The previous small
@@ -271,3 +286,13 @@ Phase 1.7 establishes the approved application shell and Overview. See the
 Phases 2A and 2B implement transaction intelligence and automation foundations. Phase 3
 adds CSV/OFX imports with explicit preview/confirmation. See the
 [product scope](docs/PRODUCT_SPEC.md) and [roadmap](docs/ROADMAP.md) for boundaries.
+
+
+## Release metadata
+
+`backend/app/_version.py` is authoritative. Hatch derives Python package metadata
+from it and FastAPI reports it in OpenAPI. Frontend package metadata mirrors it,
+checked by `test_release_version.py`; no About/version display exists to synchronize.
+Run `uv lock --project backend` after Python metadata changes. Tags use `v0.5.0`;
+future development branches do not change the released application version.
+Historical phases and immutable seed/migration identifiers remain traceable in the roadmap.

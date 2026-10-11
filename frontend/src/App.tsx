@@ -4,6 +4,7 @@ import { AppShell, type Page } from '@/components/app-shell'
 import { ErrorState, LoadingState, PageHeader } from '@/components/primitives'
 import { getAccounts, getCategories } from '@/lib/api'
 import Spending from '@/pages/spending'
+import Investments from '@/pages/investments'
 import Dashboard from '@/pages/dashboard'
 import Transactions from '@/pages/transaction-workspace'
 import { Accounts, Settings } from '@/pages/management'
@@ -67,7 +68,14 @@ export default function App() {
             />
           )}
           {route.page === 'Account' &&
-            (selected ? (
+            (selected?.type === 'INVESTMENT' ? (
+              <Investments
+                key={selected.id}
+                initialAccount={selected.id}
+                accounts={accounts.data}
+                categories={categories.data}
+              />
+            ) : selected ? (
               <Transactions
                 key={selected.id}
                 account={selected}
@@ -92,9 +100,15 @@ export default function App() {
               }
             />
           )}
-          {['Investments', 'Performance', 'Net Worth', 'Reports'].includes(
-            route.page,
-          ) && (
+          {route.page === 'Investments' && (
+            <Investments
+              key={route.accountId ?? 'all'}
+              initialAccount={route.accountId}
+              accounts={accounts.data}
+              categories={categories.data}
+            />
+          )}
+          {['Performance', 'Net Worth', 'Reports'].includes(route.page) && (
             <Preview
               key={route.page}
               page={route.page as PreviewPage}

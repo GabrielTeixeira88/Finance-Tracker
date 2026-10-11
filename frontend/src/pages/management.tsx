@@ -51,7 +51,7 @@ export function Accounts({
       )}
       <Panel
         title="All accounts"
-        detail="All recorded dates, including future entries and opening balances."
+        detail="All recorded dates, including future entries and opening balances. Investment balances show cash; open the account for securities."
       >
         {!accounts.length ? (
           <EmptyState

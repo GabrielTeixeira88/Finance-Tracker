@@ -29,6 +29,7 @@ export type Page =
   | 'Settings'
   | 'Account'
   | 'Budget'
+  | 'Investments'
   | PreviewPage
 export type Navigate = (page: Page, accountId?: string) => void
 const primary = [
@@ -120,16 +121,12 @@ export function AppShell({
               key={item}
               className="nav-item"
               title={
-                ['Investments', 'Performance', 'Net Worth', 'Reports'].includes(
-                  item,
-                )
+                ['Performance', 'Net Worth', 'Reports'].includes(item)
                   ? `${item} · Preview`
                   : item
               }
               aria-label={
-                ['Investments', 'Performance', 'Net Worth', 'Reports'].includes(
-                  item,
-                )
+                ['Performance', 'Net Worth', 'Reports'].includes(item)
                   ? `${item} Preview`
                   : item
               }
@@ -142,9 +139,9 @@ export function AppShell({
             >
               <Icon size={20} aria-hidden="true" />
               <span className="nav-label">{item}</span>
-              {['Investments', 'Performance', 'Net Worth', 'Reports'].includes(
-                item,
-              ) && <span className="nav-preview">Preview</span>}
+              {['Performance', 'Net Worth', 'Reports'].includes(item) && (
+                <span className="nav-preview">Preview</span>
+              )}
             </button>
           ))}
         </nav>
@@ -216,12 +213,7 @@ export function AppShell({
               <button className="nav-item" key={item} onClick={() => go(item)}>
                 <Icon size={18} />
                 {item}
-                {[
-                  'Investments',
-                  'Performance',
-                  'Net Worth',
-                  'Reports',
-                ].includes(item) && (
+                {['Performance', 'Net Worth', 'Reports'].includes(item) && (
                   <span className="nav-preview">Preview</span>
                 )}
               </button>
