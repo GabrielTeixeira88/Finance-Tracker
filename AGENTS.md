@@ -13,7 +13,7 @@
 - Never use binary floating-point values for money. Use Python Decimal and the exact SQLAlchemy money storage adapter; SQLite NUMERIC/REAL and SQL SUM must not be used for money. Exchange exact decimal strings with the frontend.
 - Preserve original currencies.
 - Transfers must not be counted as income or expenses.
-- Investment activities will later be the source of truth for holdings.
+- Investment activities are the source of truth for holdings; reconstruct positions instead of storing editable balances.
 - Imported data must retain source provenance.
 - Avoid destructive changes to financial data. Use reviewed migrations; never reset a database or delete volumes as a routine fix.
 
@@ -32,7 +32,7 @@
 - Run tests and linting before considering a task complete. Report checks that could not run.
 - Do not silently redesign the architecture.
 - Keep SQLAlchemy and Alembic. Preserve foreign keys, WAL, bounded lock waits, and atomic linked transfers.
-- Functional navigation is Overview, Accounts, Transactions, Budget (Spending & Budgets), Settings. Transfers belong to Add Transaction; Categories belong to Settings. Investments, Performance, Net Worth, and Reports are explicitly labeled read-only previews, not completed engines.
+- Functional navigation is Overview, Accounts, Transactions, Budget (Spending & Budgets), Investments, Settings. Transfers belong to Add Transaction; Categories belong to Settings. Performance, Net Worth, and Reports are explicitly labeled read-only previews, not completed engines.
 - Preserve the approved application hierarchy and restrained surfaces; do not copy third-party branding/assets or invent financial history.
 - Preserve adapted-source attribution and AGPL/OFL notices in THIRD_PARTY_NOTICES.md and frontend/public/licenses.
 - Keep product documentation focused on Finance Tracker. The roadmap may name the explicitly approved product/workflow references; preserve legal/source-attribution notices and do not copy third-party branding or assets.
@@ -46,7 +46,7 @@
 - Phase 2B rules may mutate only classification metadata. Explicit manual choices outrank rules; protect unknown legacy origins. Learning uses distinct explicit corrections, never automation outputs; suggestions require user approval.
 - Schedules are expectations, not ledger movements. Posting and candidate matching require explicit user actions; retain unique completion links and financial-edit guards. Do not add automatic schedule posting.
 - Budgeting uses monthly category spending targets independent of available cash; do not introduce envelope or zero-based allocation.
-- Phase 1 includes accounts, categories, income/expense transactions, linked transfers, opening balances, and a basic dashboard. Phase 1.6 adds read-only ledger history and synthetic preview screens only. Do not implement authentication, full investment/reporting engines, Gmail, Pluggy, real holdings, market-data APIs, or portfolio analytics without a separately requested phase.
+- Phase 1 includes accounts, categories, income/expense transactions, linked transfers, opening balances, and a basic dashboard. Phase 1.6 adds read-only ledger history and synthetic preview screens only. Do not implement authentication, advanced investment/reporting engines, Gmail, Pluggy, market-data APIs, or portfolio analytics without a separately requested phase.
 - Do not add Redis or Celery until a later phase requires background processing.
 - Do not commit or push unless explicitly requested.
 
@@ -54,3 +54,35 @@
 
 - Phase 4 targets are versioned by effective month with explicit one-month overrides. Reconstruct signed rollover from targets and exact ledger spending; never store spent values or create postings from targets. Disabling rollover resets its chain.
 - Refunds require explicit same-currency purchase links, reduce spending on the credit date and do not count as income. Protect linked financial fields; unmatched credits remain income. Share classification across budget, dashboard and history.
+
+- Phase 5 activities carry their sole cash posting; never create an ordinary transaction twin. Share cash reconstruction across balances/history, while excluding investment activity from consumption and personal income totals.
+- Reconstruct weighted-average positions in stable date/sequence order with Decimal. Reject oversells, currency mismatches and unfunded activities. Corrections void and replace, retaining source identity and immutable history.
+- Manual prices are dated observations, not live prices or historical performance. Keep missing valuations unavailable and currencies separate. Investment CSV previews never post; confirmation and identity claims are atomic.
+
+
+## Releases and versioning
+- Use MAJOR.MINOR.PATCH, with annotated Git tags vMAJOR.MINOR.PATCH. Before 1.0,
+  new functionality normally increments MINOR and compatible fixes increment PATCH.
+  1.0.0 requires validated stability, not a prescribed number of milestones.
+- Canonical version: backend/app/_version.py. Hatch and FastAPI read it; mirror it
+  in frontend/package.json and package-lock.json. Regenerate backend/uv.lock after
+  metadata changes. The release-version test prevents drift. A future branch does
+  not change the current released version.
+- Use feature/v0.6.0-market-data-style future branch names; preserve old branch names.
+  Update CHANGELOG.md for each release, using real release dates. Historical milestone
+  groupings are not releases; Phase 2A and 2B both map to v0.2.0.
+- Validate tests, financial invariants, lint/format/type/build, fresh/populated migrations,
+  and staged privacy before release. Respect branch protection and stop on blockers.
+- Preserve historical commits/hashes/messages and tags. No force pushes, history
+  rewriting, fabricated historical tags, or moving published tags. Never publish
+  local databases, financial data or secrets. Git publishing requires user authorization.
+
+## Reference-first development
+Before implementing functionality present in Wealthfolio, Actual Budget or Securo:
+1. Inspect relevant accessible source, documentation and tests.
+2. Identify behavior, data models, calculations and interactions.
+3. Prefer proven patterns and existing application services over parallel reinvention.
+4. Adapt algorithms to React/FastAPI/SQLite where appropriate.
+5. Reuse source only under compatible licenses; preserve attribution and notices.
+6. Explain meaningful deviations and verify financial behavior with tests.
+7. For UI work, compare actual visual references where available, not descriptions alone.

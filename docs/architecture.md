@@ -1,5 +1,7 @@
 # Application architecture
 
+Current release scope: **v0.5.0 - Investment Foundation**. Next: **v0.6.0 - Market Data & Portfolio Valuation**, not implemented. Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+
 ## Local storage and deployment
 
 React -> same-origin /api proxy -> FastAPI -> SQLAlchemy -> SQLite.
@@ -57,7 +59,7 @@ and physical deletion of ordinary transactions. See DATA_MODEL.md.
 
 ## Migration lineage and transition
 
-New SQLite files run `sqlite_0001` through `sqlite_0005` using Alembic. These contain an explicit schema and
+New SQLite files run `sqlite_0001` through `sqlite_0007` using Alembic. These contain an explicit schema and
 integrity triggers; application startup never invokes metadata.create_all(). The
 optional container runs Alembic before Uvicorn. Native startup runs Alembic explicitly.
 Old PostgreSQL revisions remain unchanged under migrations_legacy/postgresql and
@@ -77,13 +79,13 @@ Browser tests also use a separate database. The normal review demo stays unpollu
 
 TanStack Query fetches the local API; Zod validates transport and input. Money is
 exchanged as exact strings. Only theme preference is stored in localStorage.
-Functional navigation is Overview / Accounts / Transactions / Settings. Explicitly
+Functional navigation is Overview / Accounts / Transactions / Budget / Investments / Settings. Explicitly
 labeled read-only preview sections expose future information architecture. Transfers are a
 transaction creation mode; Categories are configuration under Settings.
 [UI_FOUNDATION.md](UI_FOUNDATION.md) documents the application shell and information hierarchy.
 
 External integrations will eventually live behind adapters. No Gmail,
-budget engines, automatic recurring entries, investment accounting, market data, auth,
+automatic recurring entries, advanced investment performance, market data, auth,
 cloud sync, or background workers are implemented. FastAPI telemetry remains off;
 interactive API docs use the framework's default CDN assets. There are no remote
 runtime assets in the financial UI.
@@ -113,8 +115,8 @@ user edits; it does not restore or reset records.
 illustrative holdings/activity, and Performance chart points are stored as JSON
 with decimal strings in that isolated table. They have no financial-model relationships,
 write APIs, or influence on ledger totals. Net Worth and Reports previews instead
-reuse the ledger-history API. Real workspaces show a demo-required empty state for
-fictional investment layouts. Budget now uses its own real domain.
+reuse the ledger-history API. Performance requires a synthetic fixture. Budget and Investments now use their own
+real domains; legacy illustrative holdings are never converted into real positions.
 
 Frontend charts normalize exact BigInt amounts to bounded dimensionless coordinates;
 only these coordinates and timestamps become Number. Tooltip labels and accessible
@@ -185,3 +187,18 @@ subviews. Existing shell, transaction forms, imports and rules stay intact. Pagi
 transaction drill-downs carry additive spending/category/payee/date filters. Budget
 configuration invalidates budget queries; financial writes refresh dependent views.
 See [semantics, endpoints, performance bounds and limitations](BUDGETS.md).
+
+## Phase 5 investment ledger extension
+
+`app.investments` reconstructs positions and valuations; `investment_schemas` validates
+exact activity inputs. Each immutable InvestmentActivity contains its single cash
+posting. Shared `ledger.balances` and `history` include non-void activity cash once;
+ordinary transaction classification and budgets never treat trades as spending.
+The existing request transaction reserves the writer before sequence allocation,
+reconstruction, cash validation and insert. Preview uses a rolled-back savepoint.
+
+Investment imports reuse bounded CSV parsing and existing profiles/batches/raw source
+records. Typed InvestmentSourceLink claims associate sources with activities without
+fabricating ordinary transactions. Bank and brokerage workflows remain distinct;
+confirmed batches commit all activities and identity claims together. See
+[precision, correction, import and valuation contracts](INVESTMENTS.md).

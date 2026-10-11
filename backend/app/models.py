@@ -387,3 +387,112 @@ class RefundLink(Record, Base):
     refund_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("transactions.id"), unique=True)
     purchase_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("transactions.id"), index=True)
     __table_args__ = (CheckConstraint("refund_id <> purchase_id", name="different_entries"),)
+
+
+class Asset(Record, Base):
+    __tablename__ = "assets"
+    symbol: Mapped[str] = mapped_column(String(40))
+    name: Mapped[str] = mapped_column(String(120))
+    asset_type: Mapped[str] = mapped_column(String(12))
+    exchange: Mapped[str] = mapped_column(String(40))
+    currency: Mapped[str] = mapped_column(String(3))
+    isin: Mapped[str | None] = mapped_column(String(12))
+    __table_args__ = (
+        UniqueConstraint("symbol", "exchange", "currency"),
+        UniqueConstraint("id", "currency"),
+        CheckConstraint(
+            "asset_type IN ('STOCK','ETF','FUND','BOND','REIT','FII','BDR','OTHER')", name="type"
+        ),
+    )
+
+
+class InvestmentActivity(Record, Base):
+    __tablename__ = "investment_activities"
+    sequence: Mapped[int] = mapped_column(Integer, unique=True)
+    request_id: Mapped[uuid.UUID] = mapped_column(unique=True)
+    account_id: Mapped[uuid.UUID] = mapped_column(index=True)
+    asset_id: Mapped[uuid.UUID | None] = mapped_column(index=True)
+    activity_type: Mapped[str] = mapped_column(String(12))
+    activity_date: Mapped[date] = mapped_column(Date, index=True)
+    quantity: Mapped[Decimal] = mapped_column(ExactMoney())
+    unit_price: Mapped[Decimal] = mapped_column(ExactMoney())
+    gross_amount: Mapped[Decimal] = mapped_column(ExactMoney())
+    fees: Mapped[Decimal] = mapped_column(ExactMoney())
+    taxes: Mapped[Decimal] = mapped_column(ExactMoney())
+    cash_amount: Mapped[Decimal] = mapped_column(ExactMoney())
+    direction: Mapped[str] = mapped_column(String(3))
+    currency: Mapped[str] = mapped_column(String(3))
+    notes: Mapped[str] = mapped_column(String(500), default="")
+    voided_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    __table_args__ = (
+        CheckConstraint("sequence > 0", name="sequence"),
+        CheckConstraint(
+            "gross_amount > '000000000000000000000000' AND cash_amount > "
+            "'000000000000000000000000'",
+            name="positive_cash",
+        ),
+        CheckConstraint(
+            "activity_type IN ('BUY','SELL') OR (quantity='000000000000000000000000' "
+            "AND unit_price='000000000000000000000000')",
+            name="cash_only",
+        ),
+        CheckConstraint(
+            "activity_type NOT IN ('FEE','TAX') OR (fees='000000000000000000000000' AND "
+            "taxes='000000000000000000000000')",
+            name="standalone_charges",
+        ),
+        ForeignKeyConstraint(
+            ["account_id", "currency"], ["financial_accounts.id", "financial_accounts.currency"]
+        ),
+        ForeignKeyConstraint(["asset_id", "currency"], ["assets.id", "assets.currency"]),
+        CheckConstraint(
+            "activity_type IN ('BUY','SELL','DIVIDEND','INTEREST','FEE','TAX')", name="type"
+        ),
+        CheckConstraint(
+            "(activity_type IN ('BUY','FEE','TAX') AND direction='OUT') OR "
+            "(activity_type IN ('SELL','DIVIDEND','INTEREST') AND direction='IN')",
+            name="direction",
+        ),
+        CheckConstraint(
+            "activity_type NOT IN ('BUY','SELL') OR (asset_id IS NOT NULL AND "
+            "quantity>'000000000000000000000000' AND "
+            "unit_price>'000000000000000000000000')",
+            name="trade",
+        ),
+        *[
+            CheckConstraint(
+                f"typeof({field})='text' AND length({field})=24 AND {field} NOT GLOB '*[^0-9]*'",
+                name=field,
+            )
+            for field in ("quantity", "unit_price", "gross_amount", "fees", "taxes", "cash_amount")
+        ],
+    )
+
+
+class PriceObservation(Record, Base):
+    __tablename__ = "price_observations"
+    asset_id: Mapped[uuid.UUID]
+    currency: Mapped[str] = mapped_column(String(3))
+    price_date: Mapped[date] = mapped_column(Date)
+    price: Mapped[Decimal] = mapped_column(ExactMoney())
+    source: Mapped[str] = mapped_column(String(12), default="MANUAL")
+    __table_args__ = (
+        ForeignKeyConstraint(["asset_id", "currency"], ["assets.id", "assets.currency"]),
+        UniqueConstraint("asset_id", "price_date"),
+        CheckConstraint("source='MANUAL'", name="source"),
+        CheckConstraint(
+            "typeof(price)='text' AND length(price)=24 AND price NOT GLOB '*[^0-9]*' "
+            "AND price>'000000000000000000000000'",
+            name="price",
+        ),
+    )
+
+
+class InvestmentSourceLink(Record, Base):
+    __tablename__ = "investment_source_links"
+    source_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("source_records.id"), unique=True)
+    activity_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("investment_activities.id"), index=True
+    )
+    file_claim: Mapped[str | None] = mapped_column(String(64), unique=True)
+    external_claim: Mapped[str | None] = mapped_column(String(64), unique=True)

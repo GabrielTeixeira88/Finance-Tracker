@@ -1,6 +1,5 @@
 import { Suspense } from 'react'
 import { useHistory } from '@/lib/use-history'
-import { activityPercent, sumMoney } from '@/lib/money'
 import {
   AccountRows,
   DateRangeTabs,
@@ -19,8 +18,7 @@ import {
 import type { Navigate } from '@/components/app-shell'
 import { BalanceChart } from './dashboard'
 
-export type PreviewPage =
-  'Investments' | 'Performance' | 'Net Worth' | 'Reports'
+export type PreviewPage = 'Performance' | 'Net Worth' | 'Reports'
 
 export default function Preview({
   page,
@@ -31,11 +29,8 @@ export default function Preview({
 }) {
   const { demo, period, setPeriod, result, series, setCurrency } =
     useHistory('1Y')
-  const illustrative = page === 'Investments' || page === 'Performance'
+  const illustrative = page === 'Performance'
   const fixture = demo.data?.enabled ? demo.data.preview : null
-  const investmentTotal = fixture
-    ? sumMoney(fixture.holdings.map((h) => h.value))
-    : '0'
   return (
     <>
       <PageHeader
@@ -88,20 +83,12 @@ export default function Preview({
               )}
             </div>
           )}
-          {(page === 'Investments' || page === 'Performance') && fixture && (
+          {page === 'Performance' && fixture && (
             <>
               <section className="primary-value">
-                <h2>
-                  {page === 'Investments'
-                    ? 'Illustrative portfolio value'
-                    : 'Illustrative balance path'}
-                </h2>
+                <h2>Illustrative balance path</h2>
                 <Money
-                  value={
-                    page === 'Investments'
-                      ? investmentTotal
-                      : (fixture.performance.at(-1)?.balance ?? '0')
-                  }
+                  value={fixture.performance.at(-1)?.balance ?? '0'}
                   currency={fixture.currency}
                 />
                 <p className="metadata">
@@ -124,101 +111,6 @@ export default function Preview({
                     interpret this path as investment performance.
                   </p>
                 </>
-              )}
-              {page === 'Investments' && (
-                <div className="dashboard-grid">
-                  <Panel
-                    title="Holdings illustration"
-                    detail="Not reconciled to investment-account cash"
-                  >
-                    <div className="table-scroll">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th scope="col">Asset</th>
-                            <th scope="col" className="amount-cell">
-                              Value
-                            </th>
-                            <th scope="col" className="amount-cell">
-                              Allocation
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {fixture.holdings.map((h) => (
-                            <tr key={h.symbol}>
-                              <th scope="row">
-                                <strong>{h.symbol}</strong>
-                                <p className="metadata">{h.name}</p>
-                              </th>
-                              <td className="amount-cell">
-                                <Money
-                                  value={h.value}
-                                  currency={fixture.currency}
-                                />
-                              </td>
-                              <td className="amount-cell">
-                                {activityPercent(h.value, investmentTotal, '0')}
-                                %
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </Panel>
-                  <Panel
-                    title="Allocation"
-                    detail="Fictional portfolio composition"
-                  >
-                    {fixture.holdings.map((h) => (
-                      <div className="spending-row" key={h.symbol}>
-                        <div>
-                          <span>{h.symbol}</span>
-                          <span>
-                            {activityPercent(h.value, investmentTotal, '0')}%
-                          </span>
-                        </div>
-                        <div className="spending-track">
-                          <span
-                            style={{
-                              width: `${activityPercent(h.value, investmentTotal, '0')}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </Panel>
-                  <Panel
-                    title="Illustrative activity"
-                    detail="Preview fixture, not investment transactions"
-                  >
-                    <ul className="activity-list">
-                      {fixture.activity.map((a) => (
-                        <li key={a.description}>
-                          <div>
-                            <strong>{a.description}</strong>
-                            <p className="metadata">{a.date}</p>
-                          </div>
-                          <Money value={a.amount} currency={fixture.currency} />
-                        </li>
-                      ))}
-                    </ul>
-                  </Panel>
-                  <Panel title="Performance context">
-                    <p className="metadata">
-                      Explore the Performance preview for a synthetic balance
-                      path. Cost basis, returns, dividends, and live valuation
-                      are intentionally deferred.
-                    </p>
-                    <button
-                      className="text-action mt-3"
-                      onClick={() => navigate('Performance')}
-                    >
-                      View Performance preview
-                    </button>
-                  </Panel>
-                </div>
               )}
             </>
           )}

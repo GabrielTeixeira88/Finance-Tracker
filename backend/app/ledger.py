@@ -40,6 +40,12 @@ def balances(session: Session) -> dict[UUID, Decimal]:
         totals[account_id] = totals.get(account_id, Decimal("0")) + (
             amount if direction == "IN" else -amount
         )
+    from app.investments import cash_entries
+
+    for entry in cash_entries(session):
+        totals[entry.account_id] = totals.get(entry.account_id, Decimal("0")) + (
+            entry.amount if entry.direction == "IN" else -entry.amount
+        )
     return totals
 
 

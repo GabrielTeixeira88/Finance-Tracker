@@ -7,11 +7,12 @@ from alembic.config import Config
 from fastapi.testclient import TestClient
 from sqlalchemy import URL, inspect, text
 from sqlalchemy.orm import Session
-from test_ingestion import CONFIG, account, confirm, upload
+from test_ingestion import CONFIG, confirm, upload
 
 from app import budgets
 from app.database import get_session, make_engine
 from app.main import app
+from app.models import FinancialAccount
 from app.seed_demo import seed_demo
 from app.seed_spending_demo import seed_spending_demo
 
@@ -41,7 +42,14 @@ def test_populated_phase3_migration_preserves_every_existing_table(tmp_path):
     app.dependency_overrides[get_session] = session_override
     try:
         with TestClient(app) as api:
-            aid = account(api, "Synthetic migration import account")
+            # Populate the old schema without invoking the current account balance API.
+            with Session(engine) as session, session.begin():
+                account = FinancialAccount(
+                    name="Synthetic migration import account", type="CHECKING", currency="BRL"
+                )
+                session.add(account)
+                session.flush()
+                aid = str(account.id)
             confirm(api, upload(api, aid))
             assert (
                 api.post(

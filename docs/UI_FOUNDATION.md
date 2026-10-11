@@ -20,7 +20,8 @@ fixed end date, identified by the information control and options popover.
 
 Currencies remain separate. Account rows show their own currency, including account
 type metadata. Opening entries and transfers affect balances but not income/expense
-totals. Investment accounts contain cash only. Accounts administration retains
+totals. General account balances show investment cash only; the Investments workspace adds
+separate activity-derived security valuation. Accounts administration retains
 all-recorded-date balances; Overview uses the selected ending date.
 
 ## Shell and navigation
@@ -31,7 +32,7 @@ Find a page filters navigation destinations only, not financial records. The exi
 Overview, Accounts, Transactions, Budget, Investments, Performance, Net Worth, Reports,
 and Settings destinations remain; future sections retain Preview labels in expanded
 navigation, accessible names, tooltips, and their pages. Settings stays at the bottom.
-Account rows open the existing filtered account ledger. React state navigation remains;
+Account rows open the filtered ledger, or investment account workspace for INVESTMENT. React state navigation remains;
 URL deep links/back-forward are deferred.
 
 Transactions has one Add Transaction action with Expense / Income / Transfer modes.
@@ -67,15 +68,14 @@ validation widths are 1440, 1280, 1024, 768, and 390 pixels.
 
 ## Preview boundaries
 
-Budget is now the real Phase 4 Spending & Budgets workspace (see below). Investments displays fictional
-allocation, holdings, activity, and a link to a Performance illustration. Those
-fixtures are deliberately independent of investment-account cash and cannot affect it.
+Budget is the real Phase 4 Spending & Budgets workspace; Investments is the Phase 5
+activity-derived workspace. Legacy fictional holdings are no longer presented there.
 Performance points illustrate a chart only, with no TWR, benchmark, or valuation claim.
 Net Worth uses actual ledger history and account breakdown, labeled Total balance.
 Reports composes the existing spending, flows, and balance information; no report
 builder, exports, or reporting engine is implemented.
 
-Investments/Performance require the explicit historical demo fixture; an ordinary
+Performance requires the explicit historical demo fixture; an ordinary
 workspace gets a compact demo-required state. All preview payloads come through
 `/api/demo` from an isolated SQLite record, never hardcoded financial arrays in React.
 The seed is fixed through September 2026; Overview information/options and preview notices expose this context.
@@ -146,3 +146,21 @@ Transactions with explicit spending filters and a clear-filter action. Numeric s
 controls provide ordering; drag-and-drop is deferred. Group disclosures can collapse
 long lists. Projection copy distinguishes current, completed and future months.
 See [behavior and limitations](BUDGETS.md).
+
+## Phase 5 Investments
+
+The existing Investments destination is functional; shell geometry/theme stay unchanged.
+Internal Overview, Holdings, Activity, Accounts and Imports tabs share account/as-of
+context. Compact right-aligned holdings show quantity, basis, dated manual price,
+market value and results; missing prices remain visibly unavailable. Security detail
+shows positions across accounts and actual activity. No historical price chart is
+fabricated. General Accounts and cash-history pages identify the cash-only boundary.
+
+ActivityForm shows backend-calculated gross/net cash before explicit confirmation.
+AssetForm and PriceForm reuse associated fields, exact Money displays and mutation
+invalidation. Brokerage import mapping, preview, row decisions and account confirmation
+reuse the existing ingestion conventions. Tables scroll within the page on mobile;
+loading, errors, empty positions and unpriced holdings have explicit states.
+
+Public investment reference screenshots and its holdings/detail layout were inspected.
+This phase adds no copied source or third-party assets. Existing attribution remains.

@@ -201,6 +201,9 @@ export default function Dashboard({
             aria-label={`${series.currency} summary`}
           >
             <h2 className="sr-only">Total balance</h2>
+            <p className="metadata">
+              Cash balances · Securities valued separately in Investments
+            </p>
             <div
               className="overview-balance"
               data-testid="Total balance"
