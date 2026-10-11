@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app import ledger, schemas
 from app.models import Category, Transaction
+from app.spending import annotate_refunds, flow, refund_map
 
 Period = Literal["1M", "3M", "YTD", "1Y", "ALL"]
 ZERO = Decimal("0")
@@ -74,6 +75,8 @@ def history(session: Session, period: Period, end: date) -> History:
     # ALL and calendar periods include the closing balance immediately before the range.
     account_list = ledger.accounts(session)
     category_names = dict(session.execute(select(Category.id, Category.name)).all())
+    refunds = refund_map(session)
+    purchases = {t.id: t for t in entries}
     series = []
     account_balances = defaultdict(lambda: ZERO)
     with localcontext() as context:
@@ -97,11 +100,17 @@ def history(session: Session, period: Period, end: date) -> History:
             ):
                 for entry in group:
                     balance += entry.amount if entry.direction == "IN" else -entry.amount
-                    if entry.transaction_type == "INCOME":
-                        income += entry.amount
-                    elif entry.transaction_type == "EXPENSE":
-                        expenses += entry.amount
-                        spending[entry.category_id] += entry.amount
+                    refund = entry.id in refunds
+                    inc, exp = flow(entry.transaction_type, entry.amount, refund)
+                    income += inc
+                    expenses += exp
+                    if entry.transaction_type == "EXPENSE" or refund:
+                        category = (
+                            purchases[refunds[entry.id]].category_id
+                            if refund
+                            else entry.category_id
+                        )
+                        spending[category] += exp
                 points.append(Point(date=day, balance=balance))
             if points[-1].date != end:
                 points.append(Point(date=end, balance=balance))
@@ -139,5 +148,5 @@ def history(session: Session, period: Period, end: date) -> History:
         date_to=end,
         series=series,
         accounts=account_list,
-        recent_transactions=recent,
+        recent_transactions=annotate_refunds(session, recent),
     )

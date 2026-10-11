@@ -67,8 +67,7 @@ validation widths are 1440, 1280, 1024, 768, and 390 pixels.
 
 ## Preview boundaries
 
-Budget compares separately stored fictional monthly targets with actual demo expenses.
-It offers no budget editing or persistence domain. Investments displays fictional
+Budget is now the real Phase 4 Spending & Budgets workspace (see below). Investments displays fictional
 allocation, holdings, activity, and a link to a Performance illustration. Those
 fixtures are deliberately independent of investment-account cash and cannot affect it.
 Performance points illustrate a chart only, with no TWR, benchmark, or valuation claim.
@@ -76,7 +75,7 @@ Net Worth uses actual ledger history and account breakdown, labeled Total balanc
 Reports composes the existing spending, flows, and balance information; no report
 builder, exports, or reporting engine is implemented.
 
-Budget/Investments/Performance require the explicit historical demo fixture; an ordinary
+Investments/Performance require the explicit historical demo fixture; an ordinary
 workspace gets a compact demo-required state. All preview payloads come through
 `/api/demo` from an isolated SQLite record, never hardcoded financial arrays in React.
 The seed is fixed through September 2026; Overview information/options and preview notices expose this context.
@@ -130,3 +129,20 @@ file/account selection, CSV format/profile and mapping, preview, explicit row de
 then account confirmation and atomic posting. Import history reopens drafts or committed
 outcomes. Rules and schedule matches appear as proposals; uncertain rows block posting
 until resolved. Existing shell, theme and financial formatting remain unchanged.
+
+## Phase 4 Spending & Budgets
+
+The existing Budget icon now opens a functional month/currency workspace. Overview,
+Budgets and Insights are compact internal tabs; the shell is unchanged. Layout follows
+the inspected spending reference: primary spending headline and daily bars, a 2:1
+category/recent-spending and budget-pace layout, then a 3:1 grouped target/copy layout
+in Budgets. All amounts come from APIs; only dimensionless chart geometry uses Number.
+Signed daily refund values plot below zero. Light/dark tokens, shared Money, headers,
+recent-activity rows and loading/error states are reused. Tables scroll locally and
+two-column layouts collapse on narrow viewports.
+
+Target and group editors are inline. Category/day/payee controls open paginated
+Transactions with explicit spending filters and a clear-filter action. Numeric sort
+controls provide ordering; drag-and-drop is deferred. Group disclosures can collapse
+long lists. Projection copy distinguishes current, completed and future months.
+See [behavior and limitations](BUDGETS.md).

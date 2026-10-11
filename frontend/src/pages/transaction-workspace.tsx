@@ -7,6 +7,7 @@ import ImportWorkspace from './import-workspace'
 export default function TransactionWorkspace(props: {
   accounts: Account[]
   categories: Category[]
+  initialFilters?: Record<string, string>
   account?: Account
 }) {
   const [view, setView] = useState<'activity' | 'scheduled' | 'imports'>(

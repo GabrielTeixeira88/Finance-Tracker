@@ -164,10 +164,12 @@ export function RecentActivity({
                 <p className="metadata">
                   {row.transaction_date} ·{' '}
                   {accounts.find((a) => a.id === row.account_id)?.name} ·{' '}
-                  {transfer
-                    ? `Transfer ${row.direction === 'IN' ? 'in' : 'out'}`
-                    : (categories.find((c) => c.id === row.category_id)?.name ??
-                      label(row.transaction_type))}
+                  {row.refund_purchase_id
+                    ? 'Refund'
+                    : transfer
+                      ? `Transfer ${row.direction === 'IN' ? 'in' : 'out'}`
+                      : (categories.find((c) => c.id === row.category_id)
+                          ?.name ?? label(row.transaction_type))}
                 </p>
               </div>
               <Money

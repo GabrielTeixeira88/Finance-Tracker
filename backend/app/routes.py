@@ -174,6 +174,10 @@ def list_transactions(
     sort: Literal["date_desc", "date_asc"] = "date_desc",
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    currency: schemas.Currency | None = None,
+    spending_only: bool = False,
+    uncategorized: bool = False,
+    no_payee: bool = False,
 ):
     if date_from and date_to and date_from > date_to:
         raise HTTPException(422, "Start date must not follow end date")
@@ -191,11 +195,17 @@ def list_transactions(
         amount_min,
         amount_max,
         sort,
+        currency=currency,
+        spending_only=spending_only,
+        uncategorized=uncategorized,
+        no_payee=no_payee,
     )
     response.headers["X-Total-Count"] = str(
         db.scalar(select(func.count()).select_from(query.order_by(None).subquery()))
     )
-    return list(db.scalars(query.limit(limit).offset(offset)))
+    from app.spending import annotate_refunds
+
+    return annotate_refunds(db, list(db.scalars(query.limit(limit).offset(offset))))
 
 
 @router.patch("/transactions/bulk", response_model=list[schemas.TransactionOutput])
@@ -211,7 +221,9 @@ def patch_transaction(record_id: UUID, data: schemas.TransactionPatch, db: DB):
 
 @router.get("/transactions/{record_id}", response_model=schemas.TransactionOutput)
 def get_transaction(record_id: UUID, db: DB):
-    return ledger.require(db, Transaction, record_id)
+    from app.spending import annotate_refunds
+
+    return annotate_refunds(db, [ledger.require(db, Transaction, record_id)])[0]
 
 
 @router.post("/transactions", response_model=schemas.TransactionOutput, status_code=201)

@@ -24,16 +24,19 @@ export default function Transactions({
   accounts,
   categories,
   account,
+  initialFilters,
 }: {
   accounts: Account[]
   categories: Category[]
+  initialFilters?: Record<string, string>
   account?: Account
 }) {
   const [editing, setEditing] = useState<Transaction>()
   const [creating, setCreating] = useState(false)
-  const [filters, setFilters] = useState<Record<string, string>>(
-    account ? { account_id: account.id } : {},
-  )
+  const [filters, setFilters] = useState<Record<string, string>>({
+    ...initialFilters,
+    ...(account ? { account_id: account.id } : {}),
+  })
   const [offset, setOffset] = useState(0)
   const [selected, setSelected] = useState<string[]>([])
   const params = new URLSearchParams(
@@ -65,7 +68,11 @@ export default function Transactions({
   })
   const mutation = useWrite()
   function filter(key: string, value: string) {
-    setFilters((current) => ({ ...current, [key]: value }))
+    setFilters((current) => ({
+      ...current,
+      ...(key === 'category_id' ? { uncategorized: '' } : {}),
+      [key]: value,
+    }))
     setOffset(0)
     setSelected([])
   }
@@ -132,6 +139,27 @@ export default function Transactions({
       )}
       <section className="panel">
         <h2>Transaction history</h2>
+        {(filters.spending_only ||
+          filters.uncategorized ||
+          filters.payee_id ||
+          filters.currency) && (
+          <p className="metadata">
+            Spending drill-down: {filters.currency}{' '}
+            {filters.uncategorized ? ' / Uncategorized' : ''}. Linked refunds
+            reduce spending.{' '}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setFilters(account ? { account_id: account.id } : {})
+                setOffset(0)
+                setSelected([])
+              }}
+            >
+              Clear drill-down filters
+            </Button>
+          </p>
+        )}
         <div className="filter-bar">
           <Field label="Search transactions">
             <input

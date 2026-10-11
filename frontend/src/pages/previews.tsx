@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { useHistory } from '@/lib/use-history'
-import { activityPercent, subtractMoney, sumMoney } from '@/lib/money'
+import { activityPercent, sumMoney } from '@/lib/money'
 import {
   AccountRows,
   DateRangeTabs,
@@ -20,7 +20,7 @@ import type { Navigate } from '@/components/app-shell'
 import { BalanceChart } from './dashboard'
 
 export type PreviewPage =
-  'Budget' | 'Investments' | 'Performance' | 'Net Worth' | 'Reports'
+  'Investments' | 'Performance' | 'Net Worth' | 'Reports'
 
 export default function Preview({
   page,
@@ -29,18 +29,13 @@ export default function Preview({
   page: PreviewPage
   navigate: Navigate
 }) {
-  const { demo, period, setPeriod, result, series, setCurrency } = useHistory(
-    page === 'Budget' ? '1M' : '1Y',
-  )
-  const illustrative =
-    page === 'Budget' || page === 'Investments' || page === 'Performance'
+  const { demo, period, setPeriod, result, series, setCurrency } =
+    useHistory('1Y')
+  const illustrative = page === 'Investments' || page === 'Performance'
   const fixture = demo.data?.enabled ? demo.data.preview : null
   const investmentTotal = fixture
     ? sumMoney(fixture.holdings.map((h) => h.value))
     : '0'
-  const budgetSeries = result.data?.series.find(
-    (s) => s.currency === fixture?.currency,
-  )
   return (
     <>
       <PageHeader
@@ -92,69 +87,6 @@ export default function Preview({
                 </label>
               )}
             </div>
-          )}
-          {page === 'Budget' && fixture && (
-            <Panel
-              title="Monthly plan"
-              detail={`${result.data.date_to.slice(0, 7)} · Fictional targets, actual ledger spending · ${fixture.currency}`}
-            >
-              <div className="table-scroll">
-                <table>
-                  <caption className="sr-only">
-                    Synthetic budget preview
-                  </caption>
-                  <thead>
-                    <tr>
-                      {['Category', 'Demo target', 'Spent', 'Remaining'].map(
-                        (h, i) => (
-                          <th
-                            scope="col"
-                            key={h}
-                            className={i ? 'amount-cell' : ''}
-                          >
-                            {h}
-                          </th>
-                        ),
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fixture.budgets.map((b) => {
-                      const spent =
-                        budgetSeries?.spending.find(
-                          (s) => s.category_id === b.category_id,
-                        )?.amount ?? '0'
-                      const remaining = subtractMoney(b.target, spent)
-                      return (
-                        <tr key={b.category_id}>
-                          <th scope="row">{b.name}</th>
-                          <td className="amount-cell">
-                            <Money
-                              value={b.target}
-                              currency={fixture.currency}
-                            />
-                          </td>
-                          <td className="amount-cell">
-                            <Money value={spent} currency={fixture.currency} />
-                          </td>
-                          <td className="amount-cell">
-                            <Money
-                              value={remaining}
-                              currency={fixture.currency}
-                              tone={
-                                remaining.startsWith('-')
-                                  ? 'negative'
-                                  : 'neutral'
-                              }
-                            />
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </Panel>
           )}
           {(page === 'Investments' || page === 'Performance') && fixture && (
             <>

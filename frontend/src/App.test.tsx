@@ -286,13 +286,13 @@ it('labels future sections as previews and never injects a fake portfolio into a
   renderApp()
   await screen.findByTestId('Total balance')
   const nav = screen.getByRole('navigation', { name: 'Main navigation' })
-  for (const page of [
-    'Budget',
-    'Investments',
-    'Performance',
-    'Net Worth',
-    'Reports',
-  ]) {
+  expect(
+    within(nav).getByRole('button', { name: 'Budget' }),
+  ).toBeInTheDocument()
+  expect(
+    within(nav).queryByRole('button', { name: 'Budget Preview' }),
+  ).not.toBeInTheDocument()
+  for (const page of ['Investments', 'Performance', 'Net Worth', 'Reports']) {
     expect(
       within(nav).getByRole('button', { name: `${page} Preview` }),
     ).toBeInTheDocument()

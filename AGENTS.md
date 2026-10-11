@@ -32,7 +32,7 @@
 - Run tests and linting before considering a task complete. Report checks that could not run.
 - Do not silently redesign the architecture.
 - Keep SQLAlchemy and Alembic. Preserve foreign keys, WAL, bounded lock waits, and atomic linked transfers.
-- Functional navigation is Overview, Accounts, Transactions, Settings. Transfers belong to Add Transaction; Categories belong to Settings. Budget, Investments, Performance, Net Worth, and Reports are explicitly labeled read-only previews, not completed engines.
+- Functional navigation is Overview, Accounts, Transactions, Budget (Spending & Budgets), Settings. Transfers belong to Add Transaction; Categories belong to Settings. Investments, Performance, Net Worth, and Reports are explicitly labeled read-only previews, not completed engines.
 - Preserve the approved application hierarchy and restrained surfaces; do not copy third-party branding/assets or invent financial history.
 - Preserve adapted-source attribution and AGPL/OFL notices in THIRD_PARTY_NOTICES.md and frontend/public/licenses.
 - Keep product documentation focused on Finance Tracker. The roadmap may name the explicitly approved product/workflow references; preserve legal/source-attribution notices and do not copy third-party branding or assets.
@@ -45,9 +45,12 @@
 - Preserve the additive transaction-list API and exact amount filtering. Selection is explicit and page-scoped; do not silently apply a bulk action to all matching history.
 - Phase 2B rules may mutate only classification metadata. Explicit manual choices outrank rules; protect unknown legacy origins. Learning uses distinct explicit corrections, never automation outputs; suggestions require user approval.
 - Schedules are expectations, not ledger movements. Posting and candidate matching require explicit user actions; retain unique completion links and financial-edit guards. Do not add automatic schedule posting.
-- Future budgeting uses monthly category spending targets independent of available cash; do not introduce envelope or zero-based allocation.
-- Phase 1 includes accounts, categories, income/expense transactions, linked transfers, opening balances, and a basic dashboard. Phase 1.6 adds read-only ledger history and synthetic preview screens only. Do not implement authentication, full budget/investment/reporting engines, Gmail, Pluggy, real holdings, market-data APIs, or portfolio analytics without a separately requested phase.
+- Budgeting uses monthly category spending targets independent of available cash; do not introduce envelope or zero-based allocation.
+- Phase 1 includes accounts, categories, income/expense transactions, linked transfers, opening balances, and a basic dashboard. Phase 1.6 adds read-only ledger history and synthetic preview screens only. Do not implement authentication, full investment/reporting engines, Gmail, Pluggy, real holdings, market-data APIs, or portfolio analytics without a separately requested phase.
 - Do not add Redis or Celery until a later phase requires background processing.
 - Do not commit or push unless explicitly requested.
 
 - Phase 3 parsers must never post ledger entries. Keep raw provenance separate, enforce bounded local uploads, and confirm through the existing ledger service. Exact source identities are account/context scoped; weak content matches require explicit decisions. Preserve atomic confirmation and many-source-to-one-transaction links; never log imported payloads.
+
+- Phase 4 targets are versioned by effective month with explicit one-month overrides. Reconstruct signed rollover from targets and exact ledger spending; never store spent values or create postings from targets. Disabling rollover resets its chain.
+- Refunds require explicit same-currency purchase links, reduce spending on the credit date and do not count as income. Protect linked financial fields; unmatched credits remain income. Share classification across budget, dashboard and history.
