@@ -34,6 +34,36 @@ class ExactMoney(TypeDecorator):
         return Decimal(value) if dialect.name == "postgresql" else Decimal(value).scaleb(-6)
 
 
+class ExactRate(TypeDecorator):
+    """Positive FX quote, eighteen fractional digits, fixed-width exact TEXT."""
+
+    impl = String(36)
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        from decimal import localcontext
+
+        with localcontext() as context:
+            context.prec = 60
+            if (
+                not isinstance(value, Decimal)
+                or not value.is_finite()
+                or not 0 < value < Decimal("1e18")
+                or value != value.quantize(Decimal("1e-18"))
+            ):
+                raise ValueError(
+                    "Rate must be a positive Decimal with at most 18 fractional digits"
+                )
+            return str(int(value.scaleb(18))).zfill(36)
+
+    def process_result_value(self, value, dialect):
+        from decimal import localcontext
+
+        with localcontext() as context:
+            context.prec = 60
+            return Decimal(value).scaleb(-18) if value is not None else None
+
+
 class UTCDateTime(TypeDecorator):
     impl = DateTime(timezone=True)
     cache_ok = True

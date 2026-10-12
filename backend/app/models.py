@@ -476,10 +476,16 @@ class PriceObservation(Record, Base):
     price_date: Mapped[date] = mapped_column(Date)
     price: Mapped[Decimal] = mapped_column(ExactMoney())
     source: Mapped[str] = mapped_column(String(12), default="MANUAL")
+    price_type: Mapped[str] = mapped_column(
+        String(12), default="RAW_CLOSE", server_default="RAW_CLOSE"
+    )
+    fetched_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    observed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     __table_args__ = (
         ForeignKeyConstraint(["asset_id", "currency"], ["assets.id", "assets.currency"]),
-        UniqueConstraint("asset_id", "price_date"),
-        CheckConstraint("source='MANUAL'", name="source"),
+        UniqueConstraint("asset_id", "price_date", "source", "price_type"),
+        CheckConstraint("source IN ('MANUAL','BRAPI','ALPHA','SYNTHETIC')", name="source"),
+        CheckConstraint("price_type IN ('RAW_CLOSE','LATEST','ADJUSTED')", name="price_type"),
         CheckConstraint(
             "typeof(price)='text' AND length(price)=24 AND price NOT GLOB '*[^0-9]*' "
             "AND price>'000000000000000000000000'",

@@ -1,10 +1,13 @@
 # Finance Tracker
 
-Current version: **0.5.0 - Investment Foundation**. Next planned: **v0.6.0 - Market Data & Portfolio Valuation** (not implemented). See [changelog](CHANGELOG.md) and [version roadmap](docs/ROADMAP.md).
+Current version: **0.6.0 - Market Data & Portfolio Valuation**.
+Next: **v0.7.0 - Investment Analytics** (not implemented).
+See [changelog](CHANGELOG.md) and [version roadmap](docs/ROADMAP.md).
 
 A single-user, local-first, self-hosted personal finance application. All durable
 financial data stays on your machine in **SQLite**. No cloud persistence, telemetry,
-analytics, authentication, or external financial integrations are included.
+analytics services or authentication are included. Market-data requests are optional;
+the ledger and cached valuation views remain local and usable offline.
 
 Implemented: accounts, categories, income/expenses, atomic linked transfers, opening
 balances, reconstructed account balances, and a historical overview. Investment accounts
@@ -20,7 +23,10 @@ v0.4.0 adds monthly category targets, groups, overrides, signed optional rollove
 spending insights and explicitly linked refunds. Targets never allocate account cash.
 v0.5.0 adds securities, BUY/SELL, dividends, interest, fees/taxes, weighted-average
 cost, realized results, manual prices and confirmed brokerage CSV imports. See
-[investment contracts and limitations](docs/INVESTMENTS.md). Market Data & Valuation is next.
+[investment contracts and limitations](docs/INVESTMENTS.md).
+The v0.6.0 market-data extension adds documented quote adapters, exact dated FX,
+cached current/historical valuation and manual-price controls. See
+[setup, provider limits and valuation policy](docs/MARKET_DATA.md).
 
 ## Run locally (no Docker or PostgreSQL required)
 
@@ -63,12 +69,20 @@ in the root `.env`, then from `backend/` run:
 
 ```sh
 uv run alembic upgrade head
-uv run python -m app.seed_investment_demo
+uv run python -m app.seed_market_demo
 ```
 
 Restart the API after changing the database path. To return to your original workspace,
 restore its path; do not delete or overwrite either database. Existing SQLite databases
 only need `alembic upgrade head`; no ledger reset is required.
+
+The v0.6 market demo extends the investment fixture with USD/EUR brokerage accounts,
+AAPL/MSFT/VOO/VWCE illustrations, dated synthetic quotes and exact synthetic FX.
+It contains eight accounts, nine securities and 30 investment activities, with
+intentional manual, stale and missing-price examples. Prices are fictional, not
+downloaded market history. Refresh skips the explicit synthetic provider. Use a
+new empty database; it never extends or resets an existing populated workspace.
+The older `app.seed_investment_demo` remains available for the Phase 5 fixture below.
 
 The fixed fictional history covers April 2025 through September 2026, plus five
 opening entries on March 31, 2025. The Phase 5 demo contains **506 ordinary ledger entries, 74 atomic transfers, six
@@ -172,7 +186,8 @@ income **1,000**, expenses **200**. Transfers and openings never enter flow tota
   Transfer review updates both linked sides; transfers/openings cannot receive category
   or payee assignments. Review means user checking, not bank reconciliation.
 - **Settings:** Categories and safe deletion rules; Rules with preview/application and
-  user-approved learning suggestions. Transactions also contains the Scheduled subview.
+  user-approved learning suggestions; Market Data with provider status, reporting currency,
+  explicit refresh and opt-in synchronization. Transactions also contains the Scheduled subview.
 - **Budget:** Spending & Budgets with Overview, Budgets and Insights tabs, shared month
   and currency controls, target/group editors, rollover, refunds and ledger drill-downs.
   See [budget semantics and refund policy](docs/BUDGETS.md).
@@ -251,6 +266,8 @@ links. `sqlite_0005` adds import profiles, batches and source provenance without
 existing postings. `sqlite_0006` adds versioned budgets, groups and guarded refund links
 without rewriting financial records. `sqlite_0007` adds assets, immutable investment
 activities, manual observations and typed source links without rewriting old tables.
+`sqlite_0008` extends price observations and adds pricing preferences, dated FX and
+sync state. Existing manual observations are retained and their assets stay in manual mode.
 Do not apply SQLite migrations to
 an existing PostgreSQL database or stamp old databases to the new revision.
 
@@ -293,6 +310,6 @@ adds CSV/OFX imports with explicit preview/confirmation. See the
 `backend/app/_version.py` is authoritative. Hatch derives Python package metadata
 from it and FastAPI reports it in OpenAPI. Frontend package metadata mirrors it,
 checked by `test_release_version.py`; no About/version display exists to synchronize.
-Run `uv lock --project backend` after Python metadata changes. Tags use `v0.5.0`;
+Run `uv lock --project backend` after Python metadata changes. Tags use `v0.6.0`;
 future development branches do not change the released application version.
 Historical phases and immutable seed/migration identifiers remain traceable in the roadmap.

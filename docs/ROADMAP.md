@@ -2,7 +2,7 @@
 
 Versions are the primary milestone identifiers. Historical phases remain traceable
 below; they do not imply earlier releases or tags. Current application version is
-0.5.0. v0.6.0 is next and has no implementation in this release.
+0.6.0. v0.7.0 Investment Analytics is next; no analytics implementation is included.
 
 ## Historical mapping
 
@@ -45,15 +45,20 @@ v1.0.0 requires validated stability, not a milestone counter reaching a number.
   manual prices and brokerage CSV. Depends on accounts/transfers and ingestion.
   No live prices, FX, corporate actions or return engine. See [contracts](INVESTMENTS.md).
 
-## Future versions - planned, not implemented
-
-- **v0.6.0 - next: Market Data & Portfolio Valuation.** Provider adapters, security
+- **v0.6.0 - completed and validated: Market Data & Portfolio Valuation.** Provider adapters, security
   identities, price provenance/freshness, historical prices, valuation and explicit
   FX policy. Depends on investment activities; preserve offline fallback and missing
-  price distinctions. Providers are not selected yet.
-- **v0.7.0 - Investment Analytics.** TWR, IRR/MWR, benchmarks, allocation, portfolio
+  price distinctions. Brapi v2, Alpha Vantage and Frankfurter ECB adapters are implemented.
+  Live acceptance is limited by available credentials and raw-history plan access;
+  see [implementation and validation](MARKET_DATA.md).
+
+## Future versions - planned, not implemented
+
+- **v0.7.0 - next: Investment Analytics.** TWR, IRR/MWR, benchmarks, allocation, portfolio
   insights and income/dividend analytics. Depends on reliable cash flows, historical
   prices, FX and corporate-action policy; illustrative charts are not returns.
+  Planned views include account/security returns, realized/unrealized breakdown,
+  sector/geographic/currency exposure, attribution and performance/data-quality indicators.
 - **v0.8.0 - Gmail Ingestion.** Opt-in mail adapters, local OAuth/token handling,
   bounded parsing, normalized candidates, rules and explicit review. Depends on
   ingestion/provenance; mail and credentials remain private.

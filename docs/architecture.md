@@ -1,6 +1,6 @@
 # Application architecture
 
-Current release scope: **v0.5.0 - Investment Foundation**. Next: **v0.6.0 - Market Data & Portfolio Valuation**, not implemented. Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.6.0 - Market Data & Portfolio Valuation**. Next: **v0.7.0 - Investment Analytics**; see [market-data contracts](MARKET_DATA.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
 
 ## Local storage and deployment
 
@@ -59,7 +59,7 @@ and physical deletion of ordinary transactions. See DATA_MODEL.md.
 
 ## Migration lineage and transition
 
-New SQLite files run `sqlite_0001` through `sqlite_0007` using Alembic. These contain an explicit schema and
+New SQLite files run `sqlite_0001` through `sqlite_0008` using Alembic. These contain an explicit schema and
 integrity triggers; application startup never invokes metadata.create_all(). The
 optional container runs Alembic before Uvicorn. Native startup runs Alembic explicitly.
 Old PostgreSQL revisions remain unchanged under migrations_legacy/postgresql and
@@ -84,9 +84,9 @@ labeled read-only preview sections expose future information architecture. Trans
 transaction creation mode; Categories are configuration under Settings.
 [UI_FOUNDATION.md](UI_FOUNDATION.md) documents the application shell and information hierarchy.
 
-External integrations will eventually live behind adapters. No Gmail,
-automatic recurring entries, advanced investment performance, market data, auth,
-cloud sync, or background workers are implemented. FastAPI telemetry remains off;
+Market integrations live behind adapters. No Gmail,
+automatic recurring entries, advanced investment performance, auth,
+cloud sync, or job queue is implemented. Only opt-in market refresh has an in-process worker. FastAPI telemetry remains off;
 interactive API docs use the framework's default CDN assets. There are no remote
 runtime assets in the financial UI.
 
@@ -202,3 +202,15 @@ records. Typed InvestmentSourceLink claims associate sources with activities wit
 fabricating ordinary transactions. Bank and brokerage workflows remain distinct;
 confirmed batches commit all activities and identity claims together. See
 [precision, correction, import and valuation contracts](INVESTMENTS.md).
+
+## v0.6.0 market data
+
+`market_providers` is an ORM-free adapter boundary with exact JSON decoding and typed
+safe errors. `market_sync` selects activity-relevant assets, resolves symbols and
+performs HTTP outside database transactions; short write units upsert the local cache.
+`market_valuation` supplies shared price/FX selection and chronological history with
+batched reads. No derived value is stored as a new source of truth.
+`market_routes` exposes cached reads, explicit refresh, preferences and status.
+The optional in-process scheduler operates only while a single API worker is running.
+Read routes never fetch providers; failed refresh cannot erase prices or block ledger use.
+See [decisions, provider contracts and operational limits](MARKET_DATA.md).

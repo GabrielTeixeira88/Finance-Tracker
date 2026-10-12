@@ -1,6 +1,6 @@
 # Finance Tracker data model
 
-Current release scope: **v0.5.0 - Investment Foundation**. Next: **v0.6.0 - Market Data & Portfolio Valuation**, not implemented. Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.6.0 - Market Data & Portfolio Valuation**. Next: **v0.7.0 - Investment Analytics**; see [market-data contracts](MARKET_DATA.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
 
 All financial records stay in local SQLite. The ledger is authoritative; there
 is no editable or cached account-balance column.
@@ -316,3 +316,22 @@ non-void history; preserve closed-position results. Inputs retain at most six de
 places; derived trade gross settles to six using half-even rounding. Weighted-average
 basis uses 60-digit Decimal intermediates and releases residual basis on full closure.
 [INVESTMENTS.md](INVESTMENTS.md) specifies formulas and limitations.
+
+## v0.6.0 (`sqlite_0008`)
+
+- PriceObservation extends the existing table: source is MANUAL, BRAPI, ALPHA or
+  SYNTHETIC; price_type is RAW_CLOSE, LATEST or ADJUSTED. Unique identity is
+  asset/date/source/type. fetched_at records retrieval; observed_at preserves an
+  available provider timestamp. Manual IDs/prices/dates/timestamps survive migration.
+- AssetPricing holds mode, optional provider/symbol override and an explicit
+  corporate-action gap. Asset identity and original activity currency remain unchanged.
+- FXObservation stores EUR base, quote currency, date, provider and retrieval time.
+  Rates are positive 36-digit TEXT with 18 fractional places, decoded to Decimal.
+  `rate=5.20, base=EUR, quote=BRL` means one EUR equals 5.20 BRL.
+- MarketSettings holds a singleton reporting currency, explicit FX source and opt-in
+  automatic refresh flag. Credentials are never persisted here.
+- SyncState records attempt/success/error/retry and observed coverage per security/FX.
+  ProviderBudget preserves Alpha request usage and provider cooldown across restarts.
+
+Only the price cache is rebuilt for its extended uniqueness constraint. No investment,
+ordinary transaction, import, budget, rule or account table is rewritten.

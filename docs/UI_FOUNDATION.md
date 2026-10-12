@@ -1,4 +1,4 @@
-﻿# UI foundation - Phase 1.7 shell / Overview review
+# UI foundation - Phase 1.7 shell / Overview review
 
 ## Application hierarchy
 
@@ -164,3 +164,13 @@ loading, errors, empty positions and unpriced holdings have explicit states.
 
 Public investment reference screenshots and its holdings/detail layout were inspected.
 This phase adds no copied source or third-party assets. Existing attribution remains.
+
+## v0.6.0 market-data additions
+
+The existing shell, Overview, investment activity forms and budgeting views remain
+unchanged. Investments adds a cached portfolio-value chart with range/currency controls;
+security details put the daily price chart before positions and activities. Provider
+mapping and corporate-action gaps sit under Pricing preferences and coverage. Cached
+observations are an expandable table. Settings gains Market Data alongside Categories
+and Rules. Quote date and retrieval/sync timestamps are distinct. Missing totals and
+historical gaps remain explicit; no performance percentage is inferred from deposits.

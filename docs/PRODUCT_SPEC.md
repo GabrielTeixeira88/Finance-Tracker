@@ -1,6 +1,6 @@
 # Current product scope
 
-Current release scope: **v0.5.0 - Investment Foundation**. Next: **v0.6.0 - Market Data & Portfolio Valuation**, not implemented. Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.6.0 - Market Data & Portfolio Valuation**. Next: **v0.7.0 - Investment Analytics**; see [market-data contracts](MARKET_DATA.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
 
 Finance Tracker is a single-user, offline-capable local finance application. Financial
 records stay in a local SQLite database. No authentication, cloud persistence, telemetry,
@@ -28,7 +28,7 @@ Transactions contains All Activity, Scheduled and Imports. See [automation contr
 Phase 4 implements monthly category targets, groups, effective defaults, one-month
 overrides, optional signed rollover, explicit refunds and ledger-backed spending insights.
 Targets are independent of cash; no envelopes or zero-based allocation. Gmail, automatic
-reconciliation, advanced investment performance, market data and cloud sync remain excluded.
+reconciliation, advanced investment performance and cloud sync remain excluded.
 See [Spending & Budgets contracts](BUDGETS.md).
 
 See [data model](DATA_MODEL.md) for API and integrity contracts and
@@ -118,7 +118,7 @@ financial regression is preserved. See [validation details and remaining limits]
 Phase 5 implements investment accounts, securities, exact activities, weighted-average
 holdings, realized results, manual valuation and local brokerage CSV imports.
 Investment cash is integrated into account balances; Overview is explicitly cash-only.
-Performance remains illustrative. Next is v0.6.0 - Market Data & Portfolio Valuation.
+Performance remains illustrative. The v0.6.0 extension adds cached market data and valuation (see MARKET_DATA.md).
 See [investment behavior and validation](INVESTMENTS.md).
 
 
@@ -129,3 +129,16 @@ atomicity/repeats, migration preservation, deterministic seed and exact cash int
 are covered. Lint/format/type/build checks, live restart persistence, investment browser
 acceptance and the existing budget/CSV/OFX workflows pass. See
 [results and deliberately deferred limits](INVESTMENTS.md#validation-checkpoint---october-11-2026).
+
+## v0.6.0: market data and portfolio valuation
+
+Investments adds cached provider pricing, manual/automatic mode, editable symbol
+mappings, security history and current/historical portfolio values. Original-currency
+cash and holdings remain separate; reporting conversion uses dated exact FX.
+Settings > Market Data reports credentials, capability limits, attempts/successes,
+coverage and failures. Refresh is explicit or opt-in while the local API runs.
+The historical chart uses historical quantities/cash and shows coverage gaps without
+invented zeroes. It measures portfolio value, not investment return.
+The synthetic market demo exercises multiple currencies, manual/missing/stale prices
+and closed positions through persisted records. Real providers never become a
+fallback to demo figures. See [coverage and limitations](MARKET_DATA.md).

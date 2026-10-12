@@ -59,6 +59,15 @@
 - Reconstruct weighted-average positions in stable date/sequence order with Decimal. Reject oversells, currency mismatches and unfunded activities. Corrections void and replace, retaining source identity and immutable history.
 - Manual prices are dated observations, not live prices or historical performance. Keep missing valuations unavailable and currencies separate. Investment CSV previews never post; confirmation and identity claims are atomic.
 
+- v0.6 market adapters must remain independent of ledger/ORM code. Network calls belong
+  only to explicit/opt-in refresh, outside SQLite write transactions. Never log provider
+  URLs, tokens or response payloads. Preserve manual observations and cached data on failure.
+- Valuation uses eligible raw/manual prices with historical quantities and dated exact
+  FX. Never mix adjusted prices with unadjusted quantities, future quotes, synthetic/live
+  sources, or missing values with zero. History carries prior observations at most seven
+  days. Corporate-action gaps and incomplete totals must stay visible. Portfolio value
+  includes contributions and is not performance. Keep one API worker for market sync.
+
 
 ## Releases and versioning
 - Use MAJOR.MINOR.PATCH, with annotated Git tags vMAJOR.MINOR.PATCH. Before 1.0,

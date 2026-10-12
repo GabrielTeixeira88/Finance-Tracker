@@ -6,7 +6,29 @@ of independently published releases or tags. See [the roadmap](docs/ROADMAP.md).
 
 ## [Unreleased]
 
-Next: v0.6.0 - Market Data & Portfolio Valuation. No implementation yet.
+Next: v0.7.0 - Investment Analytics. No implementation yet.
+
+## [0.6.0] - 2026-10-12
+
+### Added
+- Documented Brapi v2 and Alpha Vantage adapters, validated symbol mappings and bounded refresh.
+- Exact local quote/FX cache, source conventions, manual mode and provider status.
+- Dated ECB FX conversion, current reporting values and chronological portfolio history.
+- Market Data settings, security history, portfolio chart and explicit coverage gaps.
+- Deterministic multicurrency market demo, migration and offline regression coverage.
+
+### Changed
+- Investment views use eligible cached market prices and dated FX; manual mode is preserved.
+
+### Fixed
+- Raw-history backfill no longer treats latest/adjusted quotes as historical coverage.
+- FX backfill covers newly added older investment cash instead of only recent rates.
+- Cancellation is checked between quote batches and FX history chunks.
+
+### Limits
+- Brapi raw historical prices require Pro entitlement; adjusted history is never valued.
+- Alpha Vantage requires a key; free daily history is limited to 100 observations.
+- Corporate actions and investment-performance metrics remain outside this milestone.
 
 ## [0.5.0] - 2026-10-11
 

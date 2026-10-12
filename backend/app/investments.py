@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 
 from app import ledger
 from app.investment_schemas import settled
-from app.models import Asset, FinancialAccount, InvestmentActivity, PriceObservation, Transaction
+from app.models import Asset, FinancialAccount, InvestmentActivity, Transaction
 
 ZERO = Decimal("0")
 
@@ -164,7 +164,7 @@ def void(session, activity_id):
     return row
 
 
-def portfolio(session, account_id=None, asset_id=None, as_of=None):
+def portfolio(session, account_id=None, asset_id=None, as_of=None, serialize=True):
     as_of = as_of or date.today()
     accounts = list(
         session.scalars(
@@ -180,13 +180,9 @@ def portfolio(session, account_id=None, asset_id=None, as_of=None):
     rows = activities(session, account_id, as_of)
     positions = reconstruct(rows)
     assets = {a.id: a for a in session.scalars(select(Asset))}
-    prices = {}
-    for p in session.scalars(
-        select(PriceObservation)
-        .where(PriceObservation.price_date <= as_of)
-        .order_by(PriceObservation.price_date, PriceObservation.id)
-    ):
-        prices[p.asset_id] = p
+    from app.market_valuation import PriceBook
+
+    prices = PriceBook(session, as_of)
     with localcontext() as ctx:
         ctx.prec = 60
         holdings = []
@@ -195,7 +191,7 @@ def portfolio(session, account_id=None, asset_id=None, as_of=None):
             if security is None or (asset_id and security != asset_id):
                 continue
             asset = assets[security]
-            p = prices.get(security)
+            p = prices.select(security, as_of)
             value = values["quantity"] * p.price if p else ZERO if not values["quantity"] else None
             item = {
                 **values,
@@ -211,8 +207,17 @@ def portfolio(session, account_id=None, asset_id=None, as_of=None):
                 else ZERO,
                 "last_price": p.price if p else None,
                 "price_date": p.price_date if p else None,
-                "price_source": "MANUAL" if p else None,
+                "price_source": p.source if p else None,
+                "price_type": p.price_type if p else None,
+                "price_fetched_at": p.fetched_at if p else None,
                 "price_stale": bool(p and p.price_date < as_of),
+                "price_freshness": "UNAVAILABLE"
+                if p is None
+                else "STALE"
+                if (as_of - p.price_date).days > 7
+                else "CARRIED"
+                if p.price_date < as_of
+                else "AS_OF_DATE",
                 "market_value": value,
                 "unrealized": value - values["cost_basis"] if value is not None else None,
             }
@@ -298,15 +303,19 @@ def portfolio(session, account_id=None, asset_id=None, as_of=None):
             total["total_value"] = (
                 None if total["missing_prices"] else total["cash"] + total["known_holdings_value"]
             )
-        return wire(
-            {
-                "as_of": as_of,
-                "method": "WEIGHTED_AVERAGE",
-                "accounts": account_reports,
-                "totals": list(totals.values()),
-                "holdings": sorted(
-                    consolidated.values(), key=lambda h: (h["symbol"], h["exchange"], h["currency"])
-                ),
-                "positions": holdings,
-            }
-        )
+            total["unrealized"] = (
+                None
+                if total["missing_prices"]
+                else total["known_holdings_value"] - total["cost_basis"]
+            )
+        result = {
+            "as_of": as_of,
+            "method": "WEIGHTED_AVERAGE",
+            "accounts": account_reports,
+            "totals": list(totals.values()),
+            "holdings": sorted(
+                consolidated.values(), key=lambda h: (h["symbol"], h["exchange"], h["currency"])
+            ),
+            "positions": holdings,
+        }
+        return wire(result) if serialize else result
