@@ -14,6 +14,7 @@ import type { Navigate } from '@/components/app-shell'
 import { useWrite } from '@/lib/use-write'
 import { label, type Account, type Category } from '@/lib/api'
 import { Rules } from '@/pages/rules'
+import { MarketDataSettings } from '@/pages/market-data'
 
 export function Accounts({
   accounts,
@@ -123,7 +124,9 @@ export function Settings({
   categories: Category[]
   accounts: Account[]
 }) {
-  const [view, setView] = useState<'categories' | 'rules'>('categories')
+  const [view, setView] = useState<'categories' | 'rules' | 'market'>(
+    'categories',
+  )
   return (
     <>
       <nav className="range-tabs mb-4" aria-label="Settings sections">
@@ -139,9 +142,17 @@ export function Settings({
         >
           Rules
         </button>
+        <button
+          aria-pressed={view === 'market'}
+          onClick={() => setView('market')}
+        >
+          Market Data
+        </button>
       </nav>
       {view === 'categories' ? (
         <CategorySettings categories={categories} />
+      ) : view === 'market' ? (
+        <MarketDataSettings />
       ) : (
         <>
           <PageHeader title="Settings" description="Transaction automation" />

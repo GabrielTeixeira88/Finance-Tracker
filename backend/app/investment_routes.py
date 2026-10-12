@@ -54,10 +54,17 @@ def asset(asset_id: UUID, db: DB, as_of: date | None = None):
 
 @router.post("/assets/{asset_id}/prices", status_code=201)
 def price(asset_id: UUID, data: PriceInput, db: DB):
+    from app.market_models import AssetPricing
+
     ledger.require(db, Asset, asset_id)
     row = PriceObservation(asset_id=asset_id, **data.model_dump())
     db.add(row)
     db.flush()
+    config = db.scalar(select(AssetPricing).where(AssetPricing.asset_id == asset_id))
+    if config is None:
+        config = AssetPricing(asset_id=asset_id)
+        db.add(config)
+    config.mode = "MANUAL"
     return investments.wire(row)
 
 

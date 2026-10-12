@@ -16,12 +16,18 @@ from app.database import get_engine, get_session
 from app.ingestion_routes import router as ingestion_router
 from app.investment_import_routes import router as investment_import_router
 from app.investment_routes import router as investment_router
+from app.market_routes import router as market_router
 from app.routes import router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    from app.market_scheduler import start_worker
+
+    stop, thread = start_worker()
     yield
+    stop.set()
+    thread.join(timeout=20)
     if get_engine.cache_info().currsize:
         get_engine().dispose()
         get_engine.cache_clear()
@@ -40,6 +46,7 @@ app = FastAPI(
     },
 )
 app.include_router(investment_router)
+app.include_router(market_router)
 app.include_router(investment_import_router)
 app.include_router(router)
 app.include_router(automation_router)

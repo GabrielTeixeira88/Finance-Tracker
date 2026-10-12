@@ -28,11 +28,13 @@ const holdingSchema = z.object({
   price_date: z.string().nullable(),
   price_source: z.string().nullable(),
   price_stale: z.boolean(),
+  price_freshness: z.string().optional(),
   market_value: money.nullable(),
   unrealized: money.nullable(),
 })
 export type Holding = z.infer<typeof holdingSchema>
 const totalSchema = z.object({
+  unrealized: money.nullable().optional(),
   currency: z.string(),
   cash: money,
   known_holdings_value: money,

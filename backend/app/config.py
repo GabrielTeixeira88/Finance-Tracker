@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     sqlite_busy_timeout_ms: int = Field(default=5000, ge=1, le=60000)
     learning_min_examples: int = Field(default=3, ge=3, le=100)
     schedule_match_days: int = Field(default=3, ge=0, le=14)
+    brapi_api_token: SecretStr = SecretStr("")
+    brapi_raw_history: bool = False
+    brapi_batch_size: int = Field(default=1, ge=1, le=20)
+    alpha_vantage_api_key: SecretStr = SecretStr("")
+    alpha_vantage_full_history: bool = False
+    market_sync_interval_minutes: int = Field(default=360, ge=60, le=10080)
 
     @property
     def resolved_database_path(self) -> Path:

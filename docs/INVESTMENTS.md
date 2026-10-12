@@ -38,7 +38,7 @@ Phase 5 adds activity-derived holdings, exact investment cash and dated manual v
   inspected investment reference's compact rows, right-aligned data and internal tabs.
   No third-party source is copied for this phase; existing legal notices remain intact.
 
-Deferred: FX trades, security transfers, corporate actions, tax lots, live prices,
+Deferred: FX trades, security transfers, corporate actions, tax lots, intraday streaming,
 performance returns, benchmarks, margin, short sales and automated investment posting.
 
 ## Posting and valuation formulas
@@ -51,12 +51,13 @@ performance returns, benchmarks, margin, short sales and automated investment po
 - DIVIDEND / INTEREST: net cash and investment income = gross - fees - taxes.
 - Standalone FEE / TAX: gross is the sole cash debit; additional charges are rejected.
   Standalone charges are not retrospectively allocated into security cost basis.
-- Market value = quantity * latest manual price at/before the as-of date.
+- Market value = quantity * selected eligible cached price at/before the as-of date.
   Unrealized result = market value - remaining basis. Account value = cash + holdings;
   any missing open-position price makes the complete value unavailable.
 
-Prices older than the as-of date are explicitly stale; this conservative label is not
-an exchange-calendar freshness policy. Same-day ordering is posting sequence, not
+Current prices carry their actual date: prior observations up to seven days are
+carried; older observations are stale cached values. Historical values require
+seven-day coverage. This is a bounded carry policy, not an exchange calendar. Same-day ordering is posting sequence, not
 intraday exchange execution time. Ordinary ledger cash is applied before investment
 activities on the same date. Posting/voiding checks funding at each investment activity;
 existing ordinary-ledger overdraft rules are unchanged. Do not interpret this as a
@@ -122,10 +123,9 @@ and the original 5,300 / 2,500 accounting scenario. Screenshots use 1440x900,
 1920x1080 and 390px responsive layouts; all artifacts stay ignored in `.tmp`.
 
 Manual observations are add-only (one per asset/date); a price-correction audit workflow
-is deferred. No live prices, historical market-value chart, FX, security transfers,
-corporate actions, TWR/IRR, benchmark returns or jurisdictional tax reports are claimed.
-Phase 6 should specify market-data adapters, price provenance/freshness, symbol mapping
-and offline fallback before introducing network providers.
+is deferred. The original v0.5 release excludes provider prices, historical market value
+and FX; the v0.6.0 extension below adds those. Security transfers, corporate actions,
+TWR/IRR, benchmark returns and jurisdictional tax reports remain deferred.
 
 ### Validation checkpoint - October 11, 2026
 
@@ -142,3 +142,11 @@ and offline fallback before introducing network providers.
   Neither prevents startup; route-level splitting can be considered separately.
 - The regular user database was not reset, migrated or seeded for validation.
   All generated databases, logs and screenshots remain ignored; nothing is staged.
+
+## v0.6.0 market-data extension
+
+Provider and manual observations share the extended price table. Security pricing
+preferences, explicit coverage gaps, dated FX and portfolio/security charts are
+implemented independently of activity posting. Current totals may use labeled stale
+cache; historical gaps remain null. Original currencies, cost basis, realized results
+and cash are unchanged. See [market-data policy and setup](MARKET_DATA.md).

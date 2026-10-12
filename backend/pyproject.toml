@@ -30,6 +30,9 @@ packages = ["app"]
 [tool.hatch.version]
 path = "app/_version.py"
 
+[tool.uv]
+cache-keys = [{ file = "pyproject.toml" }, { file = "app/_version.py" }]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"

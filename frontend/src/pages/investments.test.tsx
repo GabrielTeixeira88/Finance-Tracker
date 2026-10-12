@@ -193,7 +193,7 @@ it('renders exact holdings, cash and missing-price state without invented market
   expect(within(table).getByText('R$100.50')).toBeInTheDocument()
   expect(within(table).getByText('R$73.00')).toBeInTheDocument()
   expect(
-    screen.getByText(/position\(s\) have no manual price/),
+    screen.getByText(/position\(s\) have no eligible price/),
   ).toBeInTheDocument()
   expect(within(table).getAllByText('Unavailable')).toHaveLength(3)
 })

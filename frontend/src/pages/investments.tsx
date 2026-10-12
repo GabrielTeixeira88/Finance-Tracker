@@ -28,6 +28,7 @@ import { useWrite } from '@/lib/use-write'
 import { TransactionTable } from '@/components/transaction-table'
 import { ActivityForm, AssetForm, PriceForm } from './investment-forms'
 import BrokerageImports from './investment-imports'
+import { PortfolioHistory, SecurityMarketData } from './market-data'
 import './investments.css'
 
 function Value({
@@ -144,8 +145,12 @@ export function HoldingsTable({
                     <Value value={r.last_price} currency={r.currency} />
                     {r.price_date && (
                       <small>
-                        {r.price_date} · Manual
-                        {r.price_stale ? ' · Prior date' : ''}
+                        {r.price_date} · {r.price_source ?? 'Unknown source'}
+                        {r.price_freshness === 'STALE'
+                          ? ' · Stale cache'
+                          : r.price_stale
+                            ? ' · Carried prior quote'
+                            : ''}
                       </small>
                     )}
                   </td>
@@ -379,7 +384,7 @@ export function InvestmentWorkspace({
         description={
           selected
             ? `${selected.symbol} · ${selected.exchange} · ${selected.currency}`
-            : 'Activity-derived positions · Weighted-average cost · Manual prices'
+            : 'Activity-derived positions · Weighted-average cost · Cached market prices'
         }
       >
         {(security || accountId) && (
@@ -488,6 +493,7 @@ export function InvestmentWorkspace({
           )}
           {security && selected ? (
             <>
+              <SecurityMarketData key={security} id={security} asOf={asOf} />
               <SectionHeader
                 title="Position across accounts"
                 detail="Missing market prices are never substituted with cost basis."
@@ -513,6 +519,7 @@ export function InvestmentWorkspace({
             <>
               {tab === 'Overview' && (
                 <>
+                  <PortfolioHistory accountId={accountId} asOf={asOf} />
                   {portfolio.data.totals.length === 0 && (
                     <EmptyState
                       title="No investment accounts yet"
@@ -536,11 +543,18 @@ export function InvestmentWorkspace({
                         </strong>
                         <small>
                           {total.missing_prices
-                            ? `${total.missing_prices} position(s) have no manual price. Known values are partial.`
-                            : `Cash plus holdings at last-known manual prices as of ${portfolio.data.as_of}.`}
+                            ? `${total.missing_prices} position(s) have no eligible price. Known values are partial.`
+                            : `Cash plus holdings at cached prices as of ${portfolio.data.as_of}.`}
                         </small>
                       </div>
                       <div className="investment-metrics">
+                        <div>
+                          <span className="metadata">Unrealized P&amp;L</span>
+                          <Value
+                            value={total.unrealized ?? null}
+                            currency={total.currency}
+                          />
+                        </div>
                         {[
                           ['Cash', total.cash],
                           ['Known holdings value', total.known_holdings_value],
