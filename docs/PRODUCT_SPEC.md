@@ -1,6 +1,6 @@
 # Current product scope
 
-Current release scope: **v0.6.0 - Market Data & Portfolio Valuation**. Next: **v0.7.0 - Investment Analytics**; see [market-data contracts](MARKET_DATA.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.7.0 - Investment Analytics**. Next: **v0.8.0 - Gmail Ingestion**; see [analytics contracts](INVESTMENT_ANALYTICS.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
 
 Finance Tracker is a single-user, offline-capable local finance application. Financial
 records stay in a local SQLite database. No authentication, cloud persistence, telemetry,
@@ -16,9 +16,9 @@ pagination, individual editing, and confirmed atomic bulk review/category/payee 
 Metadata edits must not change monetary postings. Transfer review applies to both sides;
 transfer/opening financial correction remains restricted. Review is not reconciliation.
 
-Functional destinations are Overview, Accounts, Transactions, Budget, Investments, and Settings. Categories
-are configuration; transfers belong to Add Transaction. Performance,
-Net Worth, and Reports remain read-only previews, not finished financial engines.
+Functional destinations are Overview, Accounts, Transactions, Budget, Investments,
+Performance and Settings. Categories are configuration; transfers belong to Add
+Transaction. Net Worth and Reports remain read-only previews, not finished engines.
 
 Phase 3 implements raw source -> parsing/normalization -> payee identification
 -> candidate -> rules -> review -> ledger for local CSV/OFX files.
@@ -118,7 +118,8 @@ financial regression is preserved. See [validation details and remaining limits]
 Phase 5 implements investment accounts, securities, exact activities, weighted-average
 holdings, realized results, manual valuation and local brokerage CSV imports.
 Investment cash is integrated into account balances; Overview is explicitly cash-only.
-Performance remains illustrative. The v0.6.0 extension adds cached market data and valuation (see MARKET_DATA.md).
+The v0.6.0 extension adds cached market data and valuation (see MARKET_DATA.md).
+The v0.7 release replaces illustrative Performance with real analytics.
 See [investment behavior and validation](INVESTMENTS.md).
 
 
@@ -142,3 +143,20 @@ invented zeroes. It measures portfolio value, not investment return.
 The synthetic market demo exercises multiple currencies, manual/missing/stale prices
 and closed positions through persisted records. Real providers never become a
 fallback to demo figures. See [coverage and limitations](MARKET_DATA.md).
+
+## v0.7: investment analytics
+
+Performance measures cash-flow-adjusted daily returns separately from portfolio value,
+with annualized XIRR, period gain, external flows and cached benchmark comparisons.
+Account selection changes the measurement boundary; inter-brokerage transfers are
+internal only when both accounts are selected. Allocation includes cash, explicit
+Unknown classifications, current/historical values and top-1/3/5 concentration.
+Income shows recorded gross, fees, withholding/taxes and net amounts by month, year,
+account and security, retaining original currencies. Position results preserve closed
+positions and identify realized/unrealized/income/charges without double deduction.
+
+These are read-only analytics, not trading, tax reporting, forecasting or investment
+advice. No yield is projected. XIRR conservatively declines multiple-sign-change
+cash-flow streams; FX decomposition is limited to unchanged quantities. ETF/index
+comparisons are labeled price proxies. Full attribution, look-through, corporate
+actions, rebalancing and risk engines remain separate future work.

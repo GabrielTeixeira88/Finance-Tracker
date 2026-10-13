@@ -121,12 +121,12 @@ export function AppShell({
               key={item}
               className="nav-item"
               title={
-                ['Performance', 'Net Worth', 'Reports'].includes(item)
+                ['Net Worth', 'Reports'].includes(item)
                   ? `${item} · Preview`
                   : item
               }
               aria-label={
-                ['Performance', 'Net Worth', 'Reports'].includes(item)
+                ['Net Worth', 'Reports'].includes(item)
                   ? `${item} Preview`
                   : item
               }
@@ -139,7 +139,7 @@ export function AppShell({
             >
               <Icon size={20} aria-hidden="true" />
               <span className="nav-label">{item}</span>
-              {['Performance', 'Net Worth', 'Reports'].includes(item) && (
+              {['Net Worth', 'Reports'].includes(item) && (
                 <span className="nav-preview">Preview</span>
               )}
             </button>
@@ -213,7 +213,7 @@ export function AppShell({
               <button className="nav-item" key={item} onClick={() => go(item)}>
                 <Icon size={18} />
                 {item}
-                {['Performance', 'Net Worth', 'Reports'].includes(item) && (
+                {['Net Worth', 'Reports'].includes(item) && (
                   <span className="nav-preview">Preview</span>
                 )}
               </button>

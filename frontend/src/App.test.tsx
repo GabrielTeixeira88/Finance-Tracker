@@ -298,15 +298,17 @@ it('labels future sections as previews and never injects a fake portfolio into a
   expect(
     within(nav).queryByRole('button', { name: 'Investments Preview' }),
   ).not.toBeInTheDocument()
-  for (const page of ['Performance', 'Net Worth', 'Reports']) {
+  expect(
+    within(nav).getByRole('button', { name: 'Performance' }),
+  ).toBeInTheDocument()
+  expect(
+    within(nav).queryByRole('button', { name: 'Performance Preview' }),
+  ).not.toBeInTheDocument()
+  for (const page of ['Net Worth', 'Reports']) {
     expect(
       within(nav).getByRole('button', { name: `${page} Preview` }),
     ).toBeInTheDocument()
   }
-  await userEvent.click(
-    within(nav).getByRole('button', { name: 'Performance Preview' }),
-  )
-  expect(await screen.findByText('Demo workspace required')).toBeInTheDocument()
   expect(screen.queryByText('WRLD11')).not.toBeInTheDocument()
   await userEvent.click(
     within(nav).getByRole('button', { name: 'Net Worth Preview' }),

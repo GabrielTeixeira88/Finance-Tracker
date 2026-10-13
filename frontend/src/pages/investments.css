@@ -2,6 +2,21 @@
   max-width: 1680px;
   margin: 0 auto;
 }
+.investment-workspace .page-actions {
+  flex-wrap: wrap;
+}
+.investment-workspace .range-tabs {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.investment-workspace .range-tabs button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.investment-workspace progress {
+  accent-color: var(--chart-line);
+  max-width: 160px;
+}
 .investment-toolbar,
 .investment-actions {
   display: flex;

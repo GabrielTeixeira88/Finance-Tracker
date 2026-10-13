@@ -174,3 +174,25 @@ mapping and corporate-action gaps sit under Pricing preferences and coverage. Ca
 observations are an expandable table. Settings gains Market Data alongside Categories
 and Rules. Quote date and retrieval/sync timestamps are distinct. Missing totals and
 historical gaps remain explicit; no performance percentage is inferred from deposits.
+
+## Unreleased v0.7 investment analytics
+
+Investments now has Performance, Allocation and Income subviews using the existing
+account/as-of toolbar. The primary Performance destination opens the real subview;
+it is no longer a synthetic preview. Re-selecting that destination resets the local
+subview correctly. No sidebar geometry, theme tokens or general navigation design changes.
+
+Reference performance comparison and income screenshots were inspected, alongside
+the source calculations and allocation derivations. The adaptation keeps compact
+metrics, a full-width comparison chart, internal tabs, exact tooltips and dense rows.
+It retains Finance Tracker's approved dark palette and deliberately omits unsupported
+volatility/drawdown statistics, forecast yield, look-through and allocation targets.
+Chart geometry uses one shared dimensionless normalization for both return series;
+benchmark lines are dashed. The original exact percentages remain in tooltips and
+the keyboard-accessible table. Income uses separate charts for original currencies.
+
+Allocation rows drill into securities; sector/geography editing lives on security
+detail and leaves missing classification Unknown. Position rankings stay within each
+currency and label absolute gains separately from returns. Existing value charts
+remain labeled portfolio value, not performance. New controls wrap or scroll locally
+at narrow widths, and page actions wrap without changing the global shell.

@@ -150,3 +150,10 @@ preferences, explicit coverage gaps, dated FX and portfolio/security charts are
 implemented independently of activity posting. Current totals may use labeled stale
 cache; historical gaps remain null. Original currencies, cost basis, realized results
 and cash are unchanged. See [market-data policy and setup](MARKET_DATA.md).
+
+## Unreleased v0.7 analytics extension
+
+Performance, income and allocation now compose these same reconstruction services.
+The earlier performance deferrals describe historical release boundaries; the current
+working implementation is documented in [investment analytics](INVESTMENT_ANALYTICS.md).
+Activity posting and correction rules remain unchanged.
