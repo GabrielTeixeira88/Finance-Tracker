@@ -1,6 +1,6 @@
 # Finance Tracker data model
 
-Current release scope: **v0.6.0 - Market Data & Portfolio Valuation**. Next: **v0.7.0 - Investment Analytics**; see [market-data contracts](MARKET_DATA.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.7.0 - Investment Analytics**. Next: **v0.8.0 - Gmail Ingestion**; see [analytics contracts](INVESTMENT_ANALYTICS.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
 
 All financial records stay in local SQLite. The ledger is authoritative; there
 is no editable or cached account-balance column.
@@ -335,3 +335,17 @@ basis uses 60-digit Decimal intermediates and releases residual basis on full cl
 
 Only the price cache is rebuilt for its extended uniqueness constraint. No investment,
 ordinary transaction, import, budget, rule or account table is rewritten.
+
+## v0.7.0 (`sqlite_0009`)
+
+AssetClassification adds one optional record per Asset, with nullable user-declared
+sector and geography plus normal ID/timestamps. Foreign-key and unique constraints
+prevent orphan/duplicate classifications. Empty labels become Unknown in reports;
+metadata is current, not historical issuer look-through. The migration creates only
+this table and preserves every v0.6 financial/cache record.
+
+Performance, external flows, income, allocation and P&L are read-only projections.
+They reuse InvestmentActivity, linked Transfer/Transaction, PriceObservation and
+FXObservation; there are no editable holdings, stored gains or benchmark postings.
+Benchmark selection refers to an existing Asset and is session-local. Its cached
+raw/manual prices are identified as a price-return proxy, never a total-return index.

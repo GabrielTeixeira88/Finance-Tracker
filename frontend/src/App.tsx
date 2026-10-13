@@ -15,6 +15,7 @@ export default function App() {
     page: Page
     accountId?: string
     filters?: Record<string, string>
+    visit?: number
   }>({
     page: 'Overview',
   })
@@ -27,7 +28,11 @@ export default function App() {
     queryFn: ({ signal }) => getCategories(signal),
   })
   const navigate = (page: Page, accountId?: string) =>
-    setRoute({ page, accountId })
+    setRoute((previous) => ({
+      page,
+      accountId,
+      visit: (previous.visit ?? 0) + 1,
+    }))
   const selected = accounts.data?.find((a) => a.id === route.accountId)
   return (
     <AppShell page={route.page} navigate={navigate}>
@@ -100,15 +105,18 @@ export default function App() {
               }
             />
           )}
-          {route.page === 'Investments' && (
+          {['Investments', 'Performance'].includes(route.page) && (
             <Investments
-              key={route.accountId ?? 'all'}
+              key={`${route.page}-${route.accountId ?? 'all'}-${route.visit ?? 0}`}
+              initialView={
+                route.page === 'Performance' ? 'Performance' : 'Overview'
+              }
               initialAccount={route.accountId}
               accounts={accounts.data}
               categories={categories.data}
             />
           )}
-          {['Performance', 'Net Worth', 'Reports'].includes(route.page) && (
+          {['Net Worth', 'Reports'].includes(route.page) && (
             <Preview
               key={route.page}
               page={route.page as PreviewPage}

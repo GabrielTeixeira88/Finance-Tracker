@@ -187,7 +187,8 @@ Validation checkpoint, October 12, 2026:
 The release audit also restricts incremental raw-price coverage to RAW_CLOSE rows,
 backfills FX for newly added older cash history, and checks cancellation between batches.
 
-No exchange calendar, corporate-action reconstruction, security transfers, TWR/IRR,
-benchmarks or investment tax reports are implemented. Seven-day carry is a stated
-approximation; provider gaps/entitlements remain visible. Next v0.7 work should define
-cash-flow-adjusted return calculations and coverage policies before adding performance.
+No exchange calendar, corporate-action reconstruction, security transfers or investment
+tax reports are implemented. Seven-day carry is a stated approximation; provider gaps
+and entitlements remain visible. The unreleased [v0.7 analytics](INVESTMENT_ANALYTICS.md)
+reuse these cached readers for returns and price-return benchmark proxies; no new
+provider, request-on-read behavior or raw/adjusted convention is introduced.

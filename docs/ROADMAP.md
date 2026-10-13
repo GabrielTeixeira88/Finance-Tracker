@@ -2,7 +2,8 @@
 
 Versions are the primary milestone identifiers. Historical phases remain traceable
 below; they do not imply earlier releases or tags. Current application version is
-0.6.0. v0.7.0 Investment Analytics is next; no analytics implementation is included.
+0.7.0. Investment Analytics is completed and validated; v0.8.0 Gmail Ingestion
+is next. See [methodology and validation](INVESTMENT_ANALYTICS.md).
 
 ## Historical mapping
 
@@ -52,16 +53,23 @@ v1.0.0 requires validated stability, not a milestone counter reaching a number.
   Live acceptance is limited by available credentials and raw-history plan access;
   see [implementation and validation](MARKET_DATA.md).
 
-## Future versions - planned, not implemented
-
-- **v0.7.0 - next: Investment Analytics.** TWR, IRR/MWR, benchmarks, allocation, portfolio
+- **v0.7.0 - completed and validated: Investment Analytics.** TWR, IRR/MWR, benchmarks, allocation, portfolio
   insights and income/dividend analytics. Depends on reliable cash flows, historical
   prices, FX and corporate-action policy; illustrative charts are not returns.
-  Planned views include account/security returns, realized/unrealized breakdown,
+  Implemented views include account returns, security P&L, realized/unrealized breakdown,
   sector/geographic/currency exposure, attribution and performance/data-quality indicators.
+
+## Current development and future versions
+
 - **v0.8.0 - Gmail Ingestion.** Opt-in mail adapters, local OAuth/token handling,
   bounded parsing, normalized candidates, rules and explicit review. Depends on
   ingestion/provenance; mail and credentials remain private.
+  Reuse the v0.3 import pipeline and v0.2 manual-override protections. Planned scope:
+  label-based discovery, incremental polling, bank-specific parsers, normalized
+  transaction candidates, payee/rule reuse, duplicate prevention and source provenance;
+  review queue, parser diagnostics, sync history and offline operation. OAuth credentials
+  stay in secure local storage with revocation/disconnection. Reliable automatic posting
+  is optional and must require explicit configuration; nothing posts by default.
 - **v0.9.0 - Multi-Source Reconciliation.** CSV/OFX/Gmail matching, provenance,
   deduplication, cleared/reconciled states and bank-statement reconciliation.
   Depends on adapters and reliable identities. Review remains separate; weak

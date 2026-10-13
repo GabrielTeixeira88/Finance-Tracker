@@ -1,7 +1,7 @@
 # Finance Tracker
 
-Current version: **0.6.0 - Market Data & Portfolio Valuation**.
-Next: **v0.7.0 - Investment Analytics** (not implemented).
+Current version: **0.7.0 - Investment Analytics**.
+Next milestone: **v0.8.0 - Gmail Ingestion** (not implemented).
 See [changelog](CHANGELOG.md) and [version roadmap](docs/ROADMAP.md).
 
 A single-user, local-first, self-hosted personal finance application. All durable
@@ -12,7 +12,7 @@ the ledger and cached valuation views remain local and usable offline.
 Implemented: accounts, categories, income/expenses, atomic linked transfers, opening
 balances, reconstructed account balances, and a historical overview. Investment accounts
 now support activity-derived holdings and manual valuation. v0.1.0 adds an opt-in
-18-month synthetic workspace. Performance, Net Worth, and Reports remain previews.
+18-month synthetic workspace. Net Worth and Reports remain previews.
 These remain visual scaffolding; v0.4.0 replaces the former Budget preview with real spending targets.
 v0.2.0 adds normalized payees, transaction review, combined search/filters, stable
 server pagination, and atomic bulk metadata updates. v0.2.0 adds deterministic metadata
@@ -27,6 +27,16 @@ cost, realized results, manual prices and confirmed brokerage CSV imports. See
 The v0.6.0 market-data extension adds documented quote adapters, exact dated FX,
 cached current/historical valuation and manual-price controls. See
 [setup, provider limits and valuation policy](docs/MARKET_DATA.md).
+
+The v0.7.0 analytics extension adds scope-aware TWR, annualized XIRR,
+cached benchmark comparisons, investment income, allocation and P&L components.
+Performance opens the functional Investments performance view. Missing data stays
+unavailable; contributions are not gains. See [methods and limits](docs/INVESTMENT_ANALYTICS.md).
+After migrations, an **empty, separate** database can load the expanded fixture with
+`uv run python -m app.seed_analytics_demo` from `backend/`. Set `DATABASE_PATH` to an
+unused local path first; the command preserves an already populated workspace.
+Choose **Synthetic Analytics Portfolio**, ending **2026-09-30**, and **DEMOBENCH**
+for a fully covered example. Other demo accounts intentionally retain coverage gaps.
 
 ## Run locally (no Docker or PostgreSQL required)
 
@@ -191,10 +201,10 @@ income **1,000**, expenses **200**. Transfers and openings never enter flow tota
 - **Budget:** Spending & Budgets with Overview, Budgets and Insights tabs, shared month
   and currency controls, target/group editors, rollover, refunds and ledger drill-downs.
   See [budget semantics and refund policy](docs/BUDGETS.md).
-- **Investments:** Overview, Holdings, Activity, Accounts and Imports; add securities,
+- **Investments:** Overview, Performance, Allocation, Income, Holdings, Activity, Accounts and Imports; add securities,
   preview/confirm activities, inspect account/security positions and record manual prices.
   Cash and security value are separate; missing prices never become zero valuations.
-- **Preview sections:** a fictional Performance illustration; Net Worth and Reports layouts
+- **Preview sections:** Net Worth and Reports layouts
   reusing actual account history. No editing or final financial engines are provided.
   Fictional fixtures are available only in an explicitly seeded demo database.
 
@@ -268,6 +278,8 @@ without rewriting financial records. `sqlite_0007` adds assets, immutable invest
 activities, manual observations and typed source links without rewriting old tables.
 `sqlite_0008` extends price observations and adds pricing preferences, dated FX and
 sync state. Existing manual observations are retained and their assets stay in manual mode.
+`sqlite_0009` adds optional asset sector/geography classification for analytics;
+existing financial and market-data tables remain unchanged.
 Do not apply SQLite migrations to
 an existing PostgreSQL database or stamp old databases to the new revision.
 
@@ -310,6 +322,6 @@ adds CSV/OFX imports with explicit preview/confirmation. See the
 `backend/app/_version.py` is authoritative. Hatch derives Python package metadata
 from it and FastAPI reports it in OpenAPI. Frontend package metadata mirrors it,
 checked by `test_release_version.py`; no About/version display exists to synchronize.
-Run `uv lock --project backend` after Python metadata changes. Tags use `v0.6.0`;
+Run `uv lock --project backend` after Python metadata changes. Tags use `v0.7.0`;
 future development branches do not change the released application version.
 Historical phases and immutable seed/migration identifiers remain traceable in the roadmap.

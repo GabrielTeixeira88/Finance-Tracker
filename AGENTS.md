@@ -32,7 +32,7 @@
 - Run tests and linting before considering a task complete. Report checks that could not run.
 - Do not silently redesign the architecture.
 - Keep SQLAlchemy and Alembic. Preserve foreign keys, WAL, bounded lock waits, and atomic linked transfers.
-- Functional navigation is Overview, Accounts, Transactions, Budget (Spending & Budgets), Investments, Settings. Transfers belong to Add Transaction; Categories belong to Settings. Performance, Net Worth, and Reports are explicitly labeled read-only previews, not completed engines.
+- Functional navigation is Overview, Accounts, Transactions, Budget (Spending & Budgets), Investments, Performance, Settings. Transfers belong to Add Transaction; Categories belong to Settings. Performance opens investment analytics; Net Worth and Reports remain labeled read-only previews.
 - Preserve the approved application hierarchy and restrained surfaces; do not copy third-party branding/assets or invent financial history.
 - Preserve adapted-source attribution and AGPL/OFL notices in THIRD_PARTY_NOTICES.md and frontend/public/licenses.
 - Keep product documentation focused on Finance Tracker. The roadmap may name the explicitly approved product/workflow references; preserve legal/source-attribution notices and do not copy third-party branding or assets.
@@ -70,6 +70,13 @@
 
 
 ## Releases and versioning
+- v0.7 analytics are read-only ledger projections. Use shared historical prices/FX and
+  scope-aware linked flows; no independent balance or return cache is authoritative.
+  Daily TWR uses documented end-of-day flows. XIRR is annualized actual/365;
+  ambiguous roots and missing required data remain unavailable. Never substitute
+  a price-only benchmark for a total-return index without an explicit label.
+  Allocation includes cash; incomplete coverage must not inflate known weights.
+  Fees already in basis/proceeds/net income must not be deducted a second time.
 - Use MAJOR.MINOR.PATCH, with annotated Git tags vMAJOR.MINOR.PATCH. Before 1.0,
   new functionality normally increments MINOR and compatible fixes increment PATCH.
   1.0.0 requires validated stability, not a prescribed number of milestones.

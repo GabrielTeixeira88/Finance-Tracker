@@ -29,6 +29,11 @@ import { TransactionTable } from '@/components/transaction-table'
 import { ActivityForm, AssetForm, PriceForm } from './investment-forms'
 import BrokerageImports from './investment-imports'
 import { PortfolioHistory, SecurityMarketData } from './market-data'
+import InvestmentAnalytics, {
+  AnalyticsSummary,
+  SecurityClassification,
+  SecurityResults,
+} from './investment-analytics'
 import './investments.css'
 
 function Value({
@@ -304,10 +309,12 @@ export default function Investments({
   accounts,
   categories,
   initialAccount = '',
+  initialView = 'Overview',
 }: {
   accounts: Account[]
   categories: Category[]
   initialAccount?: string
+  initialView?: string
 }) {
   const demo = useQuery({
     queryKey: ['demo'],
@@ -324,6 +331,7 @@ export default function Investments({
       accounts={accounts}
       categories={categories}
       initialAccount={initialAccount}
+      initialView={initialView}
       initialDate={demo.data.enabled ? demo.data.end_date : ''}
     />
   )
@@ -334,15 +342,19 @@ export function InvestmentWorkspace({
   categories,
   initialAccount = '',
   initialDate = '',
+  initialView = 'Overview',
 }: {
   accounts: Account[]
   categories: Category[]
   initialAccount?: string
   initialDate?: string
+  initialView?: string
 }) {
   const [accountId, setAccountId] = useState(initialAccount)
-  const [asOf, setAsOf] = useState(initialDate)
-  const [tab, setTab] = useState('Overview')
+  const [asOf, setAsOf] = useState(
+    initialDate || new Date().toLocaleDateString('en-CA'),
+  )
+  const [tab, setTab] = useState(initialView)
   const [security, setSecurity] = useState('')
   const [editor, setEditor] = useState<'activity' | 'asset' | 'price' | null>(
     null,
@@ -421,21 +433,28 @@ export function InvestmentWorkspace({
       </PageHeader>
       <div className="investment-toolbar">
         <nav className="range-tabs" aria-label="Investment views">
-          {['Overview', 'Holdings', 'Activity', 'Accounts', 'Imports'].map(
-            (t) => (
-              <button
-                key={t}
-                aria-pressed={tab === t}
-                onClick={() => {
-                  setTab(t)
-                  setSecurity('')
-                  setEditor(null)
-                }}
-              >
-                {t}
-              </button>
-            ),
-          )}
+          {[
+            'Overview',
+            'Performance',
+            'Allocation',
+            'Income',
+            'Holdings',
+            'Activity',
+            'Accounts',
+            'Imports',
+          ].map((t) => (
+            <button
+              key={t}
+              aria-pressed={tab === t}
+              onClick={() => {
+                setTab(t)
+                setSecurity('')
+                setEditor(null)
+              }}
+            >
+              {t}
+            </button>
+          ))}
         </nav>
         <Field label="Portfolio account">
           <select
@@ -494,6 +513,13 @@ export function InvestmentWorkspace({
           {security && selected ? (
             <>
               <SecurityMarketData key={security} id={security} asOf={asOf} />
+              <SecurityClassification id={security} />
+              <SecurityResults
+                id={security}
+                accountId={accountId}
+                asOf={asOf}
+                onSecurity={onOpen}
+              />
               <SectionHeader
                 title="Position across accounts"
                 detail="Missing market prices are never substituted with cost basis."
@@ -515,11 +541,23 @@ export function InvestmentWorkspace({
             </>
           ) : tab === 'Imports' ? (
             <BrokerageImports accounts={accounts} />
+          ) : ['Performance', 'Allocation', 'Income'].includes(tab) ? (
+            <InvestmentAnalytics
+              view={tab}
+              accountId={accountId}
+              asOf={asOf}
+              onSecurity={onOpen}
+            />
           ) : (
             <>
               {tab === 'Overview' && (
                 <>
                   <PortfolioHistory accountId={accountId} asOf={asOf} />
+                  <AnalyticsSummary
+                    accountId={accountId}
+                    asOf={asOf}
+                    onOpen={() => setTab('Performance')}
+                  />
                   {portfolio.data.totals.length === 0 && (
                     <EmptyState
                       title="No investment accounts yet"

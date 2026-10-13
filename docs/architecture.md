@@ -1,6 +1,6 @@
 # Application architecture
 
-Current release scope: **v0.6.0 - Market Data & Portfolio Valuation**. Next: **v0.7.0 - Investment Analytics**; see [market-data contracts](MARKET_DATA.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.7.0 - Investment Analytics**. Next: **v0.8.0 - Gmail Ingestion**; see [analytics contracts](INVESTMENT_ANALYTICS.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
 
 ## Local storage and deployment
 
@@ -115,7 +115,8 @@ user edits; it does not restore or reset records.
 illustrative holdings/activity, and Performance chart points are stored as JSON
 with decimal strings in that isolated table. They have no financial-model relationships,
 write APIs, or influence on ledger totals. Net Worth and Reports previews instead
-reuse the ledger-history API. Performance requires a synthetic fixture. Budget and Investments now use their own
+reuse the ledger-history API. The old Performance illustration is no longer routed;
+v0.7 uses actual investment analytics. Budget and Investments now use their own
 real domains; legacy illustrative holdings are never converted into real positions.
 
 Frontend charts normalize exact BigInt amounts to bounded dimensionless coordinates;
@@ -214,3 +215,18 @@ batched reads. No derived value is stored as a new source of truth.
 The optional in-process scheduler operates only while a single API worker is running.
 Read routes never fetch providers; failed refresh cannot erase prices or block ledger use.
 See [decisions, provider contracts and operational limits](MARKET_DATA.md).
+
+## v0.7 analytics
+
+`performance_math` contains pure Decimal TWR/XIRR. `investment_analytics` classifies
+external flows from exact linked transfer boundaries and composes the existing
+`market_valuation.history`, PriceBook, FXBook and weighted-average reconstruction.
+History now offers an internal unrounded result and account-group scope; the v0.6
+wire contract is preserved. Portfolio/account/group analytics batch database reads;
+no network calls, background jobs or new financial posting paths are introduced.
+
+`analytics_routes` exposes performance, income, allocation, insights and explicit
+asset classification. Return and allocation responses identify method, currency,
+period and completeness. Frontend queries use the existing TanStack mutation
+invalidation and exact-string money/BigInt chart normalization. Performance no longer
+uses the old illustrative preview payload. See [formulas and boundaries](INVESTMENT_ANALYTICS.md).

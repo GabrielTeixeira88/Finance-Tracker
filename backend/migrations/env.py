@@ -1,6 +1,6 @@
 from alembic import context
 
-from app import market_models, models  # noqa: F401
+from app import analytics_models, market_models, models  # noqa: F401
 from app.config import get_settings
 from app.database import Base, make_engine
 

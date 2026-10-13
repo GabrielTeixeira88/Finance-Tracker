@@ -6,7 +6,23 @@ of independently published releases or tags. See [the roadmap](docs/ROADMAP.md).
 
 ## [Unreleased]
 
-Next: v0.7.0 - Investment Analytics. No implementation yet.
+## [0.7.0] - 2026-10-13
+
+### Added
+- Scope-aware external flows, exact daily TWR and bounded annualized XIRR.
+- Performance history, cached price-return benchmark overlays and explicit coverage reasons.
+- Actual dividend/interest reporting, cash-inclusive allocation and declared asset metadata.
+- Position P&L components, closed positions, concentration and limited exact FX decomposition.
+- Performance/Allocation/Income subviews, deterministic analytics demo and regression tests.
+- Additive `sqlite_0009` metadata migration; financial records are unchanged.
+
+### Changed
+- Investments now includes functional Performance, Allocation and Income views.
+- Performance navigation opens analytics instead of a preview.
+
+### Limits
+- Date-only end-of-day TWR; conservative XIRR ambiguity handling.
+- Benchmarks are labeled price-return proxies; FX attribution requires unchanged positions.
 
 ## [0.6.0] - 2026-10-12
 

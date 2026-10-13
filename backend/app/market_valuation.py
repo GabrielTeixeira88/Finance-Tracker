@@ -128,7 +128,16 @@ def convert_totals(totals, fx, target, day):
     return known, missing, conversions
 
 
-def history(session, start, end, account_id=None, reporting_currency=None):
+def history(
+    session,
+    start,
+    end,
+    account_id=None,
+    reporting_currency=None,
+    *,
+    account_ids=None,
+    serialize=True,
+):
     from app.investments import wire
 
     if start > end or (end - start).days > 3660 or end > date.today():
@@ -141,6 +150,11 @@ def history(session, start, end, account_id=None, reporting_currency=None):
     if account_id:
         accounts = [a for a in accounts if a.id == account_id]
         if not accounts:
+            raise HTTPException(404, "Investment account not found")
+    if account_ids is not None:
+        requested = set(account_ids)
+        accounts = [a for a in accounts if a.id in requested]
+        if {a.id for a in accounts} != requested:
             raise HTTPException(404, "Investment account not found")
     ids = {a.id for a in accounts}
     book = PriceBook(session, end, settings)
@@ -231,20 +245,19 @@ def history(session, start, end, account_id=None, reporting_currency=None):
                 }
             )
             day += timedelta(days=1)
-    return wire(
-        {
-            "start": start,
-            "end": end,
-            "currency": target,
-            "fx_provider": fx.provider,
-            "method": "HISTORICAL_LEDGER_VALUE",
-            "carry_days": CARRY_DAYS,
-            "points": points,
-            "warning": "Portfolio value includes contributions and withdrawals; not investment "
-            "performance. Corporate actions require ledger correction "
-            "and explicit coverage review.",
-        }
-    )
+    result = {
+        "start": start,
+        "end": end,
+        "currency": target,
+        "fx_provider": fx.provider,
+        "method": "HISTORICAL_LEDGER_VALUE",
+        "carry_days": CARRY_DAYS,
+        "points": points,
+        "warning": "Portfolio value includes contributions and withdrawals; not investment "
+        "performance. Corporate actions require ledger correction "
+        "and explicit coverage review.",
+    }
+    return wire(result) if serialize else result
 
 
 def reporting(session, portfolio, target=None):

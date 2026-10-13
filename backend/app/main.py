@@ -10,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app._version import __version__
+from app.analytics_routes import router as analytics_router
 from app.automation_routes import router as automation_router
 from app.budget_routes import router as budget_router
 from app.database import get_engine, get_session
@@ -46,6 +47,7 @@ app = FastAPI(
     },
 )
 app.include_router(investment_router)
+app.include_router(analytics_router)
 app.include_router(market_router)
 app.include_router(investment_import_router)
 app.include_router(router)
