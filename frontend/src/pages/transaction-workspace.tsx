@@ -3,6 +3,7 @@ import { type Account, type Category } from '@/lib/api'
 import Transactions from './transactions'
 import Schedules from './schedules'
 import ImportWorkspace from './import-workspace'
+import { GmailQueue } from './gmail'
 
 export default function TransactionWorkspace(props: {
   accounts: Account[]
@@ -10,9 +11,9 @@ export default function TransactionWorkspace(props: {
   initialFilters?: Record<string, string>
   account?: Account
 }) {
-  const [view, setView] = useState<'activity' | 'scheduled' | 'imports'>(
-    'activity',
-  )
+  const [view, setView] = useState<
+    'activity' | 'scheduled' | 'imports' | 'gmail'
+  >('activity')
   return (
     <>
       {!props.account && (
@@ -22,6 +23,12 @@ export default function TransactionWorkspace(props: {
             onClick={() => setView('activity')}
           >
             All Activity
+          </button>
+          <button
+            aria-pressed={view === 'gmail'}
+            onClick={() => setView('gmail')}
+          >
+            Gmail review
           </button>
           <button
             aria-pressed={view === 'scheduled'}
@@ -44,6 +51,8 @@ export default function TransactionWorkspace(props: {
           accounts={props.accounts}
           categories={props.categories}
         />
+      ) : view === 'gmail' ? (
+        <GmailQueue accounts={props.accounts} categories={props.categories} />
       ) : (
         <Schedules accounts={props.accounts} categories={props.categories} />
       )}

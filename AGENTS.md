@@ -70,6 +70,13 @@
 
 
 ## Releases and versioning
+- v0.8 Gmail is read-only and opt-in. Tokens belong only in a supported OS vault;
+  never expose them to React, SQLite or logs. Network calls stay outside write transactions.
+- Gmail parsers produce candidates, never ledger entries. Preserve mailbox/message
+  identity before posting, advance history only after persistence, and confirm through
+  shared ingestion. Special movements require linking or skipping; no automatic posting.
+- Add real bank parsers only from verified sanitized templates and deterministic tests.
+  Sender matching is not proof of authenticity. Never render email HTML or fetch attachments.
 - v0.7 analytics are read-only ledger projections. Use shared historical prices/FX and
   scope-aware linked flows; no independent balance or return cache is authoritative.
   Daily TWR uses documented end-of-day flows. XIRR is annualized actual/365;

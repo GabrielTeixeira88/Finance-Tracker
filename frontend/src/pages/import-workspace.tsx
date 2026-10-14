@@ -575,7 +575,7 @@ export default function ImportWorkspace({
   )
 }
 
-function ImportReview({
+export function ImportReview({
   batch,
   accounts,
   categories,
@@ -609,7 +609,11 @@ function ImportReview({
           {batch.filename}
         </h2>
         <Button variant="outline" disabled={busy} onClick={onBack}>
-          {completed ? 'New import' : 'Back to file / mapping'}
+          {batch.source_type === 'GMAIL'
+            ? 'Back to Gmail queue'
+            : completed
+              ? 'New import'
+              : 'Back to file / mapping'}
         </Button>
       </div>
       <p>

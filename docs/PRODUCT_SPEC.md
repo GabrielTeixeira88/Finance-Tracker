@@ -1,6 +1,6 @@
 # Current product scope
 
-Current release scope: **v0.7.0 - Investment Analytics**. Next: **v0.8.0 - Gmail Ingestion**; see [analytics contracts](INVESTMENT_ANALYTICS.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.8.0 - Gmail Ingestion**. Next: **v0.9.0 - Multi-Source Reconciliation**; see [Gmail contracts and limitations](GMAIL.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
 
 Finance Tracker is a single-user, offline-capable local finance application. Financial
 records stay in a local SQLite database. No authentication, cloud persistence, telemetry,
@@ -27,8 +27,8 @@ schedules with explicit match/post operations. Settings contains Categories and 
 Transactions contains All Activity, Scheduled and Imports. See [automation contracts](TRANSACTION_AUTOMATION.md).
 Phase 4 implements monthly category targets, groups, effective defaults, one-month
 overrides, optional signed rollover, explicit refunds and ledger-backed spending insights.
-Targets are independent of cash; no envelopes or zero-based allocation. Gmail, automatic
-reconciliation, advanced investment performance and cloud sync remain excluded.
+Targets are independent of cash; no envelopes or zero-based allocation. Automatic
+reconciliation and cloud sync remain excluded. v0.7 supplies investment analytics.
 See [Spending & Budgets contracts](BUDGETS.md).
 
 See [data model](DATA_MODEL.md) for API and integrity contracts and
@@ -160,3 +160,12 @@ advice. No yield is projected. XIRR conservatively declines multiple-sign-change
 cash-flow streams; FX decomposition is limited to unchanged quantities. ETF/index
 comparisons are labeled price proxies. Full attribution, look-through, corporate
 actions, rebalancing and risk engines remain separate future work.
+
+## v0.8 Gmail ingestion
+
+Settings/Gmail provides Desktop OAuth, label/account mapping, bounded backfill, polling
+and disconnect. Transactions/Gmail review provides parser diagnostics, proposed-detail
+edits, explicit link/skip/confirm and atomic page-scoped bulk approval. Existing rules,
+payees, schedule suggestions and source matching are reused. Only a fictional bank
+parser is verified; real formats and live OAuth remain validation gaps. Sync cannot
+post automatically. See [Gmail workflow and limits](GMAIL.md).

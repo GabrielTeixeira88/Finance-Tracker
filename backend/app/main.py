@@ -14,6 +14,7 @@ from app.analytics_routes import router as analytics_router
 from app.automation_routes import router as automation_router
 from app.budget_routes import router as budget_router
 from app.database import get_engine, get_session
+from app.gmail_routes import router as gmail_router
 from app.ingestion_routes import router as ingestion_router
 from app.investment_import_routes import router as investment_import_router
 from app.investment_routes import router as investment_router
@@ -26,7 +27,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from app.market_scheduler import start_worker
 
     stop, thread = start_worker()
+    from app.gmail_scheduler import start_worker as start_gmail_worker
+
+    gmail_stop, gmail_thread = start_gmail_worker()
     yield
+    gmail_stop.set()
+    gmail_thread.join(timeout=2)
+    from app.gmail_routes import get_service
+
+    if get_service.cache_info().currsize:
+        get_service().stop.set()
+        get_service().oauth_stop.set()
+        get_service.cache_clear()
     stop.set()
     thread.join(timeout=20)
     if get_engine.cache_info().currsize:
@@ -54,6 +66,7 @@ app.include_router(router)
 app.include_router(automation_router)
 app.include_router(ingestion_router)
 app.include_router(budget_router)
+app.include_router(gmail_router)
 
 
 class HealthResponse(BaseModel):
