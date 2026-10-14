@@ -1,6 +1,6 @@
 # Finance Tracker data model
 
-Current release scope: **v0.7.0 - Investment Analytics**. Next: **v0.8.0 - Gmail Ingestion**; see [analytics contracts](INVESTMENT_ANALYTICS.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.8.0 - Gmail Ingestion**. Next: **v0.9.0 - Multi-Source Reconciliation**; see [Gmail contracts and limitations](GMAIL.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
 
 All financial records stay in local SQLite. The ledger is authoritative; there
 is no editable or cached account-balance column.
@@ -349,3 +349,13 @@ They reuse InvestmentActivity, linked Transfer/Transaction, PriceObservation and
 FXObservation; there are no editable holdings, stored gains or benchmark postings.
 Benchmark selection refers to an existing Asset and is session-local. Its cached
 raw/manual prices are identified as a price-return proxy, never a total-return index.
+
+## v0.8 Gmail operational state
+
+`sqlite_0010` adds GmailConnection (singleton configuration, mailbox, cursor and lease),
+GmailSyncRun (status/counts/safe error), and GmailMessageClaim (unique digest of mailbox
+and message ID, unique SourceRecord foreign key). Source payloads remain in existing
+ImportBatch/SourceRecord structures; there is no parallel ledger or source table.
+Tokens live only in the OS vault. Minimal metadata and original parsed fields remain
+local provenance; whole message bodies are not retained. Confirmation alone posts
+through the existing ledger. See [Gmail contracts](GMAIL.md).

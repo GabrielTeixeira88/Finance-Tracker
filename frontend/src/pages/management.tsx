@@ -15,6 +15,7 @@ import { useWrite } from '@/lib/use-write'
 import { label, type Account, type Category } from '@/lib/api'
 import { Rules } from '@/pages/rules'
 import { MarketDataSettings } from '@/pages/market-data'
+import { GmailSettings } from '@/pages/gmail'
 
 export function Accounts({
   accounts,
@@ -124,7 +125,7 @@ export function Settings({
   categories: Category[]
   accounts: Account[]
 }) {
-  const [view, setView] = useState<'categories' | 'rules' | 'market'>(
+  const [view, setView] = useState<'categories' | 'rules' | 'market' | 'gmail'>(
     'categories',
   )
   return (
@@ -148,11 +149,19 @@ export function Settings({
         >
           Market Data
         </button>
+        <button
+          aria-pressed={view === 'gmail'}
+          onClick={() => setView('gmail')}
+        >
+          Gmail
+        </button>
       </nav>
       {view === 'categories' ? (
         <CategorySettings categories={categories} />
       ) : view === 'market' ? (
         <MarketDataSettings />
+      ) : view === 'gmail' ? (
+        <GmailSettings accounts={accounts} />
       ) : (
         <>
           <PageHeader title="Settings" description="Transaction automation" />

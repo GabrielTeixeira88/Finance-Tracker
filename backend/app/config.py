@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     alpha_vantage_api_key: SecretStr = SecretStr("")
     alpha_vantage_full_history: bool = False
     market_sync_interval_minutes: int = Field(default=360, ge=60, le=10080)
+    google_oauth_client_id: str = ""
+    google_oauth_client_secret: SecretStr = SecretStr("")
+    gmail_local_origins: str = "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8000"
 
     @property
     def resolved_database_path(self) -> Path:

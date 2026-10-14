@@ -6,6 +6,19 @@ of independently published releases or tags. See [the roadmap](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-14
+
+### Added
+- Gmail Desktop OAuth with state/PKCE, loopback callback and OS credential storage.
+- Read-only label retrieval, bounded backfill, incremental history, resumable source
+  identities, opt-in polling and safe disconnect/revocation.
+- Synthetic bank parser and Gmail candidates using existing rules, duplicate review,
+  schedule suggestions and atomic ledger confirmation.
+- Settings/Gmail and Transactions/Gmail review, proposed-detail editing and explicit
+  page-scoped bulk approval; additive `sqlite_0010` operational migration.
+- Mocked Google/security/regression tests. No real bank templates or live OAuth
+  validation; automatic posting remains disabled.
+
 ## [0.7.0] - 2026-10-13
 
 ### Added

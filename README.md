@@ -1,7 +1,11 @@
 # Finance Tracker
 
-Current version: **0.7.0 - Investment Analytics**.
-Next milestone: **v0.8.0 - Gmail Ingestion** (not implemented).
+Current version: **0.8.0 - Gmail Ingestion**.
+Next milestone: **v0.9.0 - Multi-Source Reconciliation** (not implemented).
+Settings → Gmail connects a local Desktop OAuth client; Transactions → Gmail review
+confirms candidates through the existing ledger. See [Gmail setup](docs/GMAIL.md).
+Only the explicitly synthetic notification format is currently supported; real bank
+templates and live Google authorization remain unverified. Automatic posting is disabled.
 See [changelog](CHANGELOG.md) and [version roadmap](docs/ROADMAP.md).
 
 A single-user, local-first, self-hosted personal finance application. All durable
@@ -150,7 +154,7 @@ In **Transactions → Scheduled**, maintain expected events and inspect upcoming
 occurrences. Match an existing eligible entry or explicitly post the actual amount/date.
 Approximate amounts require actual-amount confirmation. Matching creates no movement;
 posting does. Completed postings require unlinking before financial correction/deletion.
-No background posting, scheduler worker, or automatic reconciliation is included.
+No automatic schedule posting or bank reconciliation is included. Gmail polling is separate.
 
 Optional backend environment settings: `LEARNING_MIN_EXAMPLES` (default 3, minimum 3)
 and `SCHEDULE_MATCH_DAYS` (default 3, maximum 14). See [automation contracts](docs/TRANSACTION_AUTOMATION.md).
@@ -197,7 +201,8 @@ income **1,000**, expenses **200**. Transfers and openings never enter flow tota
   or payee assignments. Review means user checking, not bank reconciliation.
 - **Settings:** Categories and safe deletion rules; Rules with preview/application and
   user-approved learning suggestions; Market Data with provider status, reporting currency,
-  explicit refresh and opt-in synchronization. Transactions also contains the Scheduled subview.
+  explicit refresh and opt-in synchronization; Gmail connection and retrieval controls.
+  Transactions also contains Scheduled, Imports and Gmail review subviews.
 - **Budget:** Spending & Budgets with Overview, Budgets and Insights tabs, shared month
   and currency controls, target/group editors, rollover, refunds and ledger drill-downs.
   See [budget semantics and refund policy](docs/BUDGETS.md).
@@ -322,6 +327,6 @@ adds CSV/OFX imports with explicit preview/confirmation. See the
 `backend/app/_version.py` is authoritative. Hatch derives Python package metadata
 from it and FastAPI reports it in OpenAPI. Frontend package metadata mirrors it,
 checked by `test_release_version.py`; no About/version display exists to synchronize.
-Run `uv lock --project backend` after Python metadata changes. Tags use `v0.7.0`;
+Run `uv lock --project backend` after Python metadata changes. Tags use `v0.8.0`;
 future development branches do not change the released application version.
 Historical phases and immutable seed/migration identifiers remain traceable in the roadmap.

@@ -2,8 +2,10 @@
 
 Versions are the primary milestone identifiers. Historical phases remain traceable
 below; they do not imply earlier releases or tags. Current application version is
-0.7.0. Investment Analytics is completed and validated; v0.8.0 Gmail Ingestion
-is next. See [methodology and validation](INVESTMENT_ANALYTICS.md).
+0.8.0. Gmail Ingestion is completed and validated with mocked Google responses and
+Windows credential-store verification. Live OAuth and real-bank templates remain
+validation gaps. Next: v0.9.0 Multi-Source Reconciliation, not yet implemented.
+See [Gmail contracts](GMAIL.md) and [release audit](RELEASE_0_8_0.md).
 
 ## Historical mapping
 
@@ -61,19 +63,22 @@ v1.0.0 requires validated stability, not a milestone counter reaching a number.
 
 ## Current development and future versions
 
-- **v0.8.0 - Gmail Ingestion.** Opt-in mail adapters, local OAuth/token handling,
+- **v0.8.0 - Gmail Ingestion (completed with documented limits).** Opt-in mail adapters, local OAuth/token handling,
   bounded parsing, normalized candidates, rules and explicit review. Depends on
   ingestion/provenance; mail and credentials remain private.
-  Reuse the v0.3 import pipeline and v0.2 manual-override protections. Planned scope:
-  label-based discovery, incremental polling, bank-specific parsers, normalized
+  Reuses the v0.3 import pipeline and v0.2 manual-override protections. Implemented:
+  label-based discovery, incremental polling, a synthetic parser registry, normalized
   transaction candidates, payee/rule reuse, duplicate prevention and source provenance;
   review queue, parser diagnostics, sync history and offline operation. OAuth credentials
-  stay in secure local storage with revocation/disconnection. Reliable automatic posting
-  is optional and must require explicit configuration; nothing posts by default.
+  stay in the OS vault with revocation/disconnection. Automatic posting is not implemented.
+  Real-bank templates and live OAuth require separate authorized validation.
 - **v0.9.0 - Multi-Source Reconciliation.** CSV/OFX/Gmail matching, provenance,
   deduplication, cleared/reconciled states and bank-statement reconciliation.
   Depends on adapters and reliable identities. Review remains separate; weak
   matches require decisions rather than destructive automatic merging.
+  Planned work includes source conflict review, historical match corrections and an
+  audit trail, preserving manual categorization. Reuse existing ingestion services;
+  no v0.9 functionality is included in v0.8.
 - **v0.10.0 - Net Worth & Goals.** Valued history, manual assets/liabilities and
   savings goals. Depends on valuation/liability semantics; cash history is not
   automatically complete net worth.

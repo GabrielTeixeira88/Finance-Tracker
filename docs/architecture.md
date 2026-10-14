@@ -1,6 +1,6 @@
 # Application architecture
 
-Current release scope: **v0.7.0 - Investment Analytics**. Next: **v0.8.0 - Gmail Ingestion**; see [analytics contracts](INVESTMENT_ANALYTICS.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.8.0 - Gmail Ingestion**. Next: **v0.9.0 - Multi-Source Reconciliation**; see [Gmail contracts and limitations](GMAIL.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
 
 ## Local storage and deployment
 
@@ -84,9 +84,9 @@ labeled read-only preview sections expose future information architecture. Trans
 transaction creation mode; Categories are configuration under Settings.
 [UI_FOUNDATION.md](UI_FOUNDATION.md) documents the application shell and information hierarchy.
 
-Market integrations live behind adapters. No Gmail,
-automatic recurring entries, advanced investment performance, auth,
-cloud sync, or job queue is implemented. Only opt-in market refresh has an in-process worker. FastAPI telemetry remains off;
+Market and Gmail integrations live behind adapters. Automatic recurring entries,
+authentication, cloud sync and external job queues are not implemented. Opt-in market
+refresh and Gmail polling have in-process workers; run one API worker. FastAPI telemetry remains off;
 interactive API docs use the framework's default CDN assets. There are no remote
 runtime assets in the financial UI.
 
@@ -230,3 +230,11 @@ asset classification. Return and allocation responses identify method, currency,
 period and completeness. Frontend queries use the existing TanStack mutation
 invalidation and exact-string money/BigInt chart normalization. Performance no longer
 uses the old illustrative preview payload. See [formulas and boundaries](INVESTMENT_ANALYTICS.md).
+
+## v0.8 Gmail integration
+
+The Google-only transport and strict parser registry stay independent of ledger models.
+GmailService owns OAuth/vault access and bounded discovery; short SQLite writes store
+existing import candidates and message identities. Gmail routes reuse ingestion preview,
+rules, decisions and atomic confirmation. Native polling is opt-in; no cloud worker or
+auto-posting exists. See [setup, recovery and security](GMAIL.md).

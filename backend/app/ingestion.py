@@ -192,6 +192,11 @@ def preview(session, batch):
     ready = account.active
     for source in sources:
         metadata_errors = []
+        if source.source_type == "GMAIL" and source.normalized_data.get("currency") not in {
+            None,
+            account.currency,
+        }:
+            metadata_errors.append("Candidate currency differs from the selected account")
         for field, model in (("category_id", Category), ("payee_id", Payee)):
             value = source.decision.get(field)
             if value and session.get(model, UUID(value)) is None:
@@ -263,6 +268,12 @@ def preview(session, batch):
             )
         counts[item["status"]] += 1
         action = source.decision.get("action")
+        if (
+            source.source_type == "GMAIL"
+            and source.raw_data.get("link_only") == "yes"
+            and action not in {"SKIP", "LINK"}
+        ):
+            ready = False
         if action == "SKIP":
             counts["skipped"] += 1
         elif item["status"] in {"INVALID", "EXACT_DUPLICATE"}:
