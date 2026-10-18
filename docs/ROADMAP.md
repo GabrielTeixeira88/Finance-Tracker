@@ -2,10 +2,10 @@
 
 Versions are the primary milestone identifiers. Historical phases remain traceable
 below; they do not imply earlier releases or tags. Current application version is
-0.8.0. Gmail Ingestion is completed and validated with mocked Google responses and
-Windows credential-store verification. Live OAuth and real-bank templates remain
-validation gaps. Next: v0.9.0 Multi-Source Reconciliation, not yet implemented.
-See [Gmail contracts](GMAIL.md) and [release audit](RELEASE_0_8_0.md).
+0.9.0. Multi-Source Reconciliation is completed with explicit matching decisions,
+source corrections and statement verification. See [contracts](RECONCILIATION.md)
+and [release audit](RELEASE_0_9_0.md). Gmail live OAuth and real-bank templates remain
+separately documented validation gaps. The next milestone is v0.10.0.
 
 ## Historical mapping
 
@@ -72,16 +72,20 @@ v1.0.0 requires validated stability, not a milestone counter reaching a number.
   review queue, parser diagnostics, sync history and offline operation. OAuth credentials
   stay in the OS vault with revocation/disconnection. Automatic posting is not implemented.
   Real-bank templates and live OAuth require separate authorized validation.
-- **v0.9.0 - Multi-Source Reconciliation.** CSV/OFX/Gmail matching, provenance,
+- **v0.9.0 - Multi-Source Reconciliation (completed and validated).** CSV/OFX/Gmail matching, provenance,
   deduplication, cleared/reconciled states and bank-statement reconciliation.
   Depends on adapters and reliable identities. Review remains separate; weak
   matches require decisions rather than destructive automatic merging.
-  Planned work includes source conflict review, historical match corrections and an
-  audit trail, preserving manual categorization. Reuse existing ingestion services;
-  no v0.9 functionality is included in v0.8.
-- **v0.10.0 - Net Worth & Goals.** Valued history, manual assets/liabilities and
-  savings goals. Depends on valuation/liability semantics; cash history is not
-  automatically complete net worth.
+  Includes source conflict review, historical match corrections and an immutable
+  audit trail, preserving manual categorization and existing ingestion services.
+- **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals (next).** Consolidate
+  bank/investment valuation, dated multi-currency totals and asset/account breakdowns.
+  Add separately modeled property, vehicles and other manual assets with valuation
+  history; loans/mortgages/other debts must avoid double-counting card liabilities.
+  Goals cover amounts/dates, linked accounts, progress/milestones, required monthly
+  contributions and basic projections. Depends on valuation/liability semantics;
+  cash history is not automatically complete net worth. Inspect the approved
+  net-worth/save-up references before implementation; no v0.10 code is included.
 - **v0.11.0 - Product Consolidation & UX Refinement.** Coherent spending/investment
   workflows, reliable history/editing, imports, reporting and automation controls.
   Depends on prior domains; preserve explicit posting safeguards.
@@ -113,3 +117,23 @@ not change category-target budgeting. Finance Tracker joins spending and investm
 in private local SQLite, including planned Gmail and multi-source matching. Cloud
 sync/authentication, Redis, Celery and AI are not implicit dependencies. PostgreSQL
 remains a possible reviewed deployment migration, not a runtime requirement.
+
+
+## v0.9 implementation reference review
+
+Actual Budget's public `accounts/reconciliation.ts`, `Reconcile.tsx` and
+`Reconcile.test.tsx`, plus its [reconciliation guide](https://actualbudget.org/docs/accounts/reconciliation/),
+were inspected for cleared-balance comparison and locking. Finance Tracker adds
+historical cutoffs, explicit statement revisions and cascading reopen; it deliberately
+omits automatic adjustment entries and does not keep edited entries reconciled.
+Securo's public [matching](https://docs.usesecuro.com/docs/features/reconciliation),
+[import](https://docs.usesecuro.com/docs/features/import) and
+[bank-sync](https://docs.usesecuro.com/docs/features/bank-sync) documentation informed
+explainable alternatives, identity-first matching and local decision history.
+Its automatic fuzzy matching/provider infrastructure is not adopted. The existing
+Wealthfolio reference import-table source and approved Finance Tracker shell were
+reviewed; the global visual hierarchy is preserved. No third-party source was copied
+for this phase. Existing attribution/licenses remain intact.
+
+The next branch prepares v0.10 Net Worth, Assets, Liabilities & Financial Goals.
+No v0.10 functionality is implemented during v0.9 release preparation.

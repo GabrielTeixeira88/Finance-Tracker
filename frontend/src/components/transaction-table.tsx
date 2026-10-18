@@ -13,6 +13,7 @@ export function TransactionTable({
   selected,
   onSelect,
   onSelectPage,
+  onInspect,
 }: {
   rows: Transaction[]
   accounts: Account[]
@@ -23,6 +24,7 @@ export function TransactionTable({
   selected?: string[]
   onSelect?: (id: string) => void
   onSelectPage?: () => void
+  onInspect?: (row: Transaction) => void
 }) {
   if (!rows.length)
     return (
@@ -124,6 +126,20 @@ export function TransactionTable({
                       ? 'Refund'
                       : label(row.transaction_type)}
                   </Badge>
+                  {onInspect && (
+                    <button
+                      className="metadata block underline"
+                      onClick={() => onInspect(row)}
+                    >
+                      Evidence / clearing
+                    </button>
+                  )}
+                  {row.clearing_status && (
+                    <small className="metadata block">
+                      {label(row.clearing_status)}
+                      {row.source_count ? ` · ${row.source_count} sources` : ''}
+                    </small>
+                  )}
                   {transfer && (
                     <small
                       className="transfer-link"

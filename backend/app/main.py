@@ -19,6 +19,7 @@ from app.ingestion_routes import router as ingestion_router
 from app.investment_import_routes import router as investment_import_router
 from app.investment_routes import router as investment_router
 from app.market_routes import router as market_router
+from app.reconciliation_routes import router as reconciliation_router
 from app.routes import router
 
 
@@ -67,6 +68,7 @@ app.include_router(automation_router)
 app.include_router(ingestion_router)
 app.include_router(budget_router)
 app.include_router(gmail_router)
+app.include_router(reconciliation_router)
 
 
 class HealthResponse(BaseModel):

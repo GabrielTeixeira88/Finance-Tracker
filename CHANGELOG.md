@@ -6,6 +6,19 @@ of independently published releases or tags. See [the roadmap](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-18
+
+### Added
+- Shared cross-date, explainable CSV/OFX/Gmail matching with explicit conflict review.
+- Audited source detachment/reassignment, rejected proposals and controlled duplicate merges.
+- Independent clearing states, exact cutoff statement comparison, locking and cascading reopen.
+- Transactions reconciliation workspace, source evidence and bank-state filters.
+- Additive `sqlite_0011` migration and isolated migration/accounting/correction tests.
+
+### Fixed
+- Date corrections through transaction PATCH now invalidate prior clearing verification,
+  consistently with the ordinary financial-edit workflow.
+
 ## [0.8.0] - 2026-10-14
 
 ### Added

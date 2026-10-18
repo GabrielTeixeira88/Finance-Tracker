@@ -1,6 +1,6 @@
 # Finance Tracker data model
 
-Current release scope: **v0.8.0 - Gmail Ingestion**. Next: **v0.9.0 - Multi-Source Reconciliation**; see [Gmail contracts and limitations](GMAIL.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.9.0 - Multi-Source Reconciliation**. Next: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. See [reconciliation contracts](RECONCILIATION.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 All financial records stay in local SQLite. The ledger is authoritative; there
 is no editable or cached account-balance column.
@@ -167,8 +167,8 @@ no inferred payee. Lists show the current normalized payee name with the raw des
 underneath; `description` remains independent and is never overwritten by payee assignment.
 
 `transactions.review_status`: NOT NULL, default REVIEWED, constrained to REVIEWED or
-NEEDS_REVIEW. This means user inspection only. Future bank states such as PENDING,
-CLEARED, and RECONCILED are separate concepts and are not implemented or stored here.
+NEEDS_REVIEW. This means user inspection only. Bank clearing and reconciliation are stored separately by v0.9; PENDING remains
+unimplemented. They are never encoded in review_status.
 Review never changes amounts, direction, balances, or cash-flow eligibility.
 
 `sqlite_0003` uses additive SQLite columns and a new payees table; no ledger table is
@@ -359,3 +359,15 @@ ImportBatch/SourceRecord structures; there is no parallel ledger or source table
 Tokens live only in the OS vault. Minimal metadata and original parsed fields remain
 local provenance; whole message bodies are not retained. Confirmation alone posts
 through the existing ledger. See [Gmail contracts](GMAIL.md).
+
+
+## v0.9 (`sqlite_0011`)
+
+Clearing adds one optional row per transaction and an optional supporting SourceRecord.
+Statement stores account/cutoff, exact magnitude/sign, status, revision, notes and
+completion result; StatementEntry preserves included transaction IDs per revision.
+SourceDisposition records inactive links and dismissed/rejected proposals without
+erasing source identities. ReconciliationAudit is append-only with unique request
+identity, actor and before/after decision metadata. All relationships use foreign
+keys. Existing rows are unchanged and default semantically to uncleared.
+See [state transitions and lock rules](RECONCILIATION.md).

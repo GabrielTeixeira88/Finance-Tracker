@@ -50,6 +50,11 @@ export const transactionSchema = z.object({
   payee_id: z.string().nullable().default(null),
   payee: payeeSchema.nullable().default(null),
   review_status: z.enum(reviewStatuses).default('REVIEWED'),
+  clearing_status: z
+    .enum(['UNCLEARED', 'CLEARED', 'RECONCILED'])
+    .nullable()
+    .optional(),
+  source_count: z.number().nullable().optional(),
   transfer_id: z.string().nullable(),
   deleted_at: z.string().nullable(),
   manual_fields: z

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Field, TransactionForm, TransactionComposer } from '@/components/forms'
 import { Button } from '@/components/ui/button'
 import { TransactionTable } from '@/components/transaction-table'
+import { TransactionSources } from '@/components/transaction-sources'
 import { PageHeader, Money, LoadingState } from '@/components/primitives'
 import { useWrite } from '@/lib/use-write'
 import {
@@ -32,6 +33,7 @@ export default function Transactions({
   account?: Account
 }) {
   const [editing, setEditing] = useState<Transaction>()
+  const [inspecting, setInspecting] = useState<Transaction>()
   const [creating, setCreating] = useState(false)
   const [filters, setFilters] = useState<Record<string, string>>({
     ...initialFilters,
@@ -78,6 +80,12 @@ export default function Transactions({
   }
   return (
     <>
+      {inspecting && (
+        <TransactionSources
+          row={inspecting}
+          onClose={() => setInspecting(undefined)}
+        />
+      )}
       <PageHeader
         title={account?.name ?? 'Transactions'}
         description={
@@ -234,6 +242,17 @@ export default function Transactions({
               <option value="REVIEWED">Reviewed</option>
             </select>
           </Field>
+          <Field label="Bank status">
+            <select
+              value={filters.clearing_status ?? ''}
+              onChange={(e) => filter('clearing_status', e.target.value)}
+            >
+              <option value="">All bank states</option>
+              <option value="UNCLEARED">Uncleared</option>
+              <option value="CLEARED">Cleared</option>
+              <option value="RECONCILED">Reconciled</option>
+            </select>
+          </Field>
           <Field label="Minimum amount">
             <input
               inputMode="decimal"
@@ -289,6 +308,7 @@ export default function Transactions({
           </p>
         ) : (
           <TransactionTable
+            onInspect={setInspecting}
             rows={rows.data.rows}
             accounts={accounts}
             categories={categories}

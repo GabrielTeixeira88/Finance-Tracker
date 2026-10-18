@@ -1,6 +1,12 @@
 from alembic import context
 
-from app import analytics_models, gmail_models, market_models, models  # noqa: F401
+from app import (  # noqa: F401
+    analytics_models,
+    gmail_models,
+    market_models,
+    models,
+    reconciliation_models,
+)
 from app.config import get_settings
 from app.database import Base, make_engine
 

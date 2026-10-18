@@ -167,7 +167,9 @@ it('maps a local CSV, previews without posting, explicitly confirms and shows hi
   expect(fetch.mock.calls.some(([path]) => path.endsWith('/confirm'))).toBe(
     false,
   )
-  expect(screen.getByRole('button', { name: 'Confirm import' })).toBeDisabled()
+  expect(
+    await screen.findByRole('button', { name: 'Confirm import' }),
+  ).toBeDisabled()
   await userEvent.click(
     screen.getByRole('checkbox', { name: /I confirm this statement/ }),
   )
@@ -191,7 +193,9 @@ it('retains invalid rows and requires an explicit skip', async () => {
     screen.getByRole('button', { name: 'Preview transactions' }),
   )
   await screen.findByText('Invalid date')
-  expect(screen.getByRole('button', { name: 'Confirm import' })).toBeDisabled()
+  expect(
+    await screen.findByRole('button', { name: 'Confirm import' }),
+  ).toBeDisabled()
   await userEvent.click(screen.getByRole('button', { name: 'Review row 1' }))
   expect(
     screen.queryByRole('option', { name: /Import as new/ }),

@@ -109,3 +109,9 @@ Before implementing functionality present in Wealthfolio, Actual Budget or Secur
 5. Reuse source only under compatible licenses; preserve attribution and notices.
 6. Explain meaningful deviations and verify financial behavior with tests.
 7. For UI work, compare actual visual references where available, not descriptions alone.
+
+- v0.9 matching is local and identity-first. Fuzzy proposals never post or merge automatically.
+  Source corrections retain identity claims and immutable audit; keep manual metadata intact.
+- Review is independent of clearing. Statement completion uses exact historical cleared
+  ledger projections; reopening invalidates later account statements. Never silently edit
+  locked history or create balancing adjustments. Preserve rollback/idempotency guards.

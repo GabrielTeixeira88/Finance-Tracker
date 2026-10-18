@@ -1,6 +1,6 @@
 # Application architecture
 
-Current release scope: **v0.8.0 - Gmail Ingestion**. Next: **v0.9.0 - Multi-Source Reconciliation**; see [Gmail contracts and limitations](GMAIL.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.9.0 - Multi-Source Reconciliation**. Next: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. See [reconciliation contracts](RECONCILIATION.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 ## Local storage and deployment
 
@@ -59,7 +59,7 @@ and physical deletion of ordinary transactions. See DATA_MODEL.md.
 
 ## Migration lineage and transition
 
-New SQLite files run `sqlite_0001` through `sqlite_0008` using Alembic. These contain an explicit schema and
+New SQLite files run `sqlite_0001` through `sqlite_0011` using Alembic. These contain an explicit schema and
 integrity triggers; application startup never invokes metadata.create_all(). The
 optional container runs Alembic before Uvicorn. Native startup runs Alembic explicitly.
 Old PostgreSQL revisions remain unchanged under migrations_legacy/postgresql and
@@ -238,3 +238,12 @@ GmailService owns OAuth/vault access and bounded discovery; short SQLite writes 
 existing import candidates and message identities. Gmail routes reuse ingestion preview,
 rules, decisions and atomic confirmation. Native polling is opt-in; no cloud worker or
 auto-posting exists. See [setup, recovery and security](GMAIL.md).
+
+
+## v0.9 reconciliation
+
+`ingestion_matching` is shared by CSV, OFX, Gmail and historical re-evaluation.
+`reconciliation` owns explicit link corrections, clearing, statement revisions and
+local audit. Statement totals reuse ledger projections; no balance cache becomes
+authoritative. Every mutation uses the existing SQLite writer unit of work.
+See [matching and concurrency contracts](RECONCILIATION.md).

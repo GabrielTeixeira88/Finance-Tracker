@@ -46,6 +46,10 @@ def update_metadata(
         from app.payee_learning import manual_change
         from app.rules import FIELDS
 
+        if "transaction_date" in values and values["transaction_date"] != row.transaction_date:
+            from app.reconciliation import invalidate_clearing
+
+            invalidate_clearing(session, row.id)
         before = {field: getattr(row, field) for field in FIELDS}
         row.manual_fields = sorted(set(row.manual_fields or []) - set(unlock))
         for field, value in values.items():

@@ -847,6 +847,17 @@ function RowEditor({
       }}
     >
       <h3>Review row {row.row_number}</h3>
+      {row.matches
+        .filter((match) => match.amount)
+        .map((match) => (
+          <div key={match.id} className="py-2 text-sm">
+            <strong>{match.description}</strong> · {match.transaction_date}{' '}
+            {match.amount && match.currency && (
+              <Money value={match.amount} currency={match.currency} />
+            )}
+            <p className="metadata">{match.evidence?.join(' · ')}</p>
+          </div>
+        ))}
       <p className="metadata">
         {row.reason}. Metadata choices preserve the original source and never
         change amounts.
@@ -872,7 +883,7 @@ function RowEditor({
                 Import as new {row.candidate?.transaction_type.toLowerCase()}
               </option>
             )}
-            {valid && row.matches.length > 0 && (
+            {valid && row.status !== 'CONFLICT' && row.matches.length > 0 && (
               <option value="LINK">Link existing transaction</option>
             )}
           </select>
@@ -947,7 +958,9 @@ function RowEditor({
                 <option value="REVIEWED">Reviewed</option>
               </select>
             </Field>
-            {(row.candidate?.ambiguity || row.schedules.length > 0) && (
+            {(row.candidate?.ambiguity ||
+              row.schedules.length > 0 ||
+              row.status === 'CONFLICT') && (
               <label>
                 <input
                   type="checkbox"
