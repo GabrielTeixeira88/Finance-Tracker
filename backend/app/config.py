@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     sqlite_busy_timeout_ms: int = Field(default=5000, ge=1, le=60000)
     learning_min_examples: int = Field(default=3, ge=3, le=100)
     schedule_match_days: int = Field(default=3, ge=0, le=14)
+    reconciliation_match_days: int = Field(default=3, ge=0, le=14)
     brapi_api_token: SecretStr = SecretStr("")
     brapi_raw_history: bool = False
     brapi_batch_size: int = Field(default=1, ge=1, le=20)

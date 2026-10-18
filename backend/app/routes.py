@@ -178,6 +178,7 @@ def list_transactions(
     spending_only: bool = False,
     uncategorized: bool = False,
     no_payee: bool = False,
+    clearing_status: Literal["UNCLEARED", "CLEARED", "RECONCILED"] | None = None,
 ):
     if date_from and date_to and date_from > date_to:
         raise HTTPException(422, "Start date must not follow end date")
@@ -200,12 +201,34 @@ def list_transactions(
         uncategorized=uncategorized,
         no_payee=no_payee,
     )
+    from app import reconciliation
+    from app.reconciliation_models import Clearing, Statement, StatementEntry
+
+    if clearing_status:
+        locked = (
+            select(StatementEntry.transaction_id)
+            .join(Statement)
+            .where(Statement.status == "COMPLETED", StatementEntry.revision == Statement.revision)
+        )
+        cleared = select(Clearing.transaction_id).where(Clearing.cleared)
+        query = query.where(
+            Transaction.id.in_(locked)
+            if clearing_status == "RECONCILED"
+            else (Transaction.id.in_(cleared) & Transaction.id.not_in(locked))
+            if clearing_status == "CLEARED"
+            else Transaction.id.not_in(cleared)
+        )
     response.headers["X-Total-Count"] = str(
         db.scalar(select(func.count()).select_from(query.order_by(None).subquery()))
     )
     from app.spending import annotate_refunds
 
-    return annotate_refunds(db, list(db.scalars(query.limit(limit).offset(offset))))
+    rows = annotate_refunds(db, list(db.scalars(query.limit(limit).offset(offset))))
+    row_states = reconciliation.states(db, [row.id for row in rows])
+    for row in rows:
+        for key, value in row_states[row.id].items():
+            setattr(row, key, value)
+    return rows
 
 
 @router.patch("/transactions/bulk", response_model=list[schemas.TransactionOutput])
@@ -221,9 +244,13 @@ def patch_transaction(record_id: UUID, data: schemas.TransactionPatch, db: DB):
 
 @router.get("/transactions/{record_id}", response_model=schemas.TransactionOutput)
 def get_transaction(record_id: UUID, db: DB):
+    from app import reconciliation
     from app.spending import annotate_refunds
 
-    return annotate_refunds(db, [ledger.require(db, Transaction, record_id)])[0]
+    row = annotate_refunds(db, [ledger.require(db, Transaction, record_id)])[0]
+    for key, value in reconciliation.state(db, record_id).items():
+        setattr(row, key, value)
+    return row
 
 
 @router.post("/transactions", response_model=schemas.TransactionOutput, status_code=201)

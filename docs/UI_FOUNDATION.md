@@ -175,7 +175,7 @@ observations are an expandable table. Settings gains Market Data alongside Categ
 and Rules. Quote date and retrieval/sync timestamps are distinct. Missing totals and
 historical gaps remain explicit; no performance percentage is inferred from deposits.
 
-## Unreleased v0.7 investment analytics
+## v0.7 investment analytics
 
 Investments now has Performance, Allocation and Income subviews using the existing
 account/as-of toolbar. The primary Performance destination opens the real subview;
@@ -196,3 +196,13 @@ detail and leaves missing classification Unknown. Position rankings stay within 
 currency and label absolute gains separately from returns. Existing value charts
 remain labeled portfolio value, not performance. New controls wrap or scroll locally
 at narrow widths, and page actions wrap without changing the global shell.
+
+
+## v0.9 reconciliation views
+
+Transactions adds Reconcile as a local subview, also accessible within account activity.
+Source matching reuses ImportReview; Statements compares exact cutoff balances and
+provides explicit clearing, completion and reopening. Existing duplicates requires a
+preview and confirmation. Ledger rows show bank state/source count alongside review
+and offer Evidence / clearing. The global sidebar, theme and financial semantics stay
+unchanged. Decision history and source payloads remain local, text-only details.

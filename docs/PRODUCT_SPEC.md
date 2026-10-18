@@ -1,6 +1,6 @@
 # Current product scope
 
-Current release scope: **v0.8.0 - Gmail Ingestion**. Next: **v0.9.0 - Multi-Source Reconciliation**; see [Gmail contracts and limitations](GMAIL.md). Historical phase labels below describe prior implementation checkpoints; see [version mapping](ROADMAP.md).
+Current release scope: **v0.9.0 - Multi-Source Reconciliation**. Next: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. See [reconciliation contracts](RECONCILIATION.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 Finance Tracker is a single-user, offline-capable local finance application. Financial
 records stay in a local SQLite database. No authentication, cloud persistence, telemetry,
@@ -169,3 +169,14 @@ edits, explicit link/skip/confirm and atomic page-scoped bulk approval. Existing
 payees, schedule suggestions and source matching are reused. Only a fictional bank
 parser is verified; real formats and live OAuth remain validation gaps. Sync cannot
 post automatically. See [Gmail workflow and limits](GMAIL.md).
+
+
+## v0.9 reconciliation
+
+Transactions gains Source matching, Statements, Existing duplicates and Decision
+history subviews. Review remains independent of bank clearing. Suggestions require
+explicit decisions; reliable identity conflicts block reposting. Statement completion
+requires exact cutoff balance agreement and locks included history. Source correction,
+reassignment and safe duplicate merging are audited and atomic. Brokerage statements,
+automatic balancing adjustments and automated fuzzy merges are excluded.
+See [workflow, API, persistence and limits](RECONCILIATION.md).

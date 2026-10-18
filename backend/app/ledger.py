@@ -1,5 +1,5 @@
 from datetime import UTC, date, datetime
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -28,25 +28,32 @@ def posting_account(session: Session, account_id: UUID) -> FinancialAccount:
     return account
 
 
-def balances(session: Session) -> dict[UUID, Decimal]:
-    # SQLite SUM/NUMERIC can introduce floating point; aggregate exact decoded Decimals.
-    totals = {}
-    rows = session.execute(
-        select(Transaction.account_id, Transaction.direction, Transaction.amount).where(
+def balances(session: Session, *, cutoff=None, transaction_ids=None) -> dict[UUID, Decimal]:
+    with localcontext() as context:
+        context.prec = 60
+        # SQLite SUM/NUMERIC can introduce floating point; aggregate exact decoded Decimals.
+        totals = {}
+        query = select(Transaction.account_id, Transaction.direction, Transaction.amount).where(
             Transaction.deleted_at.is_(None)
         )
-    )
-    for account_id, direction, amount in rows:
-        totals[account_id] = totals.get(account_id, Decimal("0")) + (
-            amount if direction == "IN" else -amount
-        )
-    from app.investments import cash_entries
+        if cutoff is not None:
+            query = query.where(Transaction.transaction_date <= cutoff)
+        if transaction_ids is not None:
+            query = query.where(Transaction.id.in_(transaction_ids))
+        rows = session.execute(query)
+        for account_id, direction, amount in rows:
+            totals[account_id] = totals.get(account_id, Decimal("0")) + (
+                amount if direction == "IN" else -amount
+            )
+        from app.investments import cash_entries
 
-    for entry in cash_entries(session):
-        totals[entry.account_id] = totals.get(entry.account_id, Decimal("0")) + (
-            entry.amount if entry.direction == "IN" else -entry.amount
-        )
-    return totals
+        for entry in cash_entries(session):
+            if cutoff is not None and entry.transaction_date > cutoff:
+                continue
+            totals[entry.account_id] = totals.get(entry.account_id, Decimal("0")) + (
+                entry.amount if entry.direction == "IN" else -entry.amount
+            )
+        return totals
 
 
 def accounts(session: Session) -> list[schemas.AccountOutput]:
@@ -145,6 +152,13 @@ def editable_transaction(session: Session, record_id: UUID) -> Transaction:
 
 def update_transaction(session: Session, record_id: UUID, data: schemas.TransactionInput):
     transaction = editable_transaction(session, record_id)
+    if any(
+        getattr(transaction, key) != getattr(data, key)
+        for key in ("amount", "transaction_date", "transaction_type")
+    ):
+        from app.reconciliation import invalidate_clearing
+
+        invalidate_clearing(session, transaction.id)
     check_category(session, data.category_id)
     if data.payee_id is not None:
         require(session, Payee, data.payee_id)
@@ -175,6 +189,9 @@ def update_transaction(session: Session, record_id: UUID, data: schemas.Transact
 
 def delete_transaction(session: Session, record_id: UUID):
     transaction = editable_transaction(session, record_id)
+    from app.reconciliation import invalidate_clearing
+
+    invalidate_clearing(session, transaction.id)
     transaction.deleted_at = datetime.now(UTC)
     session.flush()
     from app.payee_learning import refresh_suggestions

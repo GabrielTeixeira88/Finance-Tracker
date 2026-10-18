@@ -143,6 +143,8 @@ class PayeeOutput(Output):
 
 
 class TransactionOutput(Output):
+    clearing_status: Literal["UNCLEARED", "CLEARED", "RECONCILED"] | None = None
+    source_count: int | None = None
     refund_purchase_id: UUID | None = None
     spending_category_id: UUID | None = None
     account_id: UUID

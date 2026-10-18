@@ -73,7 +73,17 @@ const importRow = z.object({
   decision,
   reason: z.string(),
   transaction_id: z.string().nullable().optional(),
-  matches: z.array(z.object({ id: z.string(), description: z.string() })),
+  matches: z.array(
+    z.object({
+      id: z.string(),
+      description: z.string(),
+      amount: z.string().optional(),
+      currency: z.string().optional(),
+      transaction_date: z.string().optional(),
+      evidence: z.array(z.string()).optional(),
+      classification: z.string().optional(),
+    }),
+  ),
   schedules: z.array(
     z.object({
       schedule_id: z.string(),

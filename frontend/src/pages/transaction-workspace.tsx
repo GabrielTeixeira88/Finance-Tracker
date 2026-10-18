@@ -4,6 +4,7 @@ import Transactions from './transactions'
 import Schedules from './schedules'
 import ImportWorkspace from './import-workspace'
 import { GmailQueue } from './gmail'
+import Reconciliation from './reconciliation'
 
 export default function TransactionWorkspace(props: {
   accounts: Account[]
@@ -12,39 +13,39 @@ export default function TransactionWorkspace(props: {
   account?: Account
 }) {
   const [view, setView] = useState<
-    'activity' | 'scheduled' | 'imports' | 'gmail'
+    'activity' | 'scheduled' | 'imports' | 'gmail' | 'reconciliation'
   >('activity')
   return (
     <>
-      {!props.account && (
-        <nav className="range-tabs mb-4" aria-label="Transaction views">
+      <nav
+        className="range-tabs mb-4 flex-wrap max-w-full"
+        aria-label="Transaction views"
+      >
+        {(
+          [
+            ['activity', 'All Activity'],
+            ['reconciliation', 'Reconcile'],
+            ...(!props.account
+              ? [
+                  ['gmail', 'Gmail review'],
+                  ['scheduled', 'Scheduled'],
+                  ['imports', 'Imports'],
+                ]
+              : []),
+          ] as const
+        ).map(([key, title]) => (
           <button
-            aria-pressed={view === 'activity'}
-            onClick={() => setView('activity')}
+            key={key}
+            aria-pressed={view === key}
+            onClick={() => setView(key as typeof view)}
           >
-            All Activity
+            {title}
           </button>
-          <button
-            aria-pressed={view === 'gmail'}
-            onClick={() => setView('gmail')}
-          >
-            Gmail review
-          </button>
-          <button
-            aria-pressed={view === 'scheduled'}
-            onClick={() => setView('scheduled')}
-          >
-            Scheduled
-          </button>
-          <button
-            aria-pressed={view === 'imports'}
-            onClick={() => setView('imports')}
-          >
-            Imports
-          </button>
-        </nav>
-      )}
-      {view === 'activity' || props.account ? (
+        ))}
+      </nav>
+      {view === 'reconciliation' ? (
+        <Reconciliation {...props} />
+      ) : view === 'activity' ? (
         <Transactions {...props} />
       ) : view === 'imports' ? (
         <ImportWorkspace

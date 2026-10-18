@@ -3,7 +3,7 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import or_, select
+from sqlalchemy import inspect, or_, select
 
 from app import schedules
 from app.config import get_settings
@@ -16,7 +16,8 @@ def compatible(row, candidate, account_id):
         and row.account_id == account_id
         and row.currency == candidate.currency
         and row.amount == candidate.amount
-        and row.transaction_date == candidate.transaction_date
+        and abs((row.transaction_date - candidate.transaction_date).days)
+        <= get_settings().reconciliation_match_days
         and row.direction == ("IN" if candidate.transaction_type == "INCOME" else "OUT")
         and row.transaction_type != "OPENING_BALANCE"
     )
@@ -37,40 +38,134 @@ def duplicates(session, source, candidate, account_id):
     )
     if claims:
         transactions = {c.transaction_id for c in claims}
-        original = claims[0].normalized_data
-        changed = (
+        from app.reconciliation_models import SourceDisposition
+
+        changed = any(
             any(
-                original.get(key) != source.normalized_data.get(key)
+                c.normalized_data.get(key) != source.normalized_data.get(key)
                 for key in ("transaction_date", "currency", "transaction_type")
             )
-            or Decimal(original["amount"]) != candidate.amount
+            or Decimal(c.normalized_data["amount"]) != candidate.amount
+            for c in claims
         )
+        detached = (
+            session.scalar(
+                select(SourceDisposition.id).where(
+                    SourceDisposition.source_id.in_([c.id for c in claims]),
+                    SourceDisposition.detached,
+                )
+            )
+            if inspect(session.connection()).has_table("source_dispositions")
+            else None
+        )
+        if detached:
+            return (
+                "INVALID",
+                [],
+                "Source identity has a detached link; resolve it without reposting",
+            )
         if changed or len(transactions) != 1:
             return (
                 "INVALID",
                 [],
                 "Source identity conflicts with financial values; inspect instead of reposting",
             )
+        linked = session.get(Transaction, claims[0].transaction_id)
+        if linked and not linked.deleted_at and not compatible(linked, candidate, account_id):
+            return "INVALID", [], "Claimed ledger values changed; inspect the source conflict"
         return (
             "EXACT_DUPLICATE",
             [str(claims[0].transaction_id)],
             "This file row or account-scoped source identifier was already recorded",
         )
+    days = get_settings().reconciliation_match_days
+    start = date.fromordinal(max(1, candidate.transaction_date.toordinal() - days))
+    end = date.fromordinal(min(date.max.toordinal(), candidate.transaction_date.toordinal() + days))
     rows = session.scalars(
-        select(Transaction).where(
+        select(Transaction)
+        .where(
             Transaction.account_id == account_id,
             Transaction.currency == candidate.currency,
             Transaction.amount == candidate.amount,
-            Transaction.transaction_date == candidate.transaction_date,
+            Transaction.transaction_date.between(
+                start,
+                end,
+            ),
             Transaction.deleted_at.is_(None),
         )
+        .order_by(Transaction.transaction_date, Transaction.id)
     )
     matches = [str(row.id) for row in rows if compatible(row, candidate, account_id)]
+    rejected = set()
+    if inspect(session.connection()).has_table("source_dispositions"):
+        from app.reconciliation_models import SourceDisposition
+
+        state = session.scalar(
+            select(SourceDisposition).where(SourceDisposition.source_id == source.id)
+        )
+        rejected = set(state.rejected_ids) if state else set()
+    if matches and rejected:
+        matches = [id for id in matches if id not in rejected]
+        if not matches:
+            return (
+                "POSSIBLE_DUPLICATE",
+                [],
+                "Previous proposals were rejected; explicitly keep separate or skip",
+            )
+    if not matches:
+        from app.rules import normalize
+
+        conflicts = list(
+            session.scalars(
+                select(Transaction)
+                .where(
+                    Transaction.account_id == account_id,
+                    Transaction.currency == candidate.currency,
+                    Transaction.direction
+                    == ("IN" if candidate.transaction_type == "INCOME" else "OUT"),
+                    Transaction.deleted_at.is_(None),
+                    Transaction.transaction_type.in_(["INCOME", "EXPENSE"]),
+                    Transaction.transaction_date.between(
+                        start,
+                        end,
+                    ),
+                )
+                .order_by(Transaction.transaction_date, Transaction.id)
+            )
+        )
+        conflicts = [
+            r
+            for r in conflicts
+            if r.amount != candidate.amount
+            and (
+                normalize(r.description) == normalize(candidate.description)
+                or (candidate.payee_id and candidate.payee_id == r.payee_id)
+            )
+        ]
+        origins = {}
+        for tid, origin in session.execute(
+            select(SourceRecord.transaction_id, SourceRecord.source_type).where(
+                SourceRecord.transaction_id.in_([r.id for r in conflicts])
+            )
+        ):
+            origins.setdefault(tid, set()).add(origin)
+        conflicts = [
+            r
+            for r in conflicts
+            if not origins.get(r.id)
+            or any(origin != source.source_type for origin in origins[r.id])
+        ]
+        if conflicts:
+            return (
+                "CONFLICT",
+                [str(r.id) for r in conflicts],
+                ("Merchant evidence overlaps but amounts differ; keep separate explicitly or skip"),
+            )
     # Same amount/date/account/direction is a conservative candidate, never proof.
     return (
         "POSSIBLE_DUPLICATE" if matches else "NEW",
         matches,
-        "Same account, currency, amount, date and direction; inspect before linking"
+        "Same account, currency, amount and direction within the date window; confirm explicitly"
         if matches
         else "No existing candidate",
     )

@@ -182,6 +182,7 @@ def preview(session, batch):
             "EXACT_DUPLICATE",
             "POSSIBLE_DUPLICATE",
             "INVALID",
+            "CONFLICT",
             "ready",
             "skipped",
             "linked",
@@ -266,6 +267,9 @@ def preview(session, batch):
                 rules=evaluation["proposed"],
                 schedules=schedule_matches(session, row),
             )
+            from app.reconciliation import match_details
+
+            item["matches"] = [match_details(session, id, candidate) for id in matches]
         counts[item["status"]] += 1
         action = source.decision.get("action")
         if (
@@ -281,7 +285,9 @@ def preview(session, batch):
             if item["status"] == "INVALID" or action in {"NEW", "LINK"}:
                 ready = False
         elif action == "LINK":
-            if source.decision.get("transaction_id") not in {m["id"] for m in item["matches"]}:
+            if item["status"] == "CONFLICT" or source.decision.get("transaction_id") not in {
+                m["id"] for m in item["matches"]
+            }:
                 ready = False
             else:
                 counts["linked"] += 1
@@ -291,7 +297,9 @@ def preview(session, batch):
             and not item["candidate"]["ambiguity"]
             and not item["schedules"]
         ):
-            uncertain = item["candidate"]["ambiguity"] or item["schedules"]
+            uncertain = (
+                item["candidate"]["ambiguity"] or item["schedules"] or item["status"] == "CONFLICT"
+            )
             if uncertain and not source.decision.get("acknowledge_classification"):
                 ready = False
             else:
@@ -330,7 +338,19 @@ def decide(session, batch, source_id, decision):
     for field, model in (("payee_id", Payee), ("category_id", Category)):
         if getattr(decision, field):
             ledger.require(session, model, getattr(decision, field))
-    source.decision = decision.model_dump(mode="json", exclude_unset=True)
+    updated = decision.model_dump(mode="json", exclude_unset=True)
+    if source.decision != updated:
+        from sqlalchemy import inspect
+
+        from app.reconciliation import audit
+
+        if inspect(session.connection()).has_table("reconciliation_audits"):
+            audit(
+                session,
+                "SOURCE_DECISION",
+                {"source_id": str(source.id), "before": source.decision, "after": updated},
+            )
+    source.decision = updated
     session.flush()
 
 
@@ -402,6 +422,23 @@ def confirm(session, batch, data):
             source.status = "IMPORTED"
             counts["imported"] += 1
         source.transaction_id = transaction.id
+        from sqlalchemy import inspect
+
+        from app.reconciliation import audit
+
+        # Older offline migration fixtures can still seed their original schema.
+        if inspect(session.connection()).has_table("reconciliation_audits"):
+            audit(
+                session,
+                "SOURCE_LINKED" if action == "LINK" else "SOURCE_POSTED",
+                {
+                    "source_id": str(source.id),
+                    "transaction_id": str(transaction.id),
+                    "source_type": source.source_type,
+                    "decision": source.decision,
+                    "evidence": item["matches"] if action == "LINK" else [],
+                },
+            )
         source.decision = {
             **source.decision,
             "posted_metadata": {
