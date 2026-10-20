@@ -1,0 +1,38 @@
+.wealth-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  margin: 16px 0;
+}
+.wealth-metrics > div,
+.wealth-metrics > span {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.wealth-metrics .money {
+  display: block;
+  margin-top: 4px;
+  font-size: 16px;
+  color: var(--foreground);
+}
+.finance-wealth-table {
+  min-width: 680px;
+}
+.finance-wealth-table progress {
+  appearance: none;
+  width: 120px;
+  height: 4px;
+  border: 0;
+  background: var(--border);
+  color: var(--chart-line);
+  accent-color: var(--chart-line);
+}
+.finance-wealth-table progress::-webkit-progress-bar {
+  background: var(--border);
+}
+.finance-wealth-table progress::-webkit-progress-value {
+  background: var(--chart-line);
+}
+.finance-wealth-table progress::-moz-progress-bar {
+  background: var(--chart-line);
+}

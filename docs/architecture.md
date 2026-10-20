@@ -1,6 +1,6 @@
 # Application architecture
 
-Current release scope: **v0.9.0 - Multi-Source Reconciliation**. Next: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. See [reconciliation contracts](RECONCILIATION.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+Current release scope: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. Next: **v0.11.0 - Product Consolidation & UI/UX Refinement**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_10_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 ## Local storage and deployment
 
@@ -59,7 +59,7 @@ and physical deletion of ordinary transactions. See DATA_MODEL.md.
 
 ## Migration lineage and transition
 
-New SQLite files run `sqlite_0001` through `sqlite_0011` using Alembic. These contain an explicit schema and
+New SQLite files run `sqlite_0001` through `sqlite_0013` using Alembic. These contain an explicit schema and
 integrity triggers; application startup never invokes metadata.create_all(). The
 optional container runs Alembic before Uvicorn. Native startup runs Alembic explicitly.
 Old PostgreSQL revisions remain unchanged under migrations_legacy/postgresql and
@@ -114,8 +114,8 @@ user edits; it does not restore or reset records.
 `GET /api/demo` exposes only this optional synthetic fixture. Legacy illustrative targets,
 illustrative holdings/activity, and Performance chart points are stored as JSON
 with decimal strings in that isolated table. They have no financial-model relationships,
-write APIs, or influence on ledger totals. Net Worth and Reports previews instead
-reuse the ledger-history API. The old Performance illustration is no longer routed;
+write APIs, or influence on ledger totals. Reports still uses the ledger-history preview API. Net Worth now uses the dedicated
+wealth service and actual investment/manual valuations. The old Performance illustration is no longer routed;
 v0.7 uses actual investment analytics. Budget and Investments now use their own
 real domains; legacy illustrative holdings are never converted into real positions.
 
@@ -247,3 +247,10 @@ auto-posting exists. See [setup, recovery and security](GMAIL.md).
 local audit. Statement totals reuse ledger projections; no balance cache becomes
 authoritative. Every mutation uses the existing SQLite writer unit of work.
 See [matching and concurrency contracts](RECONCILIATION.md).
+
+
+## v0.10.0
+
+Net Worth and Goals now use dated database-backed records and exact existing
+ledger/investment/FX services. See [contracts and limitations](NET_WORTH_GOALS.md).
+Release version is 0.10.0. Reports retains its preview boundary.

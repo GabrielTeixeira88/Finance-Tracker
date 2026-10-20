@@ -21,6 +21,7 @@ from app.investment_routes import router as investment_router
 from app.market_routes import router as market_router
 from app.reconciliation_routes import router as reconciliation_router
 from app.routes import router
+from app.wealth_routes import router as wealth_router
 
 
 @asynccontextmanager
@@ -69,6 +70,7 @@ app.include_router(ingestion_router)
 app.include_router(budget_router)
 app.include_router(gmail_router)
 app.include_router(reconciliation_router)
+app.include_router(wealth_router)
 
 
 class HealthResponse(BaseModel):

@@ -2,10 +2,9 @@
 
 Versions are the primary milestone identifiers. Historical phases remain traceable
 below; they do not imply earlier releases or tags. Current application version is
-0.9.0. Multi-Source Reconciliation is completed with explicit matching decisions,
-source corrections and statement verification. See [contracts](RECONCILIATION.md)
-and [release audit](RELEASE_0_9_0.md). Gmail live OAuth and real-bank templates remain
-separately documented validation gaps. The next milestone is v0.10.0.
+0.10.0. Net Worth, Assets, Liabilities & Financial Goals is implemented; see
+[contracts](NET_WORTH_GOALS.md) and [release audit](RELEASE_0_10_0.md). Gmail live OAuth
+and real-bank templates remain separate validation gaps. Next is v0.11.0.
 
 ## Historical mapping
 
@@ -22,7 +21,8 @@ separately documented validation gaps. The next milestone is v0.10.0.
 | v0.9.0 | Phase 9 | Multi-Source Reconciliation |
 | v0.10.0 | Phase 10 | Net Worth & Goals |
 | v0.11.0 | Phase 11 | Product Consolidation & UX Refinement |
-| v0.12.0 | Phase 12 | MVP Polish & Release Preparation |
+| v0.12.0 | Phase 12 | Interactive Demo & Portfolio Showcase |
+| v0.13.0 | Stability gate | Final Stability, Security & Release Validation |
 | v1.0.0 | Stable release | First fully validated stable version |
 
 Phase 2A and 2B belong together to v0.2.0; never use separate patch milestones.
@@ -78,22 +78,29 @@ v1.0.0 requires validated stability, not a milestone counter reaching a number.
   matches require decisions rather than destructive automatic merging.
   Includes source conflict review, historical match corrections and an immutable
   audit trail, preserving manual categorization and existing ingestion services.
-- **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals (next).** Consolidate
+- **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals (completed and validated).** Consolidate
   bank/investment valuation, dated multi-currency totals and asset/account breakdowns.
   Add separately modeled property, vehicles and other manual assets with valuation
   history; loans/mortgages/other debts must avoid double-counting card liabilities.
   Goals cover amounts/dates, linked accounts, progress/milestones, required monthly
   contributions and basic projections. Depends on valuation/liability semantics;
   cash history is not automatically complete net worth. Inspect the approved
-  net-worth/save-up references before implementation; no v0.10 code is included.
-- **v0.11.0 - Product Consolidation & UX Refinement.** Coherent spending/investment
-  workflows, reliable history/editing, imports, reporting and automation controls.
-  Depends on prior domains; preserve explicit posting safeguards.
-- **v0.12.0 - MVP Polish & Release Preparation.** Accessibility, responsive layouts,
-  performance, backup/recovery, migration/privacy audits, docs and end-to-end checks.
-  Depends on integration of the agreed MVP scope.
-- **v1.0.0 - stable gate.** Financial correctness, migrations, recovery, privacy and
-  usability must pass acceptance. No automatic promotion by schedule.
+  net-worth/save-up references. See [implementation contracts](NET_WORTH_GOALS.md).
+- **v0.11.0 - Product Consolidation & UI/UX Refinement.** Audit every page and
+  important user journey; improve reference fidelity, navigation, confusing forms,
+  redundant screens, table density, empty/loading/error states and responsiveness.
+  Preserve all existing functionality and explicit posting safeguards.
+- **v0.12.0 - Interactive Demo & Portfolio Showcase.** A populated fictional profile,
+  realistic history, one-click isolated/resettable demo mode, interactive transactions,
+  budgets, investments and goals; guided onboarding, README screenshots and demo links.
+  An optional hosted demo requires separately reviewed isolation/security and never
+  changes the local-only persistence of personal workspaces.
+- **v0.13.0 - Final Stability, Security & Release Validation.** Full regression/E2E,
+  financial correctness, migrations, data integrity, backup/recovery, performance,
+  security/privacy hardening, installation/deployment validation and blocking fixes.
+- **v1.0.0 - Stable Release.** Final acceptance, no unresolved critical defects,
+  verified installation/demo experience and documented limitations. Readiness must
+  be demonstrated; a version counter alone never triggers stable promotion.
 
 ## Post-v1.0 / separately scoped advanced backlog
 
@@ -135,5 +142,24 @@ Wealthfolio reference import-table source and approved Finance Tracker shell wer
 reviewed; the global visual hierarchy is preserved. No third-party source was copied
 for this phase. Existing attribution/licenses remain intact.
 
-The next branch prepares v0.10 Net Worth, Assets, Liabilities & Financial Goals.
-No v0.10 functionality is implemented during v0.9 release preparation.
+The current branch implements v0.10 Net Worth, Assets, Liabilities & Financial Goals.
+The v0.10 release audit is documented separately; v0.11 remains planned, not implemented.
+
+
+### v0.10 reference investigation
+
+Inspected the public Wealthfolio `net_worth_service.rs`, `net_worth_model.rs`,
+`save_up.rs`, goal storage models, `net-worth-content.tsx` and public
+[Net Worth / Goals screenshots](https://wealthfolio.app/features/). Reused concepts
+of an as-of breakdown, linked funding and calendar contributions, not source code.
+Finance Tracker deliberately uses exact Decimal/string money instead of the
+reference save-up engine's f64; fixed currency-safe allocations instead of account
+percentages; no authoritative goal-summary cache or assumed investment returns.
+
+[Actual reporting](https://actualbudget.org/docs/reports/) informed the all-account
+assets-minus-debts view without adopting envelope budgeting.
+[ProjectionLab](https://projectionlab.com/) informed separating actual historical
+progress from hypothetical scenarios; its simulation engine was not adopted.
+[YNAB targets](https://support.ynab.com/how-to-use-targets-rk5kkI9ks) was requested
+but its support-page body was inaccessible to the browser tool; no implementation
+claims or copied algorithms are based on it. Existing license notices are unchanged.

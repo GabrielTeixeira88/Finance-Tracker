@@ -9,6 +9,8 @@ import Dashboard from '@/pages/dashboard'
 import Transactions from '@/pages/transaction-workspace'
 import { Accounts, Settings } from '@/pages/management'
 import Preview, { type PreviewPage } from '@/pages/previews'
+import NetWorth from '@/pages/wealth'
+import Goals from '@/pages/goals'
 
 export default function App() {
   const [route, setRoute] = useState<{
@@ -116,7 +118,11 @@ export default function App() {
               categories={categories.data}
             />
           )}
-          {['Net Worth', 'Reports'].includes(route.page) && (
+          {route.page === 'Net Worth' && (
+            <NetWorth accounts={accounts.data} navigate={navigate} />
+          )}
+          {route.page === 'Goals' && <Goals accounts={accounts.data} />}
+          {route.page === 'Reports' && (
             <Preview
               key={route.page}
               page={route.page as PreviewPage}

@@ -1,6 +1,6 @@
 # Current product scope
 
-Current release scope: **v0.9.0 - Multi-Source Reconciliation**. Next: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. See [reconciliation contracts](RECONCILIATION.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+Current release scope: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. Next: **v0.11.0 - Product Consolidation & UI/UX Refinement**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_10_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 Finance Tracker is a single-user, offline-capable local finance application. Financial
 records stay in a local SQLite database. No authentication, cloud persistence, telemetry,
@@ -17,8 +17,8 @@ Metadata edits must not change monetary postings. Transfer review applies to bot
 transfer/opening financial correction remains restricted. Review is not reconciliation.
 
 Functional destinations are Overview, Accounts, Transactions, Budget, Investments,
-Performance and Settings. Categories are configuration; transfers belong to Add
-Transaction. Net Worth and Reports remain read-only previews, not finished engines.
+Performance, Net Worth, Goals and Settings. Categories are configuration; transfers belong to Add
+Transaction. Net Worth and Goals are functional in v0.10.0; Reports remains a read-only preview.
 
 Phase 3 implements raw source -> parsing/normalization -> payee identification
 -> candidate -> rules -> review -> ledger for local CSV/OFX files.
@@ -180,3 +180,10 @@ requires exact cutoff balance agreement and locks included history. Source corre
 reassignment and safe duplicate merging are audited and atomic. Brokerage statements,
 automatic balancing adjustments and automated fuzzy merges are excluded.
 See [workflow, API, persistence and limits](RECONCILIATION.md).
+
+
+## v0.10.0
+
+Net Worth and Goals now use dated database-backed records and exact existing
+ledger/investment/FX services. See [contracts and limitations](NET_WORTH_GOALS.md).
+Release version is 0.10.0. Reports retains its preview boundary.

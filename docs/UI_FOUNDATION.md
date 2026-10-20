@@ -6,7 +6,7 @@ Overview uses compact section tabs, a 30px JetBrains Mono balance, a 280px
 edge-to-edge chart, a centered range selector, and a two-to-one lower grid.
 The left column contains account rows; the right contains Cash flow and Recent
 activity. Spending is a related Overview view; Net Worth opens the existing
-explicitly labeled preview. See the [validation report](PHASE_1_7_VISUAL_REVIEW.md)
+functional Net Worth view in v0.10.0. See the [validation report](PHASE_1_7_VISUAL_REVIEW.md)
 and [source attribution](../THIRD_PARTY_NOTICES.md).
 
 The headline represents **Total balance**, never investment valuation or investment
@@ -206,3 +206,10 @@ provides explicit clearing, completion and reopening. Existing duplicates requir
 preview and confirmation. Ledger rows show bank state/source count alongside review
 and offer Evidence / clearing. The global sidebar, theme and financial semantics stay
 unchanged. Decision history and source payloads remain local, text-only details.
+
+
+## v0.10.0
+
+Net Worth and Goals now use dated database-backed records and exact existing
+ledger/investment/FX services. See [contracts and limitations](NET_WORTH_GOALS.md).
+Release version is 0.10.0. Reports retains its preview boundary.
