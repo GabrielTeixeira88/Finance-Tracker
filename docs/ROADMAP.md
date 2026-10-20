@@ -2,9 +2,9 @@
 
 Versions are the primary milestone identifiers. Historical phases remain traceable
 below; they do not imply earlier releases or tags. Current application version is
-0.10.0. Net Worth, Assets, Liabilities & Financial Goals is implemented; see
-[contracts](NET_WORTH_GOALS.md) and [release audit](RELEASE_0_10_0.md). Gmail live OAuth
-and real-bank templates remain separate validation gaps. Next is v0.11.0.
+0.11.0. Product Consolidation & UI/UX Refinement is implemented; see
+[UX audit](UX_AUDIT_v0.11.md) and [release audit](RELEASE_0_11_0.md). Gmail live OAuth
+and real-bank templates remain separate validation gaps. Next is v0.12.0.
 
 ## Historical mapping
 
@@ -86,15 +86,19 @@ v1.0.0 requires validated stability, not a milestone counter reaching a number.
   contributions and basic projections. Depends on valuation/liability semantics;
   cash history is not automatically complete net worth. Inspect the approved
   net-worth/save-up references. See [implementation contracts](NET_WORTH_GOALS.md).
-- **v0.11.0 - Product Consolidation & UI/UX Refinement.** Audit every page and
+- **v0.11.0 - Product Consolidation & UI/UX Refinement (completed and validated).** Audit every page and
   important user journey; improve reference fidelity, navigation, confusing forms,
   redundant screens, table density, empty/loading/error states and responsiveness.
   Preserve all existing functionality and explicit posting safeguards.
 - **v0.12.0 - Interactive Demo & Portfolio Showcase.** A populated fictional profile,
-  realistic history, one-click isolated/resettable demo mode, interactive transactions,
+  18–24 months of coherent fictional history, one-click isolated/resettable demo mode, interactive transactions,
   budgets, investments and goals; guided onboarding, README screenshots and demo links.
   An optional hosted demo requires separately reviewed isolation/security and never
-  changes the local-only persistence of personal workspaces.
+  changes the local-only persistence of personal workspaces. Use real backend APIs
+  and financial services, with no external credentials required. Include investment
+  prices/benchmarks, simulated Gmail/import/reconciliation evidence, assets/debts
+  and goals; guided interviewer tours, architecture overview and disposable session
+  isolation for any separately approved public demo.
 - **v0.13.0 - Final Stability, Security & Release Validation.** Full regression/E2E,
   financial correctness, migrations, data integrity, backup/recovery, performance,
   security/privacy hardening, installation/deployment validation and blocking fixes.
@@ -142,8 +146,11 @@ Wealthfolio reference import-table source and approved Finance Tracker shell wer
 reviewed; the global visual hierarchy is preserved. No third-party source was copied
 for this phase. Existing attribution/licenses remain intact.
 
-The current branch implements v0.10 Net Worth, Assets, Liabilities & Financial Goals.
-The v0.10 release audit is documented separately; v0.11 remains planned, not implemented.
+The current release is v0.11.0 Product Consolidation & UI/UX Refinement, documented
+in [the UX audit](UX_AUDIT_v0.11.md) and [release validation](RELEASE_0_11_0.md).
+The v0.12 demo and v0.13 stability milestones are unchanged; see
+[demo readiness](DEMO_READINESS.md) for the boundary between existing fixtures
+and future one-click, resettable showcase infrastructure.
 
 
 ### v0.10 reference investigation

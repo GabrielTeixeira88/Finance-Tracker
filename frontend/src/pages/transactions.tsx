@@ -10,6 +10,8 @@ import {
   BulkTransactionActions,
   ReviewTransaction,
 } from '@/components/transaction-review'
+import { RuleEditor } from '@/pages/rules'
+import { rememberLedgerFilters } from '@/lib/navigation'
 import { decimalUnits } from '@/lib/money'
 import {
   getTransactionPage,
@@ -32,6 +34,7 @@ export default function Transactions({
   initialFilters?: Record<string, string>
   account?: Account
 }) {
+  const [ruleSource, setRuleSource] = useState<Transaction>()
   const [editing, setEditing] = useState<Transaction>()
   const [inspecting, setInspecting] = useState<Transaction>()
   const [creating, setCreating] = useState(false)
@@ -70,11 +73,13 @@ export default function Transactions({
   })
   const mutation = useWrite()
   function filter(key: string, value: string) {
-    setFilters((current) => ({
-      ...current,
+    const next = {
+      ...filters,
       ...(key === 'category_id' ? { uncategorized: '' } : {}),
       [key]: value,
-    }))
+    }
+    setFilters(next)
+    rememberLedgerFilters(next)
     setOffset(0)
     setSelected([])
   }
@@ -113,6 +118,41 @@ export default function Transactions({
             {account.institution ?? 'No institution'}
           </span>
         </div>
+      )}
+      {ruleSource && (
+        <RuleEditor
+          key={ruleSource.id}
+          initialDraft={{
+            name: `Classify ${ruleSource.payee?.name ?? ruleSource.description}`.slice(
+              0,
+              120,
+            ),
+            enabled: true,
+            priority: 100,
+            match_mode: 'ALL',
+            conditions: [
+              {
+                field: 'description',
+                operator: 'contains',
+                value: ruleSource.description,
+              },
+            ],
+            actions: {
+              payee_id: ruleSource.payee_id,
+              category_id: ruleSource.category_id,
+            },
+          }}
+          accounts={accounts}
+          categories={categories}
+          onSaved={() => setRuleSource(undefined)}
+          valueName={(field, value) =>
+            field === 'category_id'
+              ? (categories.find((c) => c.id === value)?.name ?? 'Category')
+              : field === 'payee_id'
+                ? (ruleSource.payee?.name ?? 'Payee')
+                : (value ?? '')
+          }
+        />
       )}
       {creating && (
         <TransactionComposer
@@ -160,6 +200,7 @@ export default function Transactions({
               variant="ghost"
               onClick={() => {
                 setFilters(account ? { account_id: account.id } : {})
+                rememberLedgerFilters(account ? { account_id: account.id } : {})
                 setOffset(0)
                 setSelected([])
               }}
@@ -218,65 +259,84 @@ export default function Transactions({
               ))}
             </select>
           </Field>
-          <Field label="From date">
-            <input
-              type="date"
-              value={filters.date_from ?? ''}
-              onChange={(e) => filter('date_from', e.target.value)}
-            />
-          </Field>
-          <Field label="To date">
-            <input
-              type="date"
-              value={filters.date_to ?? ''}
-              onChange={(e) => filter('date_to', e.target.value)}
-            />
-          </Field>
-          <Field label="Filter review">
-            <select
-              value={filters.review_status ?? ''}
-              onChange={(e) => filter('review_status', e.target.value)}
-            >
-              <option value="">All review states</option>
-              <option value="NEEDS_REVIEW">Needs review</option>
-              <option value="REVIEWED">Reviewed</option>
-            </select>
-          </Field>
-          <Field label="Bank status">
-            <select
-              value={filters.clearing_status ?? ''}
-              onChange={(e) => filter('clearing_status', e.target.value)}
-            >
-              <option value="">All bank states</option>
-              <option value="UNCLEARED">Uncleared</option>
-              <option value="CLEARED">Cleared</option>
-              <option value="RECONCILED">Reconciled</option>
-            </select>
-          </Field>
-          <Field label="Minimum amount">
-            <input
-              inputMode="decimal"
-              value={filters.amount_min ?? ''}
-              onChange={(e) => filter('amount_min', e.target.value)}
-            />
-          </Field>
-          <Field label="Maximum amount">
-            <input
-              inputMode="decimal"
-              value={filters.amount_max ?? ''}
-              onChange={(e) => filter('amount_max', e.target.value)}
-            />
-          </Field>
-          <Field label="Sort transactions">
-            <select
-              value={filters.sort ?? 'date_desc'}
-              onChange={(e) => filter('sort', e.target.value)}
-            >
-              <option value="date_desc">Newest first</option>
-              <option value="date_asc">Oldest first</option>
-            </select>
-          </Field>
         </div>
+        <details
+          className="ledger-advanced"
+          open={
+            !!(
+              filters.date_from ||
+              filters.date_to ||
+              filters.amount_min ||
+              filters.amount_max ||
+              filters.review_status ||
+              filters.clearing_status
+            )
+          }
+        >
+          <summary>
+            More filters - dates, review, bank status and amount
+          </summary>
+          <div className="filter-bar">
+            <Field label="From date">
+              <input
+                type="date"
+                value={filters.date_from ?? ''}
+                onChange={(e) => filter('date_from', e.target.value)}
+              />
+            </Field>
+            <Field label="To date">
+              <input
+                type="date"
+                value={filters.date_to ?? ''}
+                onChange={(e) => filter('date_to', e.target.value)}
+              />
+            </Field>
+            <Field label="Filter review">
+              <select
+                value={filters.review_status ?? ''}
+                onChange={(e) => filter('review_status', e.target.value)}
+              >
+                <option value="">All review states</option>
+                <option value="NEEDS_REVIEW">Needs review</option>
+                <option value="REVIEWED">Reviewed</option>
+              </select>
+            </Field>
+            <Field label="Bank status">
+              <select
+                value={filters.clearing_status ?? ''}
+                onChange={(e) => filter('clearing_status', e.target.value)}
+              >
+                <option value="">All bank states</option>
+                <option value="UNCLEARED">Uncleared</option>
+                <option value="CLEARED">Cleared</option>
+                <option value="RECONCILED">Reconciled</option>
+              </select>
+            </Field>
+            <Field label="Minimum amount">
+              <input
+                inputMode="decimal"
+                value={filters.amount_min ?? ''}
+                onChange={(e) => filter('amount_min', e.target.value)}
+              />
+            </Field>
+            <Field label="Maximum amount">
+              <input
+                inputMode="decimal"
+                value={filters.amount_max ?? ''}
+                onChange={(e) => filter('amount_max', e.target.value)}
+              />
+            </Field>
+            <Field label="Sort transactions">
+              <select
+                value={filters.sort ?? 'date_desc'}
+                onChange={(e) => filter('sort', e.target.value)}
+              >
+                <option value="date_desc">Newest first</option>
+                <option value="date_asc">Oldest first</option>
+              </select>
+            </Field>
+          </div>
+        </details>
         <p className="metadata">
           Amount filters use positive magnitudes in each record’s original
           currency. Review is separate from bank reconciliation.
@@ -309,6 +369,7 @@ export default function Transactions({
         ) : (
           <TransactionTable
             onInspect={setInspecting}
+            onCreateRule={setRuleSource}
             rows={rows.data.rows}
             accounts={accounts}
             categories={categories}

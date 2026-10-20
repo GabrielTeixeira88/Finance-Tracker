@@ -17,7 +17,12 @@ import {
   getAllocations,
   type GoalDetail,
 } from '@/lib/wealth-api'
-import { activityPercent, decimalUnits, sumMoney } from '@/lib/money'
+import {
+  activityPercent,
+  decimalUnits,
+  sumMoney,
+  formatRatioPercent,
+} from '@/lib/money'
 import { NullableMoney, WealthChart, WealthForm } from './wealth'
 
 export default function Goals({ accounts }: { accounts: Account[] }) {
@@ -45,7 +50,10 @@ export default function Goals({ accounts }: { accounts: Account[] }) {
       {goals.isPending ? (
         <LoadingState text="Loading goals…" />
       ) : goals.isError ? (
-        <ErrorState text={goals.error.message} />
+        <ErrorState
+          text={goals.error.message}
+          retry={() => void goals.refetch()}
+        />
       ) : (
         <>
           {[...new Set(goals.data.map((d) => d.goal.currency))].map(
@@ -108,6 +116,9 @@ export default function Goals({ accounts }: { accounts: Account[] }) {
                   <th scope="col" className="amount-cell">
                     Target
                   </th>
+                  <th scope="col" className="amount-cell">
+                    Remaining
+                  </th>
                   <th scope="col">Progress</th>
                 </tr>
               </thead>
@@ -142,25 +153,46 @@ export default function Goals({ accounts }: { accounts: Account[] }) {
                     <td className="amount-cell">
                       <Money value={d.goal.target} currency={d.goal.currency} />
                     </td>
-                    <td>
-                      <progress
-                        aria-label={`${d.goal.name} progress`}
-                        max={100}
-                        value={
-                          d.saved === null
-                            ? 0
-                            : decimalUnits(d.goal.target) === 0n
-                              ? 100
-                              : Math.min(
-                                  100,
-                                  activityPercent(d.saved, d.goal.target, '0'),
-                                )
-                        }
+                    <td className="amount-cell">
+                      <NullableMoney
+                        value={d.remaining}
+                        currency={d.goal.currency}
                       />
+                    </td>
+                    <td>
+                      {d.progress !== null && (
+                        <progress
+                          aria-label={`${d.goal.name} progress`}
+                          aria-valuetext={formatRatioPercent(d.progress)}
+                          max={100}
+                          value={
+                            d.saved === null
+                              ? 0
+                              : decimalUnits(d.goal.target) === 0n
+                                ? 100
+                                : Math.min(
+                                    100,
+                                    activityPercent(
+                                      d.saved,
+                                      d.goal.target,
+                                      '0',
+                                    ),
+                                  )
+                          }
+                        />
+                      )}
                       <p className="metadata">
-                        {d.warnings.join('; ') ||
-                          d.milestones.map((m) => `${m}%`).join(' · ')}
+                        {d.progress === null
+                          ? 'Progress unavailable'
+                          : `${formatRatioPercent(d.progress)} saved`}
                       </p>
+                      {d.milestones.length > 0 && (
+                        <p className="metadata">
+                          Milestones reached:{' '}
+                          {d.milestones.map((m) => `${m}%`).join(' · ')}
+                        </p>
+                      )}
+                      <p className="metadata">{d.warnings.join('; ')}</p>
                     </td>
                   </tr>
                 ))}
@@ -177,7 +209,10 @@ export default function Goals({ accounts }: { accounts: Account[] }) {
           {allocations.isPending ? (
             <LoadingState />
           ) : allocations.isError ? (
-            <ErrorState text={allocations.error.message} />
+            <ErrorState
+              text={allocations.error.message}
+              retry={() => void allocations.refetch()}
+            />
           ) : (
             <div className="table-scroll">
               <table className="finance-wealth-table">
@@ -247,6 +282,11 @@ function GoalEditor({
           ))}
         </select>
       </Field>
+      <p className="metadata">
+        Account allocations reserve a share of existing savings for this goal.
+        Manual contributions track progress only. Neither mode moves money or
+        adds an asset.
+      </p>
       <Field label="Currency">
         <input
           name="currency"
@@ -293,7 +333,13 @@ function GoalView({ id, accounts }: { id: string; accounts: Account[] }) {
     placeholderData: keepPreviousData,
   })
   if (detail.isPending) return <LoadingState />
-  if (detail.isError) return <ErrorState text={detail.error.message} />
+  if (detail.isError)
+    return (
+      <ErrorState
+        text={detail.error.message}
+        retry={() => void detail.refetch()}
+      />
+    )
   const d = detail.data,
     g = d.goal
   return (

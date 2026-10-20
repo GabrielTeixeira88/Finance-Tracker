@@ -101,6 +101,9 @@ it('combines backend search, filters, exact amount ranges and date sorting', asy
   await userEvent.selectOptions(screen.getByLabelText('Filter account'), 'a')
   await userEvent.selectOptions(screen.getByLabelText('Filter category'), 'c')
   await userEvent.selectOptions(screen.getByLabelText('Filter type'), 'EXPENSE')
+  await userEvent.click(
+    screen.getByText('More filters - dates, review, bank status and amount'),
+  )
   await userEvent.selectOptions(
     screen.getByLabelText('Filter review'),
     'NEEDS_REVIEW',
@@ -148,6 +151,9 @@ it('paginates using server counts and clears selection on page/filter changes', 
   expect(screen.queryByText('1 selected on this page')).not.toBeInTheDocument()
   await screen.findByText(/Page 2/)
   expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
+  await userEvent.click(
+    screen.getByText('More filters - dates, review, bank status and amount'),
+  )
   await userEvent.selectOptions(
     screen.getByLabelText('Filter review'),
     'REVIEWED',
@@ -432,4 +438,16 @@ it('does not send a bulk update when confirmation is cancelled', async () => {
     fetch.mock.calls.some(([, options]) => options?.method === 'PATCH'),
   ).toBe(false)
   expect(screen.getByLabelText('Select Uber')).toBeChecked()
+})
+it('creates a classification rule draft from raw description without posting money', async () => {
+  const fetch = setup()
+  await screen.findByText('Uber')
+  await userEvent.click(screen.getByRole('button', { name: 'Create rule' }))
+  expect(screen.getByLabelText('Description contains')).toHaveValue(
+    row.description,
+  )
+  expect(screen.getByLabelText('Set category')).toHaveValue('c')
+  expect(fetch.mock.calls.some(([, init]) => init?.method)).toBe(false)
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  expect(screen.queryByLabelText('Rule name')).not.toBeInTheDocument()
 })

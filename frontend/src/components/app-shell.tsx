@@ -22,6 +22,7 @@ import {
   Target,
 } from 'lucide-react'
 import type { PreviewPage } from '@/pages/previews'
+import { navigateTo } from '@/lib/navigation'
 
 export type Page =
   | 'Overview'
@@ -46,6 +47,15 @@ const primary = [
   { page: 'Reports', icon: Files },
   { page: 'Settings', icon: Settings },
 ] as const
+const destinations = [
+  ['Rules', 'Settings', 'rules'],
+  ['Payees', 'Settings', 'payees'],
+  ['Categories', 'Settings', 'categories'],
+  ['Imports', 'Transactions', 'imports'],
+  ['Gmail review', 'Transactions', 'gmail'],
+  ['Scheduled transactions', 'Transactions', 'scheduled'],
+  ['Reconciliation', 'Transactions', 'reconciliation'],
+] as const
 
 export function AppShell({
   page,
@@ -57,10 +67,37 @@ export function AppShell({
   children: ReactNode
 }) {
   const [open, setOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(true)
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('finance-tracker-sidebar') !== 'expanded'
+    } catch {
+      return true
+    }
+  })
   const [search, setSearch] = useState('')
   const searchDialog = useRef<HTMLDialogElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        'finance-tracker-sidebar',
+        collapsed ? 'collapsed' : 'expanded',
+      )
+    } catch {
+      /* Appearance storage is optional. */
+    }
+  }, [collapsed])
+  useEffect(() => {
+    const findPage = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setSearch('')
+        searchDialog.current?.showModal()
+      }
+    }
+    window.addEventListener('keydown', findPage)
+    return () => window.removeEventListener('keydown', findPage)
+  }, [])
   const [theme, setTheme] = useState(() => {
     try {
       const stored = localStorage.getItem('finance-tracker-theme')
@@ -182,7 +219,14 @@ export function AppShell({
     <div
       className={`application-shell reference-shell ${collapsed ? 'sidebar-collapsed' : ''}`}
     >
-      <a className="skip-link" href="#main-content">
+      <a
+        className="skip-link"
+        href="#main-content"
+        onClick={(event) => {
+          event.preventDefault()
+          document.getElementById('main-content')?.focus()
+        }}
+      >
         Skip to content
       </a>
       <aside className="desktop-sidebar">{content()}</aside>
@@ -213,10 +257,34 @@ export function AppShell({
                 )}
               </button>
             ))}
+          {destinations
+            .filter(([title]) =>
+              title.toLowerCase().includes(search.toLowerCase()),
+            )
+            .map(([title, target, view]) => (
+              <button
+                className="nav-item"
+                key={title}
+                onClick={() => {
+                  navigateTo(target, undefined, { view })
+                  setOpen(false)
+                  searchDialog.current?.close()
+                  requestAnimationFrame(() =>
+                    document.getElementById('page-title')?.focus(),
+                  )
+                }}
+              >
+                {title}
+                <span className="metadata">{target}</span>
+              </button>
+            ))}
         </nav>
-        {!primary.some((item) =>
-          item.page.toLowerCase().includes(search.toLowerCase()),
-        ) && <p className="metadata">No matching pages</p>}
+        {!destinations.some(([title]) =>
+          title.toLowerCase().includes(search.toLowerCase()),
+        ) &&
+          !primary.some((item) =>
+            item.page.toLowerCase().includes(search.toLowerCase()),
+          ) && <p className="metadata">No matching pages</p>}
         <button
           className="text-action"
           onClick={() => searchDialog.current?.close()}

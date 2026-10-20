@@ -89,6 +89,12 @@ test('connected settings offers label/account mapping, bounded dates and disconn
   ).toBeInTheDocument()
   expect(screen.getByLabelText('Default target account')).toBeInTheDocument()
   expect(screen.getByLabelText('Backfill from')).toBeInTheDocument()
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+  await user.click(screen.getByRole('button', { name: 'Disconnect' }))
+  expect(
+    fetch.mock.calls.some(([path]) => path === '/api/gmail/disconnect'),
+  ).toBe(false)
+  confirm.mockReturnValue(true)
   await user.click(screen.getByRole('button', { name: 'Disconnect' }))
   await waitFor(() =>
     expect(

@@ -15,6 +15,7 @@ HTMLDialogElement.prototype.close = function () {
 
 afterEach(() => {
   cleanup()
+  window.history.replaceState(null, '', '/')
   vi.unstubAllGlobals()
   localStorage.clear()
   delete document.documentElement.dataset.theme

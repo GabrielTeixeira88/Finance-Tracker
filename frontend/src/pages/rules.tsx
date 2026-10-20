@@ -51,10 +51,18 @@ export function Rules({
   const [editor, setEditor] = useState<{
     rule?: Rule
     suggestion?: Suggestion
+    initialDraft?: RuleDraft
   }>()
   const [preview, setPreview] = useState<{ id: string; data: RulePreview }>()
   const [error, setError] = useState('')
   const [feedback, setFeedback] = useState('')
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('all')
+  const visibleRules = (rules.data ?? []).filter(
+    (rule) =>
+      rule.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()) &&
+      (status === 'all' || rule.enabled === (status === 'enabled')),
+  )
   const write = useWrite()
   const valueName = (field: string, value: string | null | undefined) =>
     field === 'category_id'
@@ -89,9 +97,30 @@ export function Rules({
         Lower priority numbers run first. Manual choices win. Saving applies
         only to future ordinary transactions.
       </p>
+      <div className="filter-bar">
+        <Field label="Search rules">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </Field>
+        <Field label="Rule status">
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="all">All rules</option>
+            <option value="enabled">Enabled</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        </Field>
+      </div>
       {editor && (
         <RuleEditor
-          key={editor.rule?.id ?? editor.suggestion?.id ?? 'new'}
+          key={
+            editor.rule?.id ??
+            editor.suggestion?.id ??
+            editor.initialDraft?.name ??
+            'new'
+          }
           {...editor}
           accounts={accounts}
           categories={categories}
@@ -114,7 +143,13 @@ export function Rules({
               detail="Create a narrow rule and preview its effect before applying it."
             />
           )}
-          {rules.data.map((rule) => (
+          {!!rules.data.length && !visibleRules.length && (
+            <EmptyState
+              title="No matching rules"
+              detail="Change the search or status filter."
+            />
+          )}
+          {visibleRules.map((rule) => (
             <div className="automation-row" key={rule.id}>
               <div>
                 <strong>{rule.name}</strong>
@@ -174,6 +209,22 @@ export function Rules({
                 <Button
                   size="sm"
                   variant="outline"
+                  onClick={() => {
+                    setEditor({
+                      initialDraft: {
+                        ...rule,
+                        name: `${rule.name} (copy)`.slice(0, 120),
+                        enabled: false,
+                      },
+                    })
+                    setPreview(undefined)
+                  }}
+                >
+                  Duplicate
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
                   disabled={write.isPending}
                   onClick={() => {
                     if (
@@ -359,8 +410,9 @@ function Preview({
   )
 }
 
-function RuleEditor({
+export function RuleEditor({
   rule,
+  initialDraft,
   suggestion,
   accounts,
   categories,
@@ -368,6 +420,7 @@ function RuleEditor({
   valueName,
 }: {
   rule?: Rule
+  initialDraft?: RuleDraft
   suggestion?: Suggestion
   accounts: Account[]
   categories: Category[]
@@ -376,6 +429,7 @@ function RuleEditor({
 }) {
   const [draft, setDraft] = useState<RuleDraft>(
     rule ??
+      initialDraft ??
       (suggestion
         ? {
             ...fresh(),
@@ -385,6 +439,15 @@ function RuleEditor({
           }
         : fresh()),
   )
+  const [advanced, setAdvanced] = useState(() => {
+    const value = rule ?? initialDraft ?? suggestion
+    return (
+      !!value &&
+      (value.conditions.length !== 1 ||
+        value.conditions[0]?.field !== 'description' ||
+        value.conditions[0]?.operator !== 'contains')
+    )
+  })
   const [preview, setPreview] = useState<RulePreview>()
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -446,150 +509,181 @@ function RuleEditor({
                 onChange={(e) => update({ name: e.target.value })}
               />
             </Field>
-            <Field label="Priority">
-              <input
-                type="number"
-                min={0}
-                max={100000}
-                required
-                value={draft.priority}
-                onChange={(e) => update({ priority: Number(e.target.value) })}
-              />
-            </Field>
-            <Field label="Match mode">
-              <select
-                value={draft.match_mode}
-                onChange={(e) =>
-                  update({ match_mode: e.target.value as 'ALL' | 'ANY' })
-                }
-              >
-                <option value="ALL">All conditions</option>
-                <option value="ANY">Any condition</option>
-              </select>
-            </Field>
-            <Field label="Rule enabled">
-              <input
-                type="checkbox"
-                checked={draft.enabled}
-                onChange={(e) => update({ enabled: e.target.checked })}
-              />
-            </Field>
           </div>
-          {draft.conditions.map((c, i) => (
-            <div className="filter-bar" key={i}>
-              <Field label={`Condition ${i + 1} field`}>
-                <select
-                  value={c.field}
+          {!advanced &&
+            draft.conditions.length === 1 &&
+            draft.conditions[0].field === 'description' &&
+            draft.conditions[0].operator === 'contains' && (
+              <Field label="Description contains">
+                <input
+                  required
+                  maxLength={500}
+                  value={draft.conditions[0].value}
                   onChange={(e) =>
-                    changeCondition(i, {
-                      field: e.target.value as Condition['field'],
-                      operator: 'equals',
-                      value: '',
-                    })
+                    changeCondition(0, { value: e.target.value })
                   }
-                >
-                  {conditionFields.map((f) => (
-                    <option key={f} value={f}>
-                      {label(f)}
-                    </option>
-                  ))}
-                </select>
+                />
               </Field>
-              <Field label={`Condition ${i + 1} operator`}>
-                <select
-                  value={c.operator}
-                  onChange={(e) =>
-                    changeCondition(i, { operator: e.target.value })
-                  }
-                >
-                  {(['description', 'payee_name'].includes(c.field)
-                    ? ['contains', 'not_contains', 'equals', 'starts_with']
-                    : c.field === 'amount'
-                      ? ['equals', 'greater_than', 'less_than']
-                      : ['equals']
-                  ).map((op) => (
-                    <option key={op} value={op}>
-                      {label(op)}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label={`Condition ${i + 1} value`}>
-                {[
-                  'account_id',
-                  'category_id',
-                  'transaction_type',
-                  'review_status',
-                ].includes(c.field) ? (
-                  <select
-                    required
-                    value={c.value}
-                    onChange={(e) =>
-                      changeCondition(i, { value: e.target.value })
-                    }
-                  >
-                    <option value="">Choose value</option>
-                    {(c.field === 'account_id'
-                      ? accounts.map((a) => ({ id: a.id, name: a.name }))
-                      : c.field === 'category_id'
-                        ? categories
-                        : c.field === 'transaction_type'
-                          ? ['INCOME', 'EXPENSE'].map((v) => ({
-                              id: v,
-                              name: label(v),
-                            }))
-                          : ['NEEDS_REVIEW', 'REVIEWED'].map((v) => ({
-                              id: v,
-                              name: label(v),
-                            }))
-                    ).map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
+            )}
+          <Button
+            type="button"
+            variant="ghost"
+            aria-expanded={advanced}
+            onClick={() => setAdvanced(!advanced)}
+          >
+            Advanced conditions and priority
+          </Button>
+          {advanced && (
+            <div className="advanced-fields">
+              <div className="form-grid">
+                <Field label="Priority">
                   <input
+                    type="number"
+                    min={0}
+                    max={100000}
                     required
-                    maxLength={500}
-                    value={c.value}
+                    value={draft.priority}
                     onChange={(e) =>
-                      changeCondition(i, { value: e.target.value })
+                      update({ priority: Number(e.target.value) })
                     }
                   />
-                )}
-              </Field>
+                </Field>
+                <Field label="Match mode">
+                  <select
+                    value={draft.match_mode}
+                    onChange={(e) =>
+                      update({ match_mode: e.target.value as 'ALL' | 'ANY' })
+                    }
+                  >
+                    <option value="ALL">All conditions</option>
+                    <option value="ANY">Any condition</option>
+                  </select>
+                </Field>
+                <Field label="Rule enabled">
+                  <input
+                    type="checkbox"
+                    checked={draft.enabled}
+                    onChange={(e) => update({ enabled: e.target.checked })}
+                  />
+                </Field>
+              </div>
+              {draft.conditions.map((c, i) => (
+                <div className="filter-bar" key={i}>
+                  <Field label={`Condition ${i + 1} field`}>
+                    <select
+                      value={c.field}
+                      onChange={(e) =>
+                        changeCondition(i, {
+                          field: e.target.value as Condition['field'],
+                          operator: 'equals',
+                          value: '',
+                        })
+                      }
+                    >
+                      {conditionFields.map((f) => (
+                        <option key={f} value={f}>
+                          {label(f)}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label={`Condition ${i + 1} operator`}>
+                    <select
+                      value={c.operator}
+                      onChange={(e) =>
+                        changeCondition(i, { operator: e.target.value })
+                      }
+                    >
+                      {(['description', 'payee_name'].includes(c.field)
+                        ? ['contains', 'not_contains', 'equals', 'starts_with']
+                        : c.field === 'amount'
+                          ? ['equals', 'greater_than', 'less_than']
+                          : ['equals']
+                      ).map((op) => (
+                        <option key={op} value={op}>
+                          {label(op)}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label={`Condition ${i + 1} value`}>
+                    {[
+                      'account_id',
+                      'category_id',
+                      'transaction_type',
+                      'review_status',
+                    ].includes(c.field) ? (
+                      <select
+                        required
+                        value={c.value}
+                        onChange={(e) =>
+                          changeCondition(i, { value: e.target.value })
+                        }
+                      >
+                        <option value="">Choose value</option>
+                        {(c.field === 'account_id'
+                          ? accounts.map((a) => ({ id: a.id, name: a.name }))
+                          : c.field === 'category_id'
+                            ? categories
+                            : c.field === 'transaction_type'
+                              ? ['INCOME', 'EXPENSE'].map((v) => ({
+                                  id: v,
+                                  name: label(v),
+                                }))
+                              : ['NEEDS_REVIEW', 'REVIEWED'].map((v) => ({
+                                  id: v,
+                                  name: label(v),
+                                }))
+                        ).map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        required
+                        maxLength={500}
+                        value={c.value}
+                        onChange={(e) =>
+                          changeCondition(i, { value: e.target.value })
+                        }
+                      />
+                    )}
+                  </Field>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={draft.conditions.length === 1}
+                    onClick={() =>
+                      update({
+                        conditions: draft.conditions.filter(
+                          (_, index) => i !== index,
+                        ),
+                      })
+                    }
+                  >
+                    Remove condition {i + 1}
+                  </Button>
+                </div>
+              ))}
               <Button
                 type="button"
                 variant="outline"
-                disabled={draft.conditions.length === 1}
+                disabled={draft.conditions.length >= 12}
                 onClick={() =>
                   update({
-                    conditions: draft.conditions.filter(
-                      (_, index) => i !== index,
-                    ),
+                    conditions: [
+                      ...draft.conditions,
+                      { field: 'description', operator: 'contains', value: '' },
+                    ],
                   })
                 }
               >
-                Remove condition {i + 1}
+                Add condition
               </Button>
             </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={draft.conditions.length >= 12}
-            onClick={() =>
-              update({
-                conditions: [
-                  ...draft.conditions,
-                  { field: 'description', operator: 'contains', value: '' },
-                ],
-              })
-            }
-          >
-            Add condition
-          </Button>
+          )}
           <h3 className="mt-4">Metadata actions</h3>
           <div className="form-grid">
             <PayeePicker

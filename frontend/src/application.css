@@ -519,3 +519,101 @@
     margin-right: 16px;
   }
 }
+/* Shared workflow navigation, deliberately quieter than primary navigation. */
+.reference-shell .section-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.reference-shell .section-navigation button {
+  padding: 9px 12px;
+  color: var(--muted-foreground);
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+}
+.reference-shell .section-navigation button[aria-current='page'] {
+  color: var(--foreground);
+  border-bottom-color: currentColor;
+}
+.workflow-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.workflow-steps li[aria-current='step'] {
+  color: var(--foreground);
+  font-weight: 600;
+}
+.workflow-steps li span {
+  font-variant-numeric: tabular-nums;
+  margin-right: 4px;
+}
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.advanced-fields {
+  margin: 12px 0;
+  padding: 12px 0;
+  border-block: 1px solid var(--border);
+}
+.reference-shell :is(button, a, input, select, summary):focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+.reference-shell .transaction-ledger :is(td, th) {
+  padding: 10px 8px;
+}
+.transaction-ledger .description-cell {
+  min-width: 190px;
+  max-width: 320px;
+}
+.transaction-ledger .description-cell small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+}
+.transaction-ledger .transfer-link {
+  white-space: nowrap;
+}
+.transaction-ledger .ledger-evidence {
+  float: right;
+  width: 24px;
+  height: 24px;
+}
+.ledger-advanced {
+  margin: 8px 0;
+}
+.ledger-advanced summary,
+.advanced-fields summary {
+  cursor: pointer;
+  padding: 6px 0;
+  color: var(--muted-foreground);
+}
+.workflow-context {
+  margin-bottom: 16px;
+  max-width: 90ch;
+}
+
+.reference-shell .destructive-action {
+  color: var(--negative);
+}

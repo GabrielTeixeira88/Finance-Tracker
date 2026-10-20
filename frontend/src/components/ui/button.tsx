@@ -11,6 +11,8 @@ const buttonVariants = cva(
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
         outline: 'border border-input bg-background hover:bg-muted',
         ghost: 'bg-transparent text-foreground hover:bg-muted',
+        destructive:
+          'destructive-action border border-input bg-transparent hover:bg-muted',
       },
       size: { default: 'h-9 px-3 py-2', sm: 'h-7 rounded px-2 text-xs' },
     },

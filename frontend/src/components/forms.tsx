@@ -107,7 +107,7 @@ function Editor({
           <Button disabled={mutation.isPending} type="submit">
             {mutation.isPending ? 'Saving…' : 'Save'}
           </Button>
-          {editing && (
+          {onSaved && (
             <Button
               disabled={mutation.isPending}
               variant="outline"

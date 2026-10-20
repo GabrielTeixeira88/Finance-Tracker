@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useSection } from '@/lib/navigation'
+import { SectionNavigation } from '@/components/section-navigation'
 import { type Account, type Category } from '@/lib/api'
 import Transactions from './transactions'
 import Schedules from './schedules'
@@ -12,37 +13,30 @@ export default function TransactionWorkspace(props: {
   initialFilters?: Record<string, string>
   account?: Account
 }) {
-  const [view, setView] = useState<
-    'activity' | 'scheduled' | 'imports' | 'gmail' | 'reconciliation'
-  >('activity')
+  const items = props.account
+    ? ([
+        ['activity', 'All Activity'],
+        ['reconciliation', 'Reconcile'],
+      ] as const)
+    : ([
+        ['activity', 'All Activity'],
+        ['scheduled', 'Scheduled'],
+        ['imports', 'Imports'],
+        ['gmail', 'Gmail review'],
+        ['reconciliation', 'Reconcile'],
+      ] as const)
+  const [view, setView] = useSection(
+    items.map(([key]) => key),
+    'activity',
+  )
   return (
     <>
-      <nav
-        className="range-tabs mb-4 flex-wrap max-w-full"
-        aria-label="Transaction views"
-      >
-        {(
-          [
-            ['activity', 'All Activity'],
-            ['reconciliation', 'Reconcile'],
-            ...(!props.account
-              ? [
-                  ['gmail', 'Gmail review'],
-                  ['scheduled', 'Scheduled'],
-                  ['imports', 'Imports'],
-                ]
-              : []),
-          ] as const
-        ).map(([key, title]) => (
-          <button
-            key={key}
-            aria-pressed={view === key}
-            onClick={() => setView(key as typeof view)}
-          >
-            {title}
-          </button>
-        ))}
-      </nav>
+      <SectionNavigation
+        label="Transaction views"
+        items={items}
+        value={view}
+        onChange={setView}
+      />
       {view === 'reconciliation' ? (
         <Reconciliation {...props} />
       ) : view === 'activity' ? (

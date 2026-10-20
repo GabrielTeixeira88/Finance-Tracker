@@ -1,26 +1,27 @@
-import { useState } from 'react'
+import { lazy, Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AppShell, type Page } from '@/components/app-shell'
 import { ErrorState, LoadingState, PageHeader } from '@/components/primitives'
 import { getAccounts, getCategories } from '@/lib/api'
-import Spending from '@/pages/spending'
-import Investments from '@/pages/investments'
+import { navigateTo, useRoute } from '@/lib/navigation'
 import Dashboard from '@/pages/dashboard'
 import Transactions from '@/pages/transaction-workspace'
 import { Accounts, Settings } from '@/pages/management'
-import Preview, { type PreviewPage } from '@/pages/previews'
-import NetWorth from '@/pages/wealth'
-import Goals from '@/pages/goals'
+import type { PreviewPage } from '@/pages/previews'
+
+const Spending = lazy(() => import('@/pages/spending'))
+const Investments = lazy(() => import('@/pages/investments'))
+const Preview = lazy(() => import('@/pages/previews'))
+const NetWorth = lazy(() => import('@/pages/wealth'))
+const Goals = lazy(() => import('@/pages/goals'))
 
 export default function App() {
-  const [route, setRoute] = useState<{
-    page: Page
-    accountId?: string
-    filters?: Record<string, string>
-    visit?: number
-  }>({
-    page: 'Overview',
-  })
+  const route = useRoute()
+  const filters = Object.fromEntries(
+    [...route.params].filter(
+      ([key]) => !['view', 'account', 'reconcile'].includes(key),
+    ),
+  )
   const accounts = useQuery({
     queryKey: ['accounts'],
     queryFn: ({ signal }) => getAccounts(signal),
@@ -30,11 +31,7 @@ export default function App() {
     queryFn: ({ signal }) => getCategories(signal),
   })
   const navigate = (page: Page, accountId?: string) =>
-    setRoute((previous) => ({
-      page,
-      accountId,
-      visit: (previous.visit ?? 0) + 1,
-    }))
+    navigateTo(page, accountId)
   const selected = accounts.data?.find((a) => a.id === route.accountId)
   return (
     <AppShell page={route.page} navigate={navigate}>
@@ -55,7 +52,7 @@ export default function App() {
           />
         </>
       ) : (
-        <>
+        <Suspense fallback={<LoadingState text="Loading page…" />}>
           {route.page === 'Overview' && (
             <Dashboard
               accounts={accounts.data}
@@ -68,8 +65,8 @@ export default function App() {
           )}
           {route.page === 'Transactions' && (
             <Transactions
-              key={JSON.stringify(route.filters ?? {})}
-              initialFilters={route.filters}
+              key={JSON.stringify(filters)}
+              initialFilters={filters}
               accounts={accounts.data}
               categories={categories.data}
             />
@@ -84,7 +81,8 @@ export default function App() {
               />
             ) : selected ? (
               <Transactions
-                key={selected.id}
+                key={`${selected.id}-${JSON.stringify(filters)}`}
+                initialFilters={filters}
                 account={selected}
                 accounts={accounts.data}
                 categories={categories.data}
@@ -103,13 +101,13 @@ export default function App() {
               accounts={accounts.data}
               categories={categories.data}
               onTransactions={(filters) =>
-                setRoute({ page: 'Transactions', filters })
+                navigateTo('Transactions', undefined, filters)
               }
             />
           )}
           {['Investments', 'Performance'].includes(route.page) && (
             <Investments
-              key={`${route.page}-${route.accountId ?? 'all'}-${route.visit ?? 0}`}
+              key={`${route.page}-${route.accountId ?? 'all'}`}
               initialView={
                 route.page === 'Performance' ? 'Performance' : 'Overview'
               }
@@ -129,7 +127,7 @@ export default function App() {
               navigate={navigate}
             />
           )}
-        </>
+        </Suspense>
       )}
     </AppShell>
   )

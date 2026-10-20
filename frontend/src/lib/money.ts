@@ -57,6 +57,13 @@ export function unitsToMoney(units: bigint): string {
   return `${units < 0n ? '-' : ''}${absolute / 1_000_000n}.${String(absolute % 1_000_000n).padStart(6, '0')}`
 }
 
+/** Exact label for a decimal ratio; chart coordinates may be rounded separately. */
+export function formatRatioPercent(value: string | null): string {
+  return value === null
+    ? 'Unavailable'
+    : `${unitsToMoney(decimalUnits(value) * 100n).replace(/\.?0+$/, '')}%`
+}
+
 export function sumMoney(values: string[]) {
   return unitsToMoney(
     values.reduce((sum, value) => sum + decimalUnits(value), 0n),

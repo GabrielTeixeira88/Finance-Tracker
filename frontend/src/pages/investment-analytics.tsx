@@ -257,6 +257,11 @@ export default function InvestmentAnalytics({
                   />
                 </div>
               </div>
+              <p className="metadata">
+                Time-weighted return separates investment results from deposits
+                and withdrawals. XIRR reflects their timing and amounts as an
+                annualized return; neither is a forecast.
+              </p>
               {[
                 performance.data.twr,
                 performance.data.xirr,

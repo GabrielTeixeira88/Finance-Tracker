@@ -1,4 +1,44 @@
-# UI foundation - Phase 1.7 shell / Overview review
+# UI foundation
+
+## v0.11 conventions
+
+- Preserve the existing neutral palette, mono typography, 70/220px sidebar and
+  Overview chart hierarchy. Appearance preferences alone may use localStorage.
+- Use `SectionNavigation` for workflow destinations, `WorkflowSteps` for ordered
+  ingestion context, and existing PageHeader/SectionHeader/Money/state primitives.
+  Tabs inside chart/analytics tools remain local controls, not fake product pages.
+- Page and workflow URLs use `/#/…`; `view` selects a section and `reconcile`
+  selects the reconciliation subview. Hash routes work with the existing local
+  Vite/optional static-server deployment. Back, Forward and refresh retain these
+  destinations. Ctrl/Cmd+K opens Find a page, including secondary workflows.
+- Transactions keep four primary filters. More filters exposes date, review,
+  clearing, amount and sort controls. URL filter values stay exact strings.
+  Evidence is an accessible icon action; review and bank state remain distinct.
+  Selection is still explicit and page-scoped.
+- Rules start with description/classification fields. Advanced mode exposes the
+  existing grammar and priority; complex rules open there automatically.
+  Duplicate starts disabled. Preview/apply guards are unchanged.
+- Settings owns categories, payees, rules, market providers and Gmail configuration.
+  Schedules, uploads and candidate review stay with transaction operations.
+  Gmail setup and review link to each other. No second settings store is introduced.
+- Use semantic variables directly (`var(--border)`, not a second `hsl()` wrapper).
+  Destructive buttons use the negative token plus an explicit action label and
+  confirmation. Financial signs/text remain meaningful without color.
+- Use shared focus outlines, native dialog behavior, reduced-motion styling,
+  locally scrollable tables, wrapping controls and explicit query retries.
+  New-entry forms with a close callback offer Cancel; pending wealth submissions
+  disable fields. Historical values, exact labels and unavailable coverage remain
+  unchanged.
+
+### Known boundaries
+
+Unsaved form drafts and individual source/asset/goal detail selections are not
+persisted across navigation or reload. Financial-section bookmarks are implemented;
+not every internal detail is a route. The existing rule language remains flat
+ALL/ANY, and payee search returns at most 50 matches with refinement guidance.
+Native confirmation dialogs remain; no custom global modal framework is added.
+Formal assistive-technology/WCAG certification and comprehensive error-boundary
+recovery remain future validation work. See [audit](UX_AUDIT_v0.11.md).
 
 ## Application hierarchy
 
@@ -32,8 +72,7 @@ Find a page filters navigation destinations only, not financial records. The exi
 Overview, Accounts, Transactions, Budget, Investments, Performance, Net Worth, Reports,
 and Settings destinations remain; future sections retain Preview labels in expanded
 navigation, accessible names, tooltips, and their pages. Settings stays at the bottom.
-Account rows open the filtered ledger, or investment account workspace for INVESTMENT. React state navigation remains;
-URL deep links/back-forward are deferred.
+Account rows open the filtered ledger, or investment account workspace for INVESTMENT. Hash routes preserve page/section bookmarks and browser Back/Forward; the root URL still opens Overview.
 
 Transactions has one Add Transaction action with Expense / Income / Transfer modes.
 Transfer mode submits once to the atomic backend operation; there is no top-level
@@ -42,7 +81,7 @@ Transfers item. Settings contains Categories, not unrelated configuration.
 Dark mode is the initial default, with the Flexoki dark/light palette and its olive
 chart/landscape gradient. Existing saved light preference is respected. Semantic income/expense
 colors supplement signs; transfers remain neutral with explicit direction labels.
-The sidebar is session-local. Only theme preference is stored in localStorage. All financial data comes from the API.
+Sidebar and theme appearance preferences are stored in localStorage. All financial data comes from the API.
 
 Below 1024px the sidebar becomes a native modal drawer: trapped focus, Escape,
 close button, dismissal after navigation, and focus restoration. Tables scroll in
@@ -70,13 +109,12 @@ validation widths are 1440, 1280, 1024, 768, and 390 pixels.
 
 Budget is the real Phase 4 Spending & Budgets workspace; Investments is the Phase 5
 activity-derived workspace. Legacy fictional holdings are no longer presented there.
-Performance points illustrate a chart only, with no TWR, benchmark, or valuation claim.
-Net Worth uses actual ledger history and account breakdown, labeled Total balance.
+Performance uses the v0.7 backend analytics services, with explicit coverage gaps.
+Net Worth uses the v0.10 ledger/investment/manual-asset and liability services.
 Reports composes the existing spending, flows, and balance information; no report
 builder, exports, or reporting engine is implemented.
 
-Performance requires the explicit historical demo fixture; an ordinary
-workspace gets a compact demo-required state. All preview payloads come through
+Reports preview payloads come through
 `/api/demo` from an isolated SQLite record, never hardcoded financial arrays in React.
 The seed is fixed through September 2026; Overview information/options and preview notices expose this context.
 User edits are persisted. Re-running the seed never undoes them.
@@ -212,4 +250,4 @@ unchanged. Decision history and source payloads remain local, text-only details.
 
 Net Worth and Goals now use dated database-backed records and exact existing
 ledger/investment/FX services. See [contracts and limitations](NET_WORTH_GOALS.md).
-Release version is 0.10.0. Reports retains its preview boundary.
+Introduced in 0.10.0. Reports retains its preview boundary.
