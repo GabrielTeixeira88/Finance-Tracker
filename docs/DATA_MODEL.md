@@ -1,6 +1,6 @@
 # Finance Tracker data model
 
-Current release scope: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. Next: **v0.11.0 - Product Consolidation & UI/UX Refinement**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_10_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+Current release scope: **v0.11.0 - Product Consolidation & UI/UX Refinement**. Next: **v0.12.0 - Interactive Demo & Portfolio Showcase**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_11_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 All financial records stay in local SQLite. The ledger is authoritative; there
 is no editable or cached account-balance column.
@@ -404,3 +404,12 @@ indexes without replacing any earlier financial table or row.
 
 `sqlite_0013` additively supplies optional exact annual-rate/minimum-payment and
 frequency/expected-payoff metadata to manual debts. These fields never infer payments.
+
+## v0.11 presentation note
+
+Product consolidation adds no tables or migrations. Rule drafts copied from an
+ordinary transaction retain its raw description as a condition and its existing
+classification as proposed actions; they do not copy ledger identity or monetary
+posting fields. Duplicated rules are new, disabled drafts. Payee renaming uses the
+existing normalized-name constraints and leaves raw transaction descriptions intact.
+Review, clearing and reconciliation remain distinct.

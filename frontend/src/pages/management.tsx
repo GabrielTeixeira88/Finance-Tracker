@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useSection } from '@/lib/navigation'
+import { SectionNavigation } from '@/components/section-navigation'
 import { ArrowUpRight, Landmark } from 'lucide-react'
 import { AccountForm, CategoryForm } from '@/components/forms'
 import {
@@ -16,6 +18,7 @@ import { label, type Account, type Category } from '@/lib/api'
 import { Rules } from '@/pages/rules'
 import { MarketDataSettings } from '@/pages/market-data'
 import { GmailSettings } from '@/pages/gmail'
+import { PayeeSettings } from '@/pages/payees'
 
 export function Accounts({
   accounts,
@@ -125,39 +128,29 @@ export function Settings({
   categories: Category[]
   accounts: Account[]
 }) {
-  const [view, setView] = useState<'categories' | 'rules' | 'market' | 'gmail'>(
+  const items = [
+    ['categories', 'Categories'],
+    ['payees', 'Payees'],
+    ['rules', 'Rules'],
+    ['market', 'Market Data'],
+    ['gmail', 'Gmail'],
+  ] as const
+  const [view, setView] = useSection(
+    items.map(([key]) => key),
     'categories',
   )
   return (
     <>
-      <nav className="range-tabs mb-4" aria-label="Settings sections">
-        <button
-          aria-pressed={view === 'categories'}
-          onClick={() => setView('categories')}
-        >
-          Categories
-        </button>
-        <button
-          aria-pressed={view === 'rules'}
-          onClick={() => setView('rules')}
-        >
-          Rules
-        </button>
-        <button
-          aria-pressed={view === 'market'}
-          onClick={() => setView('market')}
-        >
-          Market Data
-        </button>
-        <button
-          aria-pressed={view === 'gmail'}
-          onClick={() => setView('gmail')}
-        >
-          Gmail
-        </button>
-      </nav>
+      <SectionNavigation
+        label="Settings sections"
+        items={items}
+        value={view}
+        onChange={setView}
+      />
       {view === 'categories' ? (
         <CategorySettings categories={categories} />
+      ) : view === 'payees' ? (
+        <PayeeSettings />
       ) : view === 'market' ? (
         <MarketDataSettings />
       ) : view === 'gmail' ? (
@@ -229,7 +222,7 @@ function CategorySettings({ categories }: { categories: Category[] }) {
                   Edit
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="destructive"
                   size="sm"
                   aria-label={`Delete ${c.name}`}
                   disabled={mutation.isPending}

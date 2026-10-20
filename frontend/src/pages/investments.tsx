@@ -1,3 +1,4 @@
+import { useSection } from '@/lib/navigation'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
@@ -60,12 +61,14 @@ export function HoldingsTable({
 }) {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('symbol')
+  const [currency, setCurrency] = useState('')
   const filtered = rows
     .filter((r) =>
       `${r.symbol} ${r.name} ${r.exchange}`
         .toLowerCase()
         .includes(search.toLowerCase()),
     )
+    .filter((r) => !currency || r.currency === currency)
     .sort((a, b) =>
       sort === 'quantity'
         ? decimalUnits(a.quantity) > decimalUnits(b.quantity)
@@ -91,11 +94,28 @@ export function HoldingsTable({
             <option value="quantity">Quantity descending</option>
           </select>
         </Field>
+        <Field label="Holding currency">
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+          >
+            <option value="">All original currencies</option>
+            {[...new Set(rows.map((row) => row.currency))]
+              .sort()
+              .map((code) => (
+                <option key={code}>{code}</option>
+              ))}
+          </select>
+        </Field>
       </div>
       {!filtered.length ? (
         <EmptyState
-          title="No holdings yet"
-          detail="Create a security, fund an investment account, then add a BUY activity."
+          title={rows.length ? 'No matching holdings' : 'No holdings yet'}
+          detail={
+            rows.length
+              ? 'Change the security search or currency filter.'
+              : 'Create a security, fund an investment account, then add a BUY activity.'
+          }
         />
       ) : (
         <div className="table-scroll">
@@ -354,7 +374,19 @@ export function InvestmentWorkspace({
   const [asOf, setAsOf] = useState(
     initialDate || new Date().toLocaleDateString('en-CA'),
   )
-  const [tab, setTab] = useState(initialView)
+  const [tab, setTab] = useSection(
+    [
+      'Overview',
+      'Performance',
+      'Allocation',
+      'Income',
+      'Holdings',
+      'Activity',
+      'Accounts',
+      'Imports',
+    ],
+    initialView,
+  )
   const [security, setSecurity] = useState('')
   const [editor, setEditor] = useState<'activity' | 'asset' | 'price' | null>(
     null,
@@ -717,7 +749,10 @@ export function InvestmentWorkspace({
                   {recent.isPending ? (
                     <LoadingState />
                   ) : recent.isError ? (
-                    <ErrorState text={recent.error.message} />
+                    <ErrorState
+                      text={recent.error.message}
+                      retry={() => void recent.refetch()}
+                    />
                   ) : (
                     <TransactionTable
                       rows={recent.data}

@@ -1,3 +1,4 @@
+import { useSection } from '@/lib/navigation'
 import './wealth.css'
 import { lazy, Suspense, useState, type ReactNode, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -26,13 +27,7 @@ import {
 } from '@/lib/wealth-api'
 import { useWrite } from '@/lib/use-write'
 import type { Navigate } from '@/components/app-shell'
-import { decimalUnits, unitsToMoney } from '@/lib/money'
-
-function percent(value: string | null) {
-  return value === null
-    ? 'Unavailable'
-    : `${unitsToMoney(decimalUnits(value) * 100n).replace(/\.?0+$/, '')}%`
-}
+import { formatRatioPercent as percent } from '@/lib/money'
 
 export function WealthForm({
   title,
@@ -63,16 +58,30 @@ export function WealthForm({
   return (
     <form onSubmit={submit} className="editor-surface">
       <SectionHeader title={title} />
-      <div className="form-grid">{children}</div>
+      <fieldset disabled={write.isPending} className="form-grid">
+        {children}
+      </fieldset>
       {write.isError && <ErrorState text={write.error.message} />}
       {write.isSuccess && (
         <p role="status" className="metadata">
           Saved.
         </p>
       )}
-      <Button disabled={write.isPending} type="submit">
-        {write.isPending ? 'Saving…' : 'Save'}
-      </Button>
+      <div className="form-actions">
+        <Button disabled={write.isPending} type="submit">
+          {write.isPending ? 'Saving…' : 'Save'}
+        </Button>
+        {onDone && (
+          <Button
+            disabled={write.isPending}
+            type="button"
+            variant="outline"
+            onClick={onDone}
+          >
+            Cancel
+          </Button>
+        )}
+      </div>
     </form>
   )
 }
@@ -131,7 +140,10 @@ export default function NetWorth({
     queryFn: ({ signal }) => getDemo(signal),
   })
   if (demo.isPending) return <LoadingState text="Loading net worth…" />
-  if (demo.isError) return <ErrorState text={demo.error.message} />
+  if (demo.isError)
+    return (
+      <ErrorState text={demo.error.message} retry={() => void demo.refetch()} />
+    )
   return (
     <NetWorthWorkspace
       navigate={navigate}
@@ -151,7 +163,10 @@ export function NetWorthWorkspace({
   const [period, setPeriod] = useState('1Y')
   const [custom, setCustom] = useState(localDate())
   const [currency, setCurrency] = useState('BRL')
-  const [tab, setTab] = useState('Overview')
+  const [tab, setTab] = useSection(
+    ['Overview', 'Assets', 'Liabilities'],
+    'Overview',
+  )
   const [chartSeries, setChartSeries] = useState<
     'value' | 'assets' | 'liabilities'
   >('value')
@@ -200,7 +215,7 @@ export function NetWorthWorkspace({
         role="tablist"
         aria-label="Net worth sections"
       >
-        {['Overview', 'Assets', 'Liabilities'].map((t) => (
+        {(['Overview', 'Assets', 'Liabilities'] as const).map((t) => (
           <Button
             role="tab"
             aria-selected={tab === t}
@@ -261,7 +276,10 @@ export function NetWorthWorkspace({
           {history.isPending ? (
             <LoadingState text="Reconstructing net worth…" />
           ) : history.isError ? (
-            <ErrorState text={history.error.message} />
+            <ErrorState
+              text={history.error.message}
+              retry={() => void history.refetch()}
+            />
           ) : (
             <>
               <div className="overview-balance">
@@ -464,7 +482,10 @@ export function NetWorthWorkspace({
           {positions.isPending ? (
             <LoadingState />
           ) : positions.isError ? (
-            <ErrorState text={positions.error.message} />
+            <ErrorState
+              text={positions.error.message}
+              retry={() => void positions.refetch()}
+            />
           ) : (
             <>
               {creating && (
@@ -760,7 +781,10 @@ function PositionDetail({
       {observations.isPending ? (
         <LoadingState />
       ) : observations.isError ? (
-        <ErrorState text={observations.error.message} />
+        <ErrorState
+          text={observations.error.message}
+          retry={() => void observations.refetch()}
+        />
       ) : (
         <div className="table-scroll">
           <table className="finance-wealth-table">

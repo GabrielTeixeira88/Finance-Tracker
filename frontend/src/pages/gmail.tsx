@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { navigateTo } from '@/lib/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
 import { Button } from '@/components/ui/button'
@@ -47,7 +48,16 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
       <PageHeader
         title="Gmail integration"
         description="Read selected notifications locally. Review before posting."
-      />
+      >
+        <Button
+          variant="outline"
+          onClick={() =>
+            navigateTo('Transactions', undefined, { view: 'gmail' })
+          }
+        >
+          Open review queue
+        </Button>
+      </PageHeader>
       <p className="metadata">
         Google read-only permission covers your mailbox. The selected label is
         an application filter, not an OAuth permission boundary. Finance Tracker
@@ -56,7 +66,10 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
       {status.isPending ? (
         <LoadingState text="Loading Gmail settings…" />
       ) : status.isError ? (
-        <ErrorState text={status.error.message} />
+        <ErrorState
+          text={status.error.message}
+          retry={() => void status.refetch()}
+        />
       ) : (
         <>
           <div className="section-header mt-4">
@@ -119,14 +132,20 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
               </a>
             )}
             <Button
-              variant="outline"
+              variant="destructive"
               disabled={action.isPending || !!status.data.active_run}
-              onClick={() =>
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    'Disconnect Gmail and remove its local vault token? Imported transactions and source history will remain.',
+                  )
+                )
+                  return
                 action.mutate(async () => {
                   await gmailRequest('/disconnect', {})
                   setAuthorization('')
                 })
-              }
+              }}
             >
               Disconnect
             </Button>
@@ -395,12 +414,22 @@ export function GmailQueue({
       <PageHeader
         title="Gmail review"
         description="Email candidates do not affect balances until you confirm. Configure the connection in Settings → Gmail."
-      />
+      >
+        <Button
+          variant="outline"
+          onClick={() => navigateTo('Settings', undefined, { view: 'gmail' })}
+        >
+          Connection settings
+        </Button>
+      </PageHeader>
       {action.isError && <ErrorState text={action.error.message} />}
       {queue.isPending ? (
         <LoadingState text="Loading Gmail candidates…" />
       ) : queue.isError ? (
-        <ErrorState text={queue.error.message} />
+        <ErrorState
+          text={queue.error.message}
+          retry={() => void queue.refetch()}
+        />
       ) : batch ? (
         <>
           {!completed &&

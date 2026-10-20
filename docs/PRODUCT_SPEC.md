@@ -1,6 +1,14 @@
 # Current product scope
 
-Current release scope: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. Next: **v0.11.0 - Product Consolidation & UI/UX Refinement**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_10_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+v0.11 consolidation: bookmarkable destinations and workflow sections;
+compact ledger filters; contextual, previewable rule drafts; simple/advanced rule
+editing; rules search/duplicate; Settings payee management; clearer import and
+reconciliation context; explicit Gmail disconnect confirmation; original-currency
+holdings filtering; goal remaining values and advanced budget target disclosure.
+Existing financial engines and Reports' preview boundary remain unchanged.
+See [the audit](UX_AUDIT_v0.11.md) for evidence and remaining presentation debt.
+
+Current release scope: **v0.11.0 - Product Consolidation & UI/UX Refinement**. Next: **v0.12.0 - Interactive Demo & Portfolio Showcase**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_11_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 Finance Tracker is a single-user, offline-capable local finance application. Financial
 records stay in a local SQLite database. No authentication, cloud persistence, telemetry,

@@ -1,3 +1,4 @@
+import { useSection } from '@/lib/navigation'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react'
@@ -63,7 +64,8 @@ export function SpendingWorkspace({
 }: Props & { initialMonth: string }) {
   const [month, setMonth] = useState(initialMonth)
   const [currency, setCurrency] = useState(accounts[0]?.currency ?? 'BRL')
-  const [tab, setTab] = useState<'Overview' | 'Budgets' | 'Insights'>(
+  const [tab, setTab] = useSection(
+    ['Overview', 'Budgets', 'Insights'] as const,
     'Overview',
   )
   const [editing, setEditing] = useState<BudgetRow | 'new' | null>(null)
@@ -839,31 +841,38 @@ function TargetEditor({
               ))}
           </select>
         </Field>
-        <Field label="Category sort order">
-          <input
-            type="number"
-            min="0"
-            max="100000"
-            value={order}
-            onChange={(e) => setOrder(Number(e.target.value))}
-          />
-        </Field>
-        <label className="check-line">
-          <input
-            type="checkbox"
-            checked={rollover}
-            onChange={(e) => setRollover(e.target.checked)}
-          />{' '}
-          Carry unused and overspent amounts forward
-        </label>
-        <label className="check-line">
-          <input
-            type="checkbox"
-            checked={active}
-            onChange={(e) => setActive(e.target.checked)}
-          />{' '}
-          Target active
-        </label>
+        <details className="advanced-fields" open={!!row?.rollover_enabled}>
+          <summary>Advanced target settings</summary>
+          <p className="metadata">
+            Rollover carries both unused and overspent amounts. Disabling it
+            starts a new chain; earlier months remain unchanged.
+          </p>
+          <Field label="Category sort order">
+            <input
+              type="number"
+              min="0"
+              max="100000"
+              value={order}
+              onChange={(e) => setOrder(Number(e.target.value))}
+            />
+          </Field>
+          <label className="check-line">
+            <input
+              type="checkbox"
+              checked={rollover}
+              onChange={(e) => setRollover(e.target.checked)}
+            />{' '}
+            Carry unused and overspent amounts forward
+          </label>
+          <label className="check-line">
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={(e) => setActive(e.target.checked)}
+            />{' '}
+            Target active
+          </label>
+        </details>
         <Button type="submit">Save target</Button>
         <Button type="button" variant="ghost" onClick={onClose}>
           Cancel

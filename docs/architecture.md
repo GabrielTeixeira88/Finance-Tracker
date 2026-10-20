@@ -1,6 +1,6 @@
 # Application architecture
 
-Current release scope: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. Next: **v0.11.0 - Product Consolidation & UI/UX Refinement**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_10_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+Current release scope: **v0.11.0 - Product Consolidation & UI/UX Refinement**. Next: **v0.12.0 - Interactive Demo & Portfolio Showcase**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_11_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 ## Local storage and deployment
 
@@ -78,8 +78,8 @@ Browser tests also use a separate database. The normal review demo stays unpollu
 ## Frontend and boundaries
 
 TanStack Query fetches the local API; Zod validates transport and input. Money is
-exchanged as exact strings. Only theme preference is stored in localStorage.
-Functional navigation is Overview / Accounts / Transactions / Budget / Investments / Settings. Explicitly
+exchanged as exact strings. Only theme and sidebar appearance preferences are stored in localStorage.
+Functional navigation is Overview / Accounts / Transactions / Budget / Investments / Performance / Net Worth / Goals / Settings. Explicitly
 labeled read-only preview sections expose future information architecture. Transfers are a
 transaction creation mode; Categories are configuration under Settings.
 [UI_FOUNDATION.md](UI_FOUNDATION.md) documents the application shell and information hierarchy.
@@ -253,4 +253,18 @@ See [matching and concurrency contracts](RECONCILIATION.md).
 
 Net Worth and Goals now use dated database-backed records and exact existing
 ledger/investment/FX services. See [contracts and limitations](NET_WORTH_GOALS.md).
-Release version is 0.10.0. Reports retains its preview boundary.
+Introduced in 0.10.0. Reports retains its preview boundary.
+
+## v0.11 product consolidation
+
+The frontend owns a small hash-route adapter in `lib/navigation.ts` using browser
+history and `useSyncExternalStore`. It requires no server fallback configuration.
+Page destinations and section selectors share it; transaction filter typing replaces
+the current URL without remounting the input on every keystroke. Filters remain
+server-side API queries. Selection and unsaved form drafts are not persisted.
+
+`SectionNavigation` and `WorkflowSteps` share presentation across workflows.
+Existing query invalidation, money formatting, error/loading states and financial
+services remain authoritative. Financial pages load on demand. Settings payee
+management reuses the original payee endpoints. No new schema, API contract,
+financial calculation, provider integration or persistence system is introduced.

@@ -75,6 +75,32 @@ function mockApi() {
   return fetch
 }
 
+it('restores an account ledger bookmark and keeps skip-to-content on that route', async () => {
+  const fetch = mockApi()
+  window.history.replaceState(
+    null,
+    '',
+    '#/account?account=a&search=Synthetic&amount_min=0.123456',
+  )
+  renderApp()
+  expect(await screen.findByLabelText('Search transactions')).toHaveValue(
+    'Synthetic',
+  )
+  expect(screen.getByLabelText('Filter account')).toHaveValue('a')
+  await waitFor(() =>
+    expect(
+      fetch.mock.calls.some(
+        ([url]) =>
+          url.includes('account_id=a') && url.includes('amount_min=0.123456'),
+      ),
+    ).toBe(true),
+  )
+  const before = window.location.hash
+  await userEvent.click(screen.getByRole('link', { name: 'Skip to content' }))
+  expect(window.location.hash).toBe(before)
+  expect(screen.getByRole('main')).toHaveFocus()
+})
+
 it('renders API dashboard balances and separate reporting totals', async () => {
   mockApi()
   renderApp()
@@ -251,7 +277,11 @@ it('switches theme without persisting any financial records', async () => {
   )
   expect(document.documentElement).toHaveAttribute('data-theme', 'light')
   expect(localStorage.getItem('finance-tracker-theme')).toBe('light')
-  expect(localStorage.length).toBe(1)
+  expect(localStorage.getItem('finance-tracker-sidebar')).toBe('collapsed')
+  expect(Object.keys(localStorage).sort()).toEqual([
+    'finance-tracker-sidebar',
+    'finance-tracker-theme',
+  ])
 })
 
 it('shows a recoverable workspace error', async () => {

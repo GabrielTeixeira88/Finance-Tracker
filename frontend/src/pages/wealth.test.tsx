@@ -261,3 +261,44 @@ it('keeps projection inputs usable while clearing and typing a new assumption', 
     ),
   )
 })
+
+it('distinguishes actual goal progress from reached milestones', async () => {
+  const detail = {
+    goal: {
+      id: 'progress-goal',
+      name: 'Synthetic progress',
+      mode: 'ACCOUNT',
+      currency: 'BRL',
+      target: '20000',
+      start_date: '2026-01-01',
+      deadline: null,
+      status: 'ACTIVE',
+      notes: '',
+    },
+    saved: '9600',
+    allocated: '9600',
+    remaining: '10400',
+    warnings: [],
+    entries: [],
+    progress: '0.48',
+    milestones: [25],
+    required_monthly: null,
+    projected_completion: null,
+    overdue: false,
+    history: [],
+    projection_method: 'No interest',
+  }
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async (url: string) =>
+        new Response(JSON.stringify(url === '/api/goals' ? [detail] : [])),
+    ),
+  )
+  wrap(<Goals accounts={[]} />)
+  expect(await screen.findByText('48% saved')).toBeVisible()
+  expect(screen.getByText('Milestones reached: 25%')).toBeVisible()
+  expect(
+    screen.getByRole('progressbar', { name: 'Synthetic progress progress' }),
+  ).toHaveAttribute('aria-valuetext', '48%')
+})

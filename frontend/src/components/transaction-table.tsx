@@ -1,4 +1,4 @@
-import { ArrowLeftRight } from 'lucide-react'
+import { ArrowLeftRight, FileCheck2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge, EmptyState, Money } from '@/components/primitives'
 import { label, type Account, type Category, type Transaction } from '@/lib/api'
@@ -14,6 +14,7 @@ export function TransactionTable({
   onSelect,
   onSelectPage,
   onInspect,
+  onCreateRule,
 }: {
   rows: Transaction[]
   accounts: Account[]
@@ -24,6 +25,7 @@ export function TransactionTable({
   selected?: string[]
   onSelect?: (id: string) => void
   onSelectPage?: () => void
+  onCreateRule?: (row: Transaction) => void
   onInspect?: (row: Transaction) => void
 }) {
   if (!rows.length)
@@ -35,7 +37,7 @@ export function TransactionTable({
     )
   return (
     <div
-      className="table-scroll"
+      className="table-scroll transaction-ledger"
       tabIndex={0}
       role="region"
       aria-label="Transaction ledger"
@@ -126,20 +128,6 @@ export function TransactionTable({
                       ? 'Refund'
                       : label(row.transaction_type)}
                   </Badge>
-                  {onInspect && (
-                    <button
-                      className="metadata block underline"
-                      onClick={() => onInspect(row)}
-                    >
-                      Evidence / clearing
-                    </button>
-                  )}
-                  {row.clearing_status && (
-                    <small className="metadata block">
-                      {label(row.clearing_status)}
-                      {row.source_count ? ` · ${row.source_count} sources` : ''}
-                    </small>
-                  )}
                   {transfer && (
                     <small
                       className="transfer-link"
@@ -151,6 +139,22 @@ export function TransactionTable({
                   )}
                 </td>
                 <td>
+                  {onInspect && (
+                    <button
+                      className="icon-button ledger-evidence"
+                      aria-label="Evidence / clearing"
+                      title="Inspect source evidence and bank clearing"
+                      onClick={() => onInspect(row)}
+                    >
+                      <FileCheck2 size={14} aria-hidden="true" />
+                    </button>
+                  )}
+                  {row.clearing_status && (
+                    <small className="metadata block">
+                      {label(row.clearing_status)}
+                      {row.source_count ? ` · ${row.source_count} sources` : ''}
+                    </small>
+                  )}
                   <Badge>
                     {row.review_status === 'NEEDS_REVIEW'
                       ? 'Needs review'
@@ -179,12 +183,22 @@ export function TransactionTable({
                         </Button>
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="destructive"
                           disabled={busy}
                           onClick={() => onDelete?.(row)}
                         >
                           Delete
                         </Button>
+                        {onCreateRule && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={busy}
+                            onClick={() => onCreateRule(row)}
+                          >
+                            Create rule
+                          </Button>
+                        )}
                       </div>
                     ) : (
                       <Button

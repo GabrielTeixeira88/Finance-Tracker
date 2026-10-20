@@ -1,6 +1,6 @@
 # Finance Tracker
 
-Current version: **0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**.
+Current version: **0.11.0 - Product Consolidation & UI/UX Refinement**.
 Transactions -> Reconcile adds source matching, statement verification and audited
 corrections. Apply Alembic migrations first; see [workflow and limits](docs/RECONCILIATION.md).
 Settings → Gmail connects a local Desktop OAuth client; Transactions → Gmail review
@@ -44,6 +44,21 @@ Choose **Synthetic Analytics Portfolio**, ending **2026-09-30**, and **DEMOBENCH
 for a fully covered example. Other demo accounts intentionally retain coverage gaps.
 
 ## Run locally (no Docker or PostgreSQL required)
+
+The v0.11.0 consolidation pass adds bookmarkable pages such as
+`/#/transactions`, `/#/settings?view=rules`, and
+`/#/transactions?view=reconciliation&reconcile=statements`.
+Browser Back/Forward restores destinations; ledger filters survive refresh.
+Use **Find a page** (Ctrl/Cmd+K) for Imports, Scheduled transactions, Rules,
+Payees and other sections. Categories and Payees remain in Settings; transfers
+remain in Add Transaction.
+
+Rules start with a description condition and classification actions. Expand
+**Advanced conditions and priority** for the existing full condition grammar.
+**Create rule** on an ordinary ledger row opens a draft; it never posts money.
+Historical application still requires a separate preview and confirmation.
+See the [UX audit](docs/UX_AUDIT_v0.11.md) and
+[demo-readiness boundaries](docs/DEMO_READINESS.md). See [release validation](docs/RELEASE_0_11_0.md).
 
 Prerequisites: Python 3.12+ (3.13 used for validation), uv, Node.js 22.13+ or 24+, npm.
 From the repository root, optionally copy `.env.example` to `.env` to customize paths

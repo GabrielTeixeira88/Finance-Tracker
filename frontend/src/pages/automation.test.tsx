@@ -216,3 +216,52 @@ it('keeps schedules within Transactions and never posts projections on navigatio
     screen.getByRole('button', { name: '+ Add Transaction' }),
   ).toBeInTheDocument()
 })
+it('starts a simple rule without exposing advanced controls and preserves them on expansion', async () => {
+  setup()
+  await userEvent.click(screen.getByRole('button', { name: 'Rules' }))
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Create rule' }),
+  )
+  expect(screen.getByLabelText('Description contains')).toBeInTheDocument()
+  expect(screen.queryByLabelText('Priority')).not.toBeInTheDocument()
+  await userEvent.type(
+    screen.getByLabelText('Description contains'),
+    'SYNTHETIC SHOP',
+  )
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Advanced conditions and priority' }),
+  )
+  expect(screen.getByLabelText('Condition 1 value')).toHaveValue(
+    'SYNTHETIC SHOP',
+  )
+  expect(screen.getByLabelText('Priority')).toHaveValue(100)
+})
+
+it('duplicates as a new disabled draft and filters rules without writing', async () => {
+  const fetch = setup()
+  await userEvent.click(screen.getByRole('button', { name: 'Rules' }))
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Duplicate' }),
+  )
+  expect(screen.getByLabelText('Rule name')).toHaveValue(
+    'Synthetic rule (copy)',
+  )
+  await userEvent.click(screen.getByRole('button', { name: 'Save rule' }))
+  await waitFor(() =>
+    expect(
+      fetch.mock.calls.some(
+        ([path, init]) => path === '/api/rules' && init?.method === 'POST',
+      ),
+    ).toBe(true),
+  )
+  const call = fetch.mock.calls.find(
+    ([path, init]) => path === '/api/rules' && init?.method === 'POST',
+  )!
+  expect(JSON.parse(String(call[1]?.body))).toMatchObject({
+    enabled: false,
+    priority: 10,
+  })
+  expect(JSON.parse(String(call[1]?.body))).not.toHaveProperty('id')
+  await userEvent.type(screen.getByLabelText('Search rules'), 'no match')
+  expect(screen.getByText('No matching rules')).toBeInTheDocument()
+})

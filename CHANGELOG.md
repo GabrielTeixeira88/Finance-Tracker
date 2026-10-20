@@ -6,6 +6,25 @@ of independently published releases or tags. See [the roadmap](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-20
+
+### Changed
+- Bookmarkable application/section routes, browser history, retained ledger filters,
+  searchable workflow destinations and remembered sidebar appearance.
+- Compact transaction filters/rows, contextual rule drafts, simple/advanced rule
+  editing, rule search/status filtering and disabled duplication.
+- Settings payee management, linked Gmail setup/review, explicit disconnect
+  confirmation and import progress context.
+- Shared section navigation, destructive-action treatment, visible keyboard focus,
+  reduced motion, query retries and cancellation of new-entry forms.
+- Bookmarkable investment/spending/net-worth views, holding currency filtering,
+  clearer performance explanations, goal remaining values and advanced target disclosure.
+- Lazy-loaded financial pages, UX audit and demo-readiness documentation.
+
+### Fixed
+- Goal milestone captions no longer masquerade as actual funding progress;
+  exact progress and unavailable coverage have distinct labels.
+
 ## [0.10.0] - 2026-10-19
 
 ### Added

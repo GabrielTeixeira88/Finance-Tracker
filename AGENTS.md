@@ -124,6 +124,13 @@ Before implementing functionality present in Wealthfolio, Actual Budget or Secur
   same-currency savings, validate atomically and expose later cash shortfalls.
   Keep hypothetical savings scenarios separate from actual progress and returns.
 
-- Next milestones: v0.11 product consolidation/UI workflows; v0.12 isolated interactive
+- v0.11 consolidation is implemented. Next milestones: v0.12 isolated interactive
   demo/showcase; v0.13 stability/security/release validation; v1.0 only after demonstrated
   readiness. Creating a future branch never implements its scope or increments the version.
+
+- Product navigation uses local hash routes; preserve section bookmarks and browser
+  history. Filter typing replaces the current history entry, rather than adding one
+  entry per keystroke. Store only appearance preferences in localStorage.
+- Use shared section navigation, financial formatting and query state primitives.
+  Progressive disclosure must preserve advanced rule/target values and financial
+  guards. A transaction-to-rule action creates only a draft, never a ledger posting.

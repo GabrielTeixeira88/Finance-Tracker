@@ -30,6 +30,7 @@ import {
   SpendingList,
 } from '@/components/financial'
 import type { Navigate } from '@/components/app-shell'
+import { navigateTo } from '@/lib/navigation'
 
 // Other pages retain their existing chart and layout in this review phase.
 export const BalanceChart = lazy(() =>
@@ -88,7 +89,7 @@ export default function Dashboard({
           </button>
           <button
             onClick={() => navigate('Net Worth')}
-            title="Read-only ledger preview"
+            title="Assets, liabilities and historical coverage"
           >
             <Wallet size={14} />
             Net Worth
@@ -358,6 +359,24 @@ export default function Dashboard({
                     accounts={accounts}
                     categories={categories}
                   />
+                  <div className="form-actions">
+                    <button
+                      className="text-action"
+                      onClick={() =>
+                        navigateTo('Transactions', undefined, {
+                          review_status: 'NEEDS_REVIEW',
+                        })
+                      }
+                    >
+                      Review transactions
+                    </button>
+                    <button
+                      className="text-action"
+                      onClick={() => navigate('Budget')}
+                    >
+                      Spending &amp; budgets
+                    </button>
+                  </div>
                 </section>
               </div>
             </div>

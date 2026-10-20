@@ -1,4 +1,17 @@
-import { activityPercent, formatMoney, subtractMoney } from './money'
+import {
+  activityPercent,
+  formatMoney,
+  subtractMoney,
+  formatRatioPercent,
+} from './money'
+
+it('labels actual goal ratios exactly and keeps unavailable progress distinct from zero', () => {
+  expect(formatRatioPercent('0.48')).toBe('48%')
+  expect(formatRatioPercent('0.000001')).toBe('0.0001%')
+  expect(formatRatioPercent('1.25')).toBe('125%')
+  expect(formatRatioPercent('0')).toBe('0%')
+  expect(formatRatioPercent(null)).toBe('Unavailable')
+})
 
 it('formats currency symbols and separators for the requested locale', () => {
   expect(

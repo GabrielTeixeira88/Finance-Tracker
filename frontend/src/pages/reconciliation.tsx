@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useSection } from '@/lib/navigation'
+import { SectionNavigation } from '@/components/section-navigation'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { Field } from '@/components/forms'
@@ -38,30 +40,34 @@ export default function Reconciliation({
   categories: Category[]
   account?: Account
 }) {
-  const [view, setView] = useState(account ? 'statements' : 'sources')
+  const sections = [
+    ['sources', 'Source matching'],
+    ['statements', 'Statements'],
+    ['duplicates', 'Existing duplicates'],
+    ['history', 'Decision history'],
+  ] as const
+  const [view, setView] = useSection(
+    sections.map(([key]) => key),
+    account ? 'statements' : 'sources',
+    'reconcile',
+  )
   return (
     <>
       <PageHeader
         title="Reconciliation"
         description="Match source evidence and verify posted bank balances. Review status stays independent."
       />
-      <nav className="range-tabs mb-4" aria-label="Reconciliation views">
-        {['sources', 'statements', 'duplicates', 'history'].map((tab) => (
-          <button
-            key={tab}
-            aria-pressed={view === tab}
-            onClick={() => setView(tab)}
-          >
-            {tab === 'sources'
-              ? 'Source matching'
-              : tab === 'statements'
-                ? 'Statements'
-                : tab === 'duplicates'
-                  ? 'Existing duplicates'
-                  : 'Decision history'}
-          </button>
-        ))}
-      </nav>
+      <SectionNavigation
+        label="Reconciliation views"
+        items={sections}
+        value={view}
+        onChange={setView}
+      />
+      <p className="metadata workflow-context">
+        Link evidence first, clear verified entries, then complete a statement
+        only when its difference is zero. Marking a transaction reviewed does
+        not clear or reconcile it.
+      </p>
       {view === 'sources' ? (
         <SourceQueue accounts={accounts} categories={categories} />
       ) : view === 'statements' ? (

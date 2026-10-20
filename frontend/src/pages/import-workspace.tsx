@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { WorkflowSteps } from '@/components/section-navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { Field } from '@/components/forms'
@@ -110,6 +111,18 @@ export default function ImportWorkspace({
         title="Imports"
         description="Local CSV and OFX statements. Review first; nothing posts on upload."
       />
+      <WorkflowSteps
+        steps={['Choose file', 'Map columns', 'Review and resolve', 'Confirm']}
+        current={
+          batch.data?.status === 'COMPLETED'
+            ? 3
+            : batchId
+              ? 2
+              : headers.length
+                ? 1
+                : 0
+        }
+      />
       {(error || operation.isError) && (
         <ErrorState text={error || operation.error!.message} />
       )}
@@ -196,7 +209,12 @@ export default function ImportWorkspace({
                 Maximum 2 MiB / 2,000 rows. Files stay on this machine. Bank
                 identifiers are masked; you must confirm the destination.
               </p>
-              {csv && (
+              {!file && (
+                <p className="metadata">
+                  Choose a statement to see its format and mapping options.
+                </p>
+              )}
+              {file && csv && (
                 <>
                   <h2 className="mt-4">2. CSV format and mapping</h2>
                   <div className="filter-bar">
