@@ -6,6 +6,18 @@ of independently published releases or tags. See [the roadmap](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-19
+
+### Added
+- Exact current/historical net worth using existing ledger, investment valuation and FX.
+- Dated manual assets/debts, property links, auditable value corrections and disposal/payoff.
+- Savings goals, shared account allocations, manual progress, milestones and transparent scenarios.
+- Functional Net Worth and Goals navigation, synthetic wealth demo and additive `sqlite_0012` / `sqlite_0013`.
+- Regression coverage for accounting, historical coverage, goals and populated migrations.
+
+### Fixed
+- Goal creation waits for initial list loading, preventing a stale-list race after saving.
+
 ## [0.9.0] - 2026-10-18
 
 ### Added

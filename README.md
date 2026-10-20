@@ -1,6 +1,6 @@
 # Finance Tracker
 
-Current version: **0.9.0 - Multi-Source Reconciliation**.
+Current version: **0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**.
 Transactions -> Reconcile adds source matching, statement verification and audited
 corrections. Apply Alembic migrations first; see [workflow and limits](docs/RECONCILIATION.md).
 Settings → Gmail connects a local Desktop OAuth client; Transactions → Gmail review
@@ -17,8 +17,8 @@ the ledger and cached valuation views remain local and usable offline.
 Implemented: accounts, categories, income/expenses, atomic linked transfers, opening
 balances, reconstructed account balances, and a historical overview. Investment accounts
 now support activity-derived holdings and manual valuation. v0.1.0 adds an opt-in
-18-month synthetic workspace. Net Worth and Reports remain previews.
-These remain visual scaffolding; v0.4.0 replaces the former Budget preview with real spending targets.
+18-month synthetic workspace. Net Worth and Goals are functional in v0.10.0; Reports remains a preview.
+Reports remains visual scaffolding; v0.4.0 replaces the former Budget preview with real spending targets.
 v0.2.0 adds normalized payees, transaction review, combined search/filters, stable
 server pagination, and atomic bulk metadata updates. v0.2.0 adds deterministic metadata
 rules, opt-in suggestions learned from explicit corrections, and informational schedules.
@@ -210,7 +210,8 @@ income **1,000**, expenses **200**. Transfers and openings never enter flow tota
 - **Investments:** Overview, Performance, Allocation, Income, Holdings, Activity, Accounts and Imports; add securities,
   preview/confirm activities, inspect account/security positions and record manual prices.
   Cash and security value are separate; missing prices never become zero valuations.
-- **Preview sections:** Net Worth and Reports layouts
+- **Net Worth / Goals (v0.10.0):** dated manual assets/debts, historical consolidation, explicit savings allocations and scenarios.
+- **Preview section:** Reports layout
   reusing actual account history. No editing or final financial engines are provided.
   Fictional fixtures are available only in an explicitly seeded demo database.
 
@@ -330,6 +331,18 @@ adds CSV/OFX imports with explicit preview/confirmation. See the
 `backend/app/_version.py` is authoritative. Hatch derives Python package metadata
 from it and FastAPI reports it in OpenAPI. Frontend package metadata mirrors it,
 checked by `test_release_version.py`; no About/version display exists to synchronize.
-Run `uv lock --project backend` after Python metadata changes. Tags use `v0.9.0`;
+Run `uv lock --project backend` after Python metadata changes. Tags use `v0.10.0`;
 future development branches do not change the released application version.
 Historical phases and immutable seed/migration identifiers remain traceable in the roadmap.
+
+
+## v0.10.0: Net Worth and Goals
+
+Apply `uv run alembic upgrade head` before starting this working tree. Net Worth
+combines ledger cash, investment values, manual assets and debts with dated FX.
+Goals track explicit shared account allocations or manual progress without posting.
+See [methodology, APIs, limits and synthetic demo setup](docs/NET_WORTH_GOALS.md).
+The expanded empty-workspace demo command is `uv run python -m app.seed_wealth_demo`.
+See [release validation](docs/RELEASE_0_10_0.md). Next is v0.11.0 product consolidation;
+v0.12 covers an isolated interactive demo, v0.13 final stability/security, and v1.0
+requires demonstrated readiness. No next-phase functionality is included.

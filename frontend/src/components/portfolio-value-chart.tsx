@@ -14,9 +14,11 @@ import { Money } from './primitives'
 export function PortfolioValueChart({
   history,
   security = false,
+  label,
 }: {
   history: MarketHistory
   security?: boolean
+  label?: string
 }) {
   const id = useId().replaceAll(':', '')
   const valid = history.points.flatMap((p) =>
@@ -33,7 +35,7 @@ export function PortfolioValueChart({
   return (
     <figure
       className="balance-chart"
-      aria-label={`${history.currency} ${security ? 'security price' : 'portfolio value'} history`}
+      aria-label={`${history.currency} ${label ?? (security ? 'security price' : 'portfolio value')} history`}
     >
       <ResponsiveContainer
         width="100%"
@@ -100,27 +102,34 @@ export function PortfolioValueChart({
             strokeWidth={1.8}
             fill={`url(#${id})`}
             isAnimationActive={false}
-            name="Portfolio value"
+            name={label ?? 'Portfolio value'}
           />
         </AreaChart>
       </ResponsiveContainer>
       <figcaption className="metadata">
-        {security ? 'Eligible security prices' : 'Cash plus securities'} ·{' '}
-        {history.currency} · Gaps mean missing coverage ·{' '}
-        {security
-          ? 'Original quote currency'
-          : history.fx_provider === 'SYNTHETIC'
-            ? 'Synthetic demo FX'
-            : 'Dated ECB FX'}
+        {label ??
+          (security ? 'Eligible security prices' : 'Cash plus securities')}{' '}
+        · {history.currency} · Gaps mean missing coverage ·{' '}
+        {label
+          ? 'Dated records; no projected returns'
+          : security
+            ? 'Original quote currency'
+            : history.fx_provider === 'SYNTHETIC'
+              ? 'Synthetic demo FX'
+              : 'Dated ECB FX'}
       </figcaption>
       <details className="chart-data">
         <summary>
-          {security ? 'View security chart data' : 'View portfolio chart data'}
+          {label
+            ? `View ${label.toLowerCase()} chart data`
+            : security
+              ? 'View security chart data'
+              : 'View portfolio chart data'}
         </summary>
         <div className="table-scroll">
           <table>
             <caption className="sr-only">
-              Exact historical portfolio values
+              Exact historical {label ?? 'portfolio'} values
             </caption>
             <thead>
               <tr>
@@ -143,9 +152,13 @@ export function PortfolioValueChart({
                     )}
                   </td>
                   <td>
-                    {p.missing_assets.length || p.missing_fx.length
-                      ? `${p.missing_assets.length} unpriced assets; ${p.missing_fx.length} missing FX rates`
-                      : 'Available'}
+                    {label
+                      ? p.value === null
+                        ? 'Unavailable'
+                        : 'Available'
+                      : p.missing_assets.length || p.missing_fx.length
+                        ? `${p.missing_assets.length} unpriced assets; ${p.missing_fx.length} missing FX rates`
+                        : 'Available'}
                   </td>
                 </tr>
               ))}

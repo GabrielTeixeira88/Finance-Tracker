@@ -6,6 +6,7 @@ from app import (  # noqa: F401
     market_models,
     models,
     reconciliation_models,
+    wealth_models,
 )
 from app.config import get_settings
 from app.database import Base, make_engine

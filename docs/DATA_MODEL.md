@@ -1,6 +1,6 @@
 # Finance Tracker data model
 
-Current release scope: **v0.9.0 - Multi-Source Reconciliation**. Next: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. See [reconciliation contracts](RECONCILIATION.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+Current release scope: **v0.10.0 - Net Worth, Assets, Liabilities & Financial Goals**. Next: **v0.11.0 - Product Consolidation & UI/UX Refinement**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_10_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 All financial records stay in local SQLite. The ledger is authoritative; there
 is no editable or cached account-balance column.
@@ -371,3 +371,36 @@ erasing source identities. ReconciliationAudit is append-only with unique reques
 identity, actor and before/after decision metadata. All relationships use foreign
 keys. Existing rows are unchanged and default semantically to uncleared.
 See [state transitions and lock rules](RECONCILIATION.md).
+
+
+## v0.10.0
+
+Net Worth and Goals now use dated database-backed records and exact existing
+ledger/investment/FX services. See [contracts and limitations](NET_WORTH_GOALS.md).
+Release version is 0.10.0. Reports retains its preview boundary.
+
+
+### v0.10 additive schema (`sqlite_0012`)
+
+- `manual_positions`: asset/debt identity, currency, classification, ownership dates,
+  descriptive acquisition/disposal/loan metadata, optional self-FK from debt to asset.
+- `position_observations`: parent FK, effective date, exact nonnegative value, notes,
+  void timestamp/reason; partial unique index for one live parent/date.
+- `goals`: original currency, target, manual/account mode, start/deadline/lifecycle.
+- `goal_entries`: dated signed manual contributions or fixed account allocations,
+  foreign keys to goal/account, exact amount, void audit. Partial unique index for
+  one live goal/account/date allocation. Parent currency is immutable.
+
+```text
+FinancialAccount -- ledger / investment cash & holdings --> NetWorth (derived)
+ManualPosition -- PositionObservation --------------------> NetWorth (derived)
+ManualPosition (liability) -- associated_asset_id --> ManualPosition (asset)
+Goal -- GoalEntry -- optional FinancialAccount
+```
+
+Goal entries have no relationship that posts to Transactions or investment activities.
+Net worth has no persistent balance table. The migration creates four tables and
+indexes without replacing any earlier financial table or row.
+
+`sqlite_0013` additively supplies optional exact annual-rate/minimum-payment and
+frequency/expected-payoff metadata to manual debts. These fields never infer payments.

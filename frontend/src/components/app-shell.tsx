@@ -19,6 +19,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Search,
+  Target,
 } from 'lucide-react'
 import type { PreviewPage } from '@/pages/previews'
 
@@ -30,6 +31,7 @@ export type Page =
   | 'Account'
   | 'Budget'
   | 'Investments'
+  | 'Goals'
   | PreviewPage
 export type Navigate = (page: Page, accountId?: string) => void
 const primary = [
@@ -40,6 +42,7 @@ const primary = [
   { page: 'Investments', icon: BriefcaseBusiness },
   { page: 'Performance', icon: TrendingUp },
   { page: 'Net Worth', icon: ChartPie },
+  { page: 'Goals', icon: Target },
   { page: 'Reports', icon: Files },
   { page: 'Settings', icon: Settings },
 ] as const
@@ -120,16 +123,8 @@ export function AppShell({
             <button
               key={item}
               className="nav-item"
-              title={
-                ['Net Worth', 'Reports'].includes(item)
-                  ? `${item} · Preview`
-                  : item
-              }
-              aria-label={
-                ['Net Worth', 'Reports'].includes(item)
-                  ? `${item} Preview`
-                  : item
-              }
+              title={['Reports'].includes(item) ? `${item} · Preview` : item}
+              aria-label={['Reports'].includes(item) ? `${item} Preview` : item}
               aria-current={
                 page === item || (page === 'Account' && item === 'Accounts')
                   ? 'page'
@@ -139,7 +134,7 @@ export function AppShell({
             >
               <Icon size={20} aria-hidden="true" />
               <span className="nav-label">{item}</span>
-              {['Net Worth', 'Reports'].includes(item) && (
+              {['Reports'].includes(item) && (
                 <span className="nav-preview">Preview</span>
               )}
             </button>
@@ -213,7 +208,7 @@ export function AppShell({
               <button className="nav-item" key={item} onClick={() => go(item)}>
                 <Icon size={18} />
                 {item}
-                {['Net Worth', 'Reports'].includes(item) && (
+                {['Reports'].includes(item) && (
                   <span className="nav-preview">Preview</span>
                 )}
               </button>

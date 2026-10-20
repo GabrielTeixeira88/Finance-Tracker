@@ -32,7 +32,7 @@
 - Run tests and linting before considering a task complete. Report checks that could not run.
 - Do not silently redesign the architecture.
 - Keep SQLAlchemy and Alembic. Preserve foreign keys, WAL, bounded lock waits, and atomic linked transfers.
-- Functional navigation is Overview, Accounts, Transactions, Budget (Spending & Budgets), Investments, Performance, Settings. Transfers belong to Add Transaction; Categories belong to Settings. Performance opens investment analytics; Net Worth and Reports remain labeled read-only previews.
+- Functional navigation is Overview, Accounts, Transactions, Budget (Spending & Budgets), Investments, Performance, Settings. Transfers belong to Add Transaction; Categories belong to Settings. Performance opens investment analytics; Net Worth and Goals are functional; Reports remains a labeled read-only preview.
 - Preserve the approved application hierarchy and restrained surfaces; do not copy third-party branding/assets or invent financial history.
 - Preserve adapted-source attribution and AGPL/OFL notices in THIRD_PARTY_NOTICES.md and frontend/public/licenses.
 - Keep product documentation focused on Finance Tracker. The roadmap may name the explicitly approved product/workflow references; preserve legal/source-attribution notices and do not copy third-party branding or assets.
@@ -115,3 +115,15 @@ Before implementing functionality present in Wealthfolio, Actual Budget or Secur
 - Review is independent of clearing. Statement completion uses exact historical cleared
   ledger projections; reopening invalidates later account statements. Never silently edit
   locked history or create balancing adjustments. Preserve rollback/idempotency guards.
+
+- v0.10 net worth reuses ledger cash and historical investment/FX services. Count
+  brokerage cash/holdings once; goals never add financial assets. Missing coverage
+  yields unavailable totals, not zero. Manual observations carry only from prior dates.
+- Manual asset/debt changes never post cash or infer loan principal/interest splits.
+  Preserve dated observations and correction audit. Goal allocations share existing
+  same-currency savings, validate atomically and expose later cash shortfalls.
+  Keep hypothetical savings scenarios separate from actual progress and returns.
+
+- Next milestones: v0.11 product consolidation/UI workflows; v0.12 isolated interactive
+  demo/showcase; v0.13 stability/security/release validation; v1.0 only after demonstrated
+  readiness. Creating a future branch never implements its scope or increments the version.

@@ -81,6 +81,42 @@ def accounts(session: Session) -> list[schemas.AccountOutput]:
     ]
 
 
+def balance_series(session: Session, days):
+    """Batch historical cash reconstruction using the same authoritative movements."""
+    days = sorted(set(days))
+    if not days:
+        return {}
+    from app.investments import cash_entries
+
+    events = list(
+        session.execute(
+            select(
+                Transaction.transaction_date,
+                Transaction.account_id,
+                Transaction.direction,
+                Transaction.amount,
+            ).where(Transaction.deleted_at.is_(None), Transaction.transaction_date <= days[-1])
+        )
+    )
+    events.extend(
+        (e.transaction_date, e.account_id, e.direction, e.amount)
+        for e in cash_entries(session, days[-1])
+    )
+    events.sort(key=lambda e: e[0])
+    with localcontext() as context:
+        context.prec = 60
+        current, result, index = {}, {}, 0
+        for day in days:
+            while index < len(events) and events[index][0] <= day:
+                _, account_id, direction, amount = events[index]
+                current[account_id] = current.get(account_id, Decimal(0)) + (
+                    amount if direction == "IN" else -amount
+                )
+                index += 1
+            result[day] = current.copy()
+        return result
+
+
 def create_account(session: Session, data: schemas.AccountCreate) -> FinancialAccount:
     account = FinancialAccount(
         **data.model_dump(exclude={"opening_balance", "opening_direction", "opening_date"})
