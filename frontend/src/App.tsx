@@ -8,6 +8,7 @@ import Dashboard from '@/pages/dashboard'
 import Transactions from '@/pages/transaction-workspace'
 import { Accounts, Settings } from '@/pages/management'
 import type { PreviewPage } from '@/pages/previews'
+import { DemoExperience } from '@/components/demo-experience'
 
 const Spending = lazy(() => import('@/pages/spending'))
 const Investments = lazy(() => import('@/pages/investments'))
@@ -35,6 +36,7 @@ export default function App() {
   const selected = accounts.data?.find((a) => a.id === route.accountId)
   return (
     <AppShell page={route.page} navigate={navigate}>
+      <DemoExperience />
       {accounts.isPending || categories.isPending ? (
         <>
           <PageHeader title="Workspace" />

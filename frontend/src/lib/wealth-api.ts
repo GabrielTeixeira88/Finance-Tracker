@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { request } from './api'
+import { getDemoDate, request } from './api'
+
+function demoAsOf(path: string) {
+  const day = getDemoDate()
+  return day ? `${path}${path.includes('?') ? '&' : '?'}as_of=${day}` : path
+}
 
 const money = z.string()
 export const positionSchema = z.object({
@@ -116,10 +121,12 @@ export const wealthSchema = z.object({
 export const getPositions = async () =>
   z.array(positionSchema).parse(await request('/manual-positions'))
 export const getGoals = async () =>
-  z.array(goalDetailSchema).parse(await request('/goals'))
+  z.array(goalDetailSchema).parse(await request(demoAsOf('/goals')))
 export const getGoal = async (id: string, monthly: string) =>
   goalDetailSchema.parse(
-    await request(`/goals/${id}?monthly=${encodeURIComponent(monthly)}`),
+    await request(
+      demoAsOf(`/goals/${id}?monthly=${encodeURIComponent(monthly)}`),
+    ),
   )
 
 export const getAllocations = async () =>
@@ -135,4 +142,4 @@ export const getAllocations = async () =>
         overallocated: z.boolean(),
       }),
     )
-    .parse(await request('/goal-allocations'))
+    .parse(await request(demoAsOf('/goal-allocations')))

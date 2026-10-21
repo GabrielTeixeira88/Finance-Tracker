@@ -1,3 +1,4 @@
+import { useDemoRuntime } from '@/lib/demo-runtime'
 import { useState } from 'react'
 import { navigateTo } from '@/lib/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -385,6 +386,7 @@ export function GmailQueue({
   accounts: Account[]
   categories: Category[]
 }) {
+  const { runtime } = useDemoRuntime()
   const [offset, setOffset] = useState(0)
   const [completed, setCompleted] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
@@ -412,14 +414,18 @@ export function GmailQueue({
   return (
     <>
       <PageHeader
-        title="Gmail review"
-        description="Email candidates do not affect balances until you confirm. Configure the connection in Settings → Gmail."
+        title={runtime ? 'Gmail Notification Simulation' : 'Gmail review'}
+        description={
+          runtime
+            ? 'Fictional parser candidates. Gmail is not connected. Review and explicitly confirm to post.'
+            : 'Email candidates do not affect balances until you confirm. Configure the connection in Settings → Gmail.'
+        }
       >
         <Button
           variant="outline"
           onClick={() => navigateTo('Settings', undefined, { view: 'gmail' })}
         >
-          Connection settings
+          {runtime ? 'Simulation examples' : 'Connection settings'}
         </Button>
       </PageHeader>
       {action.isError && <ErrorState text={action.error.message} />}

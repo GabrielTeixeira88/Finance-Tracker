@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { readRoute } from '@/lib/navigation'
 import { WorkflowSteps } from '@/components/section-navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -40,7 +41,9 @@ export default function ImportWorkspace({
   categories: Category[]
 }) {
   const client = useQueryClient()
-  const [batchId, setBatchId] = useState<string | null>(null)
+  const [batchId, setBatchId] = useState<string | null>(() =>
+    readRoute().params.get('batch'),
+  )
   const [file, setFile] = useState<File | null>(null)
   const [accountId, setAccountId] = useState(
     accounts.find((a) => a.active)?.id ?? '',

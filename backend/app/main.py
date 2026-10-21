@@ -73,6 +73,11 @@ app.include_router(reconciliation_router)
 app.include_router(wealth_router)
 
 
+@app.get("/api/runtime")
+def runtime():
+    return {"mode": "normal"}
+
+
 class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
     service: Literal["finance-tracker-api"] = "finance-tracker-api"

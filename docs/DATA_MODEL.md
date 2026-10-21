@@ -1,6 +1,6 @@
 # Finance Tracker data model
 
-Current release scope: **v0.11.0 - Product Consolidation & UI/UX Refinement**. Next: **v0.12.0 - Interactive Demo & Portfolio Showcase**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_11_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+Current release scope: **v0.12.0 - Interactive Demo & Portfolio Showcase**. Next: **v0.13.0 - Final Product Refinement, Stability, Security & Release Validation**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_12_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 All financial records stay in local SQLite. The ledger is authoritative; there
 is no editable or cached account-balance column.
@@ -377,7 +377,7 @@ See [state transitions and lock rules](RECONCILIATION.md).
 
 Net Worth and Goals now use dated database-backed records and exact existing
 ledger/investment/FX services. See [contracts and limitations](NET_WORTH_GOALS.md).
-Release version is 0.10.0. Reports retains its preview boundary.
+Introduced in 0.10.0. Reports retains its preview boundary.
 
 
 ### v0.10 additive schema (`sqlite_0012`)
@@ -413,3 +413,17 @@ classification as proposed actions; they do not copy ledger identity or monetary
 posting fields. Duplicated rules are new, disabled drafts. Payee renaming uses the
 existing normalized-name constraints and leaves raw transaction descriptions intact.
 Review, clearing and reconciliation remain distinct.
+
+## v0.12 demo data ownership
+
+No tables or migrations are added. The isolated showcase populates existing domain
+tables through their services and records `showcase-v012-1` in DemoFixture. Stable
+IDs/timestamps/source identities make two fresh seed results equal, while re-running
+an existing seed is a no-op that preserves edits. Preview candidates remain separate
+from ledger entries until confirmed. The baseline includes one grocery posting with
+Gmail and OFX evidence linked to it, not two expenses.
+
+The separate demo root contains a validated baseline, UUID-named active/previous
+databases, an ownership marker and an atomic generation pointer. These are local runtime
+files, never Git artifacts or a new financial source of truth. Normal SQLite data is
+never copied into the demo. See [dataset and reset contracts](DEMO.md).

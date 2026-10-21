@@ -1,6 +1,8 @@
 # Application architecture
 
-Current release scope: **v0.11.0 - Product Consolidation & UI/UX Refinement**. Next: **v0.12.0 - Interactive Demo & Portfolio Showcase**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_11_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+Current release: **v0.12.0 - Interactive Demo & Portfolio Showcase**.
+See [demo architecture](DEMO.md) and [release validation](RELEASE_0_12_0.md).
+Historical phase labels below describe prior implementation checkpoints.
 
 ## Local storage and deployment
 
@@ -268,3 +270,19 @@ Existing query invalidation, money formatting, error/loading states and financia
 services remain authoritative. Financial pages load on demand. Settings payee
 management reuses the original payee endpoints. No new schema, API contract,
 financial calculation, provider integration or persistence system is introduced.
+
+## v0.12 isolated local demo
+
+`python -m app.demo` creates a separate FastAPI application on loopback port 8001.
+Production routes are cloned without the normal lifespan; a demo-only session
+dependency supplies the owned SQLite engine. No Gmail/market workers start. Provider
+configuration, OAuth and real connection APIs are denied. Existing ledger, posting,
+classification, ingestion and analytics services remain unchanged.
+
+DemoStore owns the fixed root, OS process lock, baseline and atomic active-generation
+pointer. Reset holds the request gate through response/dependency completion, uses
+SQLite backup, validates the new database, then switches the engine. Generation headers
+reject stale tab writes. Normal mode has no demo control endpoints. React identifies
+runtime before mounting financial forms; reset clears queries and remounts drafts.
+No new schema or migration is required. Public hosting is a documented design only;
+see [deployment boundary](DEMO_DEPLOYMENT.md).

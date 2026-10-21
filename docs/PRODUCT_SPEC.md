@@ -8,7 +8,7 @@ holdings filtering; goal remaining values and advanced budget target disclosure.
 Existing financial engines and Reports' preview boundary remain unchanged.
 See [the audit](UX_AUDIT_v0.11.md) for evidence and remaining presentation debt.
 
-Current release scope: **v0.11.0 - Product Consolidation & UI/UX Refinement**. Next: **v0.12.0 - Interactive Demo & Portfolio Showcase**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_11_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+Current release scope: **v0.12.0 - Interactive Demo & Portfolio Showcase**. Next: **v0.13.0 - Final Product Refinement, Stability, Security & Release Validation**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_12_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 Finance Tracker is a single-user, offline-capable local finance application. Financial
 records stay in a local SQLite database. No authentication, cloud persistence, telemetry,
@@ -194,4 +194,19 @@ See [workflow, API, persistence and limits](RECONCILIATION.md).
 
 Net Worth and Goals now use dated database-backed records and exact existing
 ledger/investment/FX services. See [contracts and limitations](NET_WORTH_GOALS.md).
-Release version is 0.10.0. Reports retains its preview boundary.
+Introduced in 0.10.0. Reports retains its preview boundary.
+
+## v0.12 interactive local showcase
+
+The separately launched local demo uses a fictional 24-month profile with the same
+financial APIs and calculations as normal mode. Its persistent strip, optional nine-stop
+tour and scenario shortcuts expose transaction edits, budgets, rules, synthetic imports,
+notification review, source matching, investments, net worth and goals. Reset requires
+confirmation and affects only the owned demo generation. There is no database-switching
+toggle inside normal mode and no public deployment/session service.
+
+Synthetic Gmail simulation never claims a live connection. Provider refresh and OAuth
+configuration are blocked in demo mode; all market history is labeled synthetic.
+Reports remains a preview. See [demo guide](DEMO.md), [walkthrough](PORTFOLIO_WALKTHROUGH.md)
+and [validation boundaries](DEMO_READINESS.md). v0.12.0 is the local showcase
+release; v0.13 refinement/stability scope follows concrete demo review findings.
