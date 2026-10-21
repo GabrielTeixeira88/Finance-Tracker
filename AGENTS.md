@@ -124,8 +124,9 @@ Before implementing functionality present in Wealthfolio, Actual Budget or Secur
   same-currency savings, validate atomically and expose later cash shortfalls.
   Keep hypothetical savings scenarios separate from actual progress and returns.
 
-- v0.11 consolidation is implemented. Next milestones: v0.12 isolated interactive
-  demo/showcase; v0.13 stability/security/release validation; v1.0 only after demonstrated
+- v0.11 consolidation and v0.12 isolated interactive demo/showcase are implemented.
+  Next: v0.13 product refinement/stability/security/release validation, scoped after
+  populated-demo review; v1.0 only after demonstrated
   readiness. Creating a future branch never implements its scope or increments the version.
 
 - Product navigation uses local hash routes; preserve section bookmarks and browser
@@ -134,3 +135,11 @@ Before implementing functionality present in Wealthfolio, Actual Budget or Secur
 - Use shared section navigation, financial formatting and query state primitives.
   Progressive disclosure must preserve advanced rule/target values and financial
   guards. A transaction-to-rule action creates only a draft, never a ledger posting.
+
+- v0.12 local demo uses only its owned `data/demo-v012` workspace and production
+  financial services. Never start normal integration workers or access a token vault
+  in demo mode. Reset is an explicit demo-only operation: validate a backup generation,
+  publish atomically, reject stale generation writes and clear browser state. Never
+  accept client database paths or reset a normal/legacy workspace. Browser tests must
+  create their own isolated demo root. Public session isolation is not implemented;
+  do not expose the local demo as a shared public writable service.

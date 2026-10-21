@@ -6,6 +6,25 @@ of independently published releases or tags. See [the roadmap](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-21
+
+### Added
+- Separately owned, loopback-only interactive demo with a deterministic 24-month
+  fictional profile, migrated SQLite baseline, atomic generation reset and stale-write guards.
+- Real ledger, budget, schedule, import/reconciliation, investment, price/FX, net-worth
+  and goals examples; safe Gmail Notification Simulation without OAuth or network calls.
+- Persistent demo controls, skippable guided tour, downloadable synthetic samples,
+  isolated browser runner, showcase screenshots and deployment/walkthrough documentation.
+- Tests for complete seed determinism, normal/demo isolation, restart persistence,
+  reset failure/concurrency, external-service denial and real financial projections.
+
+### Changed
+- README now leads with the local demo, current features and engineering safeguards.
+- Vite updated within major version 7 to address reported development-server advisories;
+  Playwright added for repeatable browser validation.
+- Demo-aware goal/reference dates and reconciliation cutoff defaults.
+- Local demo only; no public deployment or hosted session service.
+
 ## [0.11.0] - 2026-10-20
 
 ### Changed

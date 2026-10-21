@@ -1,3 +1,5 @@
+import { useDemoRuntime } from '@/lib/demo-runtime'
+import { DemoScenarios } from '@/components/demo-experience'
 import { useState } from 'react'
 import { useSection } from '@/lib/navigation'
 import { SectionNavigation } from '@/components/section-navigation'
@@ -128,6 +130,7 @@ export function Settings({
   categories: Category[]
   accounts: Account[]
 }) {
+  const { runtime } = useDemoRuntime()
   const items = [
     ['categories', 'Categories'],
     ['payees', 'Payees'],
@@ -152,9 +155,20 @@ export function Settings({
       ) : view === 'payees' ? (
         <PayeeSettings />
       ) : view === 'market' ? (
-        <MarketDataSettings />
+        runtime ? (
+          <PageHeader
+            title="Synthetic market data"
+            description="Dated fictional prices and FX are included. External providers and refresh are disabled in this demo. Manual observations remain available in Investments."
+          />
+        ) : (
+          <MarketDataSettings />
+        )
       ) : view === 'gmail' ? (
-        <GmailSettings accounts={accounts} />
+        runtime ? (
+          <DemoScenarios settings />
+        ) : (
+          <GmailSettings accounts={accounts} />
+        )
       ) : (
         <>
           <PageHeader title="Settings" description="Transaction automation" />

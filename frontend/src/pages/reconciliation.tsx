@@ -14,6 +14,7 @@ import {
 } from '@/components/primitives'
 import {
   request,
+  localDate,
   getTransactionPage,
   type Account,
   type Category,
@@ -318,7 +319,7 @@ function Statements({
   const [accountId, setAccountId] = useState(
     account?.id ?? accounts.find((a) => a.type !== 'INVESTMENT')?.id ?? '',
   )
-  const [cutoff, setCutoff] = useState(new Date().toISOString().slice(0, 10))
+  const [cutoff, setCutoff] = useState(localDate())
   const [balance, setBalance] = useState('')
   const [notes, setNotes] = useState('')
   const mutation = useWrite()

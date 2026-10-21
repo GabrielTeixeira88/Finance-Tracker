@@ -2,15 +2,16 @@
 
 Versions are the primary milestone identifiers. Historical phases remain traceable
 below; they do not imply earlier releases or tags. Current application version is
-0.11.0. Product Consolidation & UI/UX Refinement is implemented; see
-[UX audit](UX_AUDIT_v0.11.md) and [release audit](RELEASE_0_11_0.md). Gmail live OAuth
-and real-bank templates remain separate validation gaps. Next is v0.12.0.
+0.12.0. Interactive Demo & Portfolio Showcase is implemented locally; see
+[release validation](RELEASE_0_12_0.md) and [demo readiness](DEMO_READINESS.md).
+Gmail live OAuth and real-bank templates remain separate validation gaps.
+No public demo is deployed. v0.13 is the next refinement/stability/security gate.
 
 ## Historical mapping
 
 | Version | Previous designation | Scope |
 |---|---|---|
-| v0.1.0 | Phase 0, 1, 1.6–1.7 | Foundation, core ledger, SQLite and Wealthfolio-based UI |
+| v0.1.0 | Phase 0, 1, 1.6-1.7 | Foundation, core ledger, SQLite and Wealthfolio-based UI |
 | v0.2.0 | Phase 2A and 2B | Payees, transaction review, rules and schedules |
 | v0.3.0 | Phase 3 | CSV/OFX imports and ingestion infrastructure |
 | v0.4.0 | Phase 4 | Spending & Budgets |
@@ -22,7 +23,7 @@ and real-bank templates remain separate validation gaps. Next is v0.12.0.
 | v0.10.0 | Phase 10 | Net Worth & Goals |
 | v0.11.0 | Phase 11 | Product Consolidation & UX Refinement |
 | v0.12.0 | Phase 12 | Interactive Demo & Portfolio Showcase |
-| v0.13.0 | Stability gate | Final Stability, Security & Release Validation |
+| v0.13.0 | Stability gate | Final Product Refinement, Stability, Security & Release Validation |
 | v1.0.0 | Stable release | First fully validated stable version |
 
 Phase 2A and 2B belong together to v0.2.0; never use separate patch milestones.
@@ -90,8 +91,8 @@ v1.0.0 requires validated stability, not a milestone counter reaching a number.
   important user journey; improve reference fidelity, navigation, confusing forms,
   redundant screens, table density, empty/loading/error states and responsiveness.
   Preserve all existing functionality and explicit posting safeguards.
-- **v0.12.0 - Interactive Demo & Portfolio Showcase.** A populated fictional profile,
-  18–24 months of coherent fictional history, one-click isolated/resettable demo mode, interactive transactions,
+- **v0.12.0 - Interactive Demo & Portfolio Showcase (completed locally).** A populated fictional profile,
+  18-24 months of coherent fictional history, one-click isolated/resettable demo mode, interactive transactions,
   budgets, investments and goals; guided onboarding, README screenshots and demo links.
   An optional hosted demo requires separately reviewed isolation/security and never
   changes the local-only persistence of personal workspaces. Use real backend APIs
@@ -99,7 +100,8 @@ v1.0.0 requires validated stability, not a milestone counter reaching a number.
   prices/benchmarks, simulated Gmail/import/reconciliation evidence, assets/debts
   and goals; guided interviewer tours, architecture overview and disposable session
   isolation for any separately approved public demo.
-- **v0.13.0 - Final Stability, Security & Release Validation.** Full regression/E2E,
+- **v0.13.0 - Final Product Refinement, Stability, Security & Release Validation.** Detailed scope will be finalized after reviewing the populated demo and collecting
+  concrete UI/UX defects and functional inconsistencies. Full regression/E2E,
   financial correctness, migrations, data integrity, backup/recovery, performance,
   security/privacy hardening, installation/deployment validation and blocking fixes.
 - **v1.0.0 - Stable Release.** Final acceptance, no unresolved critical defects,
@@ -146,11 +148,9 @@ Wealthfolio reference import-table source and approved Finance Tracker shell wer
 reviewed; the global visual hierarchy is preserved. No third-party source was copied
 for this phase. Existing attribution/licenses remain intact.
 
-The current release is v0.11.0 Product Consolidation & UI/UX Refinement, documented
-in [the UX audit](UX_AUDIT_v0.11.md) and [release validation](RELEASE_0_11_0.md).
-The v0.12 demo and v0.13 stability milestones are unchanged; see
-[demo readiness](DEMO_READINESS.md) for the boundary between existing fixtures
-and future one-click, resettable showcase infrastructure.
+The current release is v0.12.0 Interactive Demo & Portfolio Showcase; see
+[release validation](RELEASE_0_12_0.md) and [demo readiness](DEMO_READINESS.md).
+v0.13 has not started. Public deployment is not implemented.
 
 
 ### v0.10 reference investigation

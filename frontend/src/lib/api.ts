@@ -161,6 +161,16 @@ export const getHistory = async (
 export const getDemo = async (signal?: AbortSignal) =>
   demoSchema.parse(await request('/demo', { signal }))
 
+let demoGeneration: string | undefined
+let demoDate: string | undefined
+export function setDemoGeneration(generation?: string, endDate?: string) {
+  demoGeneration = generation
+  demoDate = endDate
+}
+export function getDemoDate() {
+  return demoDate
+}
+
 export async function request(
   path: string,
   options: RequestInit = {},
@@ -168,7 +178,13 @@ export async function request(
 ) {
   const response = await fetch(`/api${path}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(demoGeneration
+        ? { 'X-Finance-Demo': '1', 'X-Demo-Generation': demoGeneration }
+        : {}),
+      ...options.headers,
+    },
   })
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
@@ -216,6 +232,7 @@ export const getDashboard = async (month: string, signal?: AbortSignal) =>
 
 export { formatMoney } from './money'
 export function localDate() {
+  if (demoDate) return demoDate
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }

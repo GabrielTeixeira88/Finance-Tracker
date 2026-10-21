@@ -1,3 +1,4 @@
+import { useDemoRuntime } from '@/lib/demo-runtime'
 import { lazy, Suspense, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
@@ -39,6 +40,13 @@ export function RefreshMarket({
   const [force, setForce] = useState(false)
   const [start, setStart] = useState('')
   const outcome = syncResultSchema.safeParse(mutation.data)
+  const { runtime } = useDemoRuntime()
+  if (runtime)
+    return (
+      <p className="metadata">
+        Synthetic cached history. External refresh disabled in this demo.
+      </p>
+    )
   return (
     <div className="investment-toolbar">
       {backfill && (
@@ -269,6 +277,14 @@ function PricingForm({
 }) {
   const [data, setData] = useState(initial)
   const mutation = useWrite()
+  const { runtime } = useDemoRuntime()
+  if (runtime)
+    return (
+      <p className="metadata">
+        Provider configuration is disabled in the demo. Add dated manual
+        observations through the security editor.
+      </p>
+    )
   return (
     <form
       className="investment-editor"
