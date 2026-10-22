@@ -1,5 +1,7 @@
 # Finance Tracker
 
+[![CI (development branch)](https://github.com/GabrielTeixeira88/Finance-Tracker/actions/workflows/ci.yml/badge.svg?branch=feature%2Fv0.13.0-stabilization)](https://github.com/GabrielTeixeira88/Finance-Tracker/actions/workflows/ci.yml?query=branch%3Afeature%2Fv0.13.0-stabilization)
+
 A local-first personal finance and investment application: understand spending,
 manage transactions, reconstruct holdings, and track net worth in one private workspace.
 React and FastAPI share a real SQLite ledger; exact money and auditable history take

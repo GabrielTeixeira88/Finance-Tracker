@@ -80,3 +80,5 @@ Actions conclusion. This workflow has no deploy step and adds no branch protecti
 rules. Changing the GitHub default branch is separate from committing this workflow;
 select `main` under repository Settings > Default branch. Preserve the checkpoint
 branch. Workflow changes must be reviewed and merged before `main` has these checks.
+The README badge currently tracks `feature/v0.13.0-stabilization`, whose first CI run
+passed. Point it at `main` after the workflow is merged and that branch passes CI.
