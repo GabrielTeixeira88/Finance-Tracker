@@ -1,0 +1,187 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, 'feature/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.repo.full_name || github.repository }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  # Any accidental default-engine access is confined to the disposable runner.
+  DATABASE_PATH: .tmp/ci-normal.db
+  BRAPI_API_TOKEN: ''
+  ALPHA_VANTAGE_API_KEY: ''
+  GOOGLE_OAUTH_CLIENT_ID: ''
+  GOOGLE_OAUTH_CLIENT_SECRET: ''
+  PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
+  UV_NO_PROGRESS: '1'
+
+jobs:
+  backend:
+    name: Backend tests and migrations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: '0.12.19'
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          cache-suffix: backend
+      - run: uv sync --frozen
+      - run: uv run --frozen --no-sync ruff check . ../scripts
+      - run: uv run --frozen --no-sync ruff format --check . ../scripts
+      - name: Tests, SQLite integrity, fresh and populated migrations
+        run: |
+          mkdir -p ../.tmp/ci
+          uv run --frozen --no-sync pytest --junitxml=../.tmp/ci/backend.xml
+      - name: Retain test report on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: backend-report
+          path: .tmp/ci/backend.xml
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend tests and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test -- --reporter=default --reporter=junit --outputFile=../.tmp/ci/frontend.xml
+      - run: npm run lint
+      - run: npm run format:check
+      - name: TypeScript and production build
+        run: npm run build
+      - name: Retain test report on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: frontend-report
+          path: .tmp/ci/frontend.xml
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: ignore
+
+  demo:
+    name: Isolated demo browser
+    needs: [backend, frontend]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BROWSER_CHANNEL: chromium
+      DEMO_E2E_PORT: '8001'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: '0.12.19'
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          cache-suffix: demo
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: uv sync --frozen --project backend
+      - run: npm ci
+        working-directory: frontend
+      - run: npx --no-install playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - name: Real API, synthetic history, editing and reset
+        working-directory: frontend
+        run: |
+          mkdir -p ../.tmp/ci
+          npm run test:demo 2>&1 | tee ../.tmp/ci/demo.log
+      - name: Retain synthetic browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: demo-diagnostics
+          # Explicit allowlist: never upload the .tmp tree or demo databases.
+          path: |
+            .tmp/ci/demo.log
+            .tmp/demo-e2e-results/*.jpg
+            .tmp/demo-e2e-results/*.json
+            .tmp/demo-e2e-results/*.log
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: ignore
+
+  audit:
+    name: Production dependency audits
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: '0.12.19'
+          python-version: '3.13'
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+          cache-suffix: audit
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Export exact production Python dependencies
+        run: |
+          mkdir -p .tmp/ci
+          uv export --project backend --frozen --no-dev --no-emit-project --format requirements-txt --output-file .tmp/ci/python-requirements.txt
+      - name: Audit with bounded retries and explicit outage reporting
+        run: uv run --no-project --python 3.13 python scripts/ci_audit.py
+      - name: Retain dependency audit reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dependency-audits
+          path: |
+            .tmp/ci/npm-audit.json
+            .tmp/ci/python-audit.json
+            .tmp/ci/audit-summary.json
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: ignore

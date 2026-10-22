@@ -126,6 +126,10 @@ Validation: Pytest, Vitest, Playwright, Ruff, ESLint, Prettier, TypeScript.
 
 ## Tests and checks
 
+[CI configuration and troubleshooting](docs/CI.md) documents backend/frontend checks,
+isolated Chromium demo tests and production dependency audits. CI runs on pull requests
+to `main`, pushes to `main` / `feature/**`, and manual dispatch; it never deploys.
+
 From `backend/`:
 
 ```sh

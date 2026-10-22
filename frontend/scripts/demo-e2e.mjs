@@ -51,6 +51,7 @@ server.stderr.on('data', (value) => {
 })
 const started = performance.now()
 let browser
+let page
 const timings = {}
 try {
   let ready = false
@@ -70,7 +71,7 @@ try {
     channel: process.env.BROWSER_CHANNEL || 'msedge',
     headless: true,
   })
-  const page = await browser.newPage({
+  page = await browser.newPage({
     viewport: { width: 1440, height: 1000 },
     colorScheme: 'dark',
   })
@@ -330,7 +331,21 @@ try {
   console.log(
     JSON.stringify({ result: 'PASS', timings, screenshots: output }, null, 2),
   )
+} catch (error) {
+  // This runner owns a synthetic workspace; never attach saved demo databases.
+  await writeFile(
+    path.join(output, 'failure.json'),
+    JSON.stringify({ error: String(error), timings }, null, 2),
+  )
+  await page
+    ?.screenshot({ path: path.join(output, 'failure.jpg'), quality: 85 })
+    .catch(() => {})
+  throw error
 } finally {
-  await browser?.close()
-  server.kill()
+  try {
+    await writeFile(path.join(output, 'server.log'), serverErrors)
+    await browser?.close()
+  } finally {
+    server.kill()
+  }
 }
