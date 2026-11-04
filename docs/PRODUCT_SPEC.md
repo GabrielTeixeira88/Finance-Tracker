@@ -1,5 +1,23 @@
 # Current product scope
 
+v0.13 refinement adds locally persistent appearance/language controls,
+ten fonts, six themes, independent chart palettes and financial color conventions, three UI locales and exact localized amount entry.
+Overview, Spending, Investments, Performance, Net Worth and Goals gain chart-first
+presentation using existing financial projections. The v0.13 pass adds
+native Brazilian fixed-income contracts and Life Events, deterministic spending
+insights and goal glide paths. No public deployment is introduced. See
+[appearance contracts](APPEARANCE_AND_LOCALIZATION.md) and
+[visual validation](VISUAL_REFINEMENT_v0.13.md).
+
+Supported behavior and limitations are defined in [fixed income](FIXED_INCOME.md),
+[Life Events/planning](LIFE_EVENTS.md) and the [page parity audit](WEALTHFOLIO_PARITY_v0.13.md).
+Allocation targets, rebalancing, AI, retirement/FIRE and tax-aware goal funding remain excluded.
+
+Separately authorized on 2026-10-30: optional Pluggy/MeuPluggy read-only connections,
+local provider evidence and reviewed bank/investment ingestion. Pluggy processes
+connected bank data externally; application storage remains local. Payment
+initiation and automatic posting remain excluded. See [scope and safeguards](PLUGGY.md).
+
 v0.11 consolidation: bookmarkable destinations and workflow sections;
 compact ledger filters; contextual, previewable rule drafts; simple/advanced rule
 editing; rules search/duplicate; Settings payee management; clearer import and
@@ -8,7 +26,7 @@ holdings filtering; goal remaining values and advanced budget target disclosure.
 Existing financial engines and Reports' preview boundary remain unchanged.
 See [the audit](UX_AUDIT_v0.11.md) for evidence and remaining presentation debt.
 
-Current release scope: **v0.12.0 - Interactive Demo & Portfolio Showcase**. Next: **v0.13.0 - Final Product Refinement, Stability, Security & Release Validation**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_12_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+Current release scope: **v0.13.0 - Product Refinements & Brazilian Historical Demo**. Next: **v0.14.0 - Frontend Refinement** (not implemented). See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_13_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 Finance Tracker is a single-user, offline-capable local finance application. Financial
 records stay in a local SQLite database. No authentication, cloud persistence, telemetry,
@@ -130,7 +148,6 @@ The v0.6.0 extension adds cached market data and valuation (see MARKET_DATA.md).
 The v0.7 release replaces illustrative Performance with real analytics.
 See [investment behavior and validation](INVESTMENTS.md).
 
-
 ## Phase 5 validation
 
 190 backend tests and 71 frontend tests pass. Financial reconstruction, import
@@ -178,7 +195,6 @@ payees, schedule suggestions and source matching are reused. Only a fictional ba
 parser is verified; real formats and live OAuth remain validation gaps. Sync cannot
 post automatically. See [Gmail workflow and limits](GMAIL.md).
 
-
 ## v0.9 reconciliation
 
 Transactions gains Source matching, Statements, Existing duplicates and Decision
@@ -188,7 +204,6 @@ requires exact cutoff balance agreement and locks included history. Source corre
 reassignment and safe duplicate merging are audited and atomic. Brokerage statements,
 automatic balancing adjustments and automated fuzzy merges are excluded.
 See [workflow, API, persistence and limits](RECONCILIATION.md).
-
 
 ## v0.10.0
 
@@ -206,7 +221,9 @@ confirmation and affects only the owned demo generation. There is no database-sw
 toggle inside normal mode and no public deployment/session service.
 
 Synthetic Gmail simulation never claims a live connection. Provider refresh and OAuth
-configuration are blocked in demo mode; all market history is labeled synthetic.
+configuration are blocked in demo mode. The current Brazil scenario distinguishes
+verified official CDI/Treasury observations from fictional holdings; ETF history
+requires authorized local setup. The retired household remains a regression fixture.
 Reports remains a preview. See [demo guide](DEMO.md), [walkthrough](PORTFOLIO_WALKTHROUGH.md)
-and [validation boundaries](DEMO_READINESS.md). v0.12.0 is the local showcase
-release; v0.13 refinement/stability scope follows concrete demo review findings.
+and [validation boundaries](DEMO_READINESS.md). v0.13.0 refines the local showcase; cross-platform and live-provider validation
+remain explicit limitations in the release report.

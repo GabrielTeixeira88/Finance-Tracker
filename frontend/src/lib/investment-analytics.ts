@@ -1,5 +1,8 @@
+import { t } from './i18n'
+import { getLocale } from './preferences'
 import { z } from 'zod'
 import { request } from './api'
+import { marketHistorySchema } from './market-data'
 
 const amount = z.string().regex(/^-?\d+(\.\d+)?$/)
 const metric = z.object({
@@ -15,6 +18,7 @@ export const performanceSchema = z.object({
   currency: z.string(),
   opening_value: amount.nullable(),
   ending_value: amount.nullable(),
+  valuation: marketHistorySchema.optional(),
   net_external_flows: amount.nullable(),
   twr: metric,
   xirr: metric,
@@ -46,6 +50,24 @@ export const performanceSchema = z.object({
   ),
 })
 export const incomeSchema = z.object({
+  redemptions: z
+    .array(
+      z.object({
+        id: z.string(),
+        date: z.string(),
+        account: z.string(),
+        asset_id: z.string(),
+        symbol: z.string(),
+        currency: z.string(),
+        principal: amount,
+        gross: amount,
+        fees: amount,
+        taxes: amount,
+        net: amount,
+        realized: amount,
+      }),
+    )
+    .optional(),
   breakdowns: z.record(
     z.string(),
     z.array(
@@ -96,6 +118,19 @@ const allocationGroup = z.object({
   ),
 })
 export const allocationSchema = z.object({
+  rows: z
+    .array(
+      z.object({
+        asset_id: z.string().nullable(),
+        account_id: z.string(),
+        security: z.string(),
+        account: z.string(),
+        currency: z.string(),
+        original_value: amount.nullable(),
+        value: amount.nullable(),
+      }),
+    )
+    .optional(),
   currency: z.string(),
   quality: z.string(),
   reasons: z.array(z.string()),
@@ -178,9 +213,9 @@ export async function getInsights(params: string, signal?: AbortSignal) {
 }
 
 export function percent(value: string | null) {
-  if (value === null) return 'Unavailable'
+  if (value === null) return t('common:unavailable')
   // Intl consumes the exact decimal string; this cast bridges its older TS signature.
-  const format = new Intl.NumberFormat(navigator.language, {
+  const format = new Intl.NumberFormat(getLocale(), {
     maximumFractionDigits: 2,
   }).format as unknown as (value: string) => string
   return `${format(value)}%`
@@ -204,3 +239,14 @@ export function startDate(period: string, end: string, custom: string) {
   d.setUTCDate(Math.min(day, lastDay))
   return d.toISOString().slice(0, 10)
 }
+
+export const analyticsPeriods = [
+  '1M',
+  '3M',
+  '6M',
+  'YTD',
+  '1Y',
+  '3Y',
+  'ALL',
+  'Custom',
+]

@@ -1,0 +1,48 @@
+.detail-drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  width: min(900px, 90vw);
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 0;
+  background: var(--background);
+  color: var(--foreground);
+  border: 0;
+  border-left: 1px solid var(--border);
+}
+.detail-drawer::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+.detail-drawer > header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 24px;
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+}
+.detail-drawer > header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.detail-drawer > header button {
+  padding: 8px;
+  border-radius: 6px;
+}
+.detail-drawer-content {
+  padding: 20px 24px;
+}
+@media (max-width: 700px) {
+  .detail-drawer {
+    width: 100vw;
+  }
+  .detail-drawer-content {
+    padding: 16px;
+  }
+}

@@ -1,3 +1,5 @@
+import { t as tr, ui } from '@/lib/i18n'
+import { PortfolioComposition } from '@/components/portfolio-composition'
 import { useDemoRuntime } from '@/lib/demo-runtime'
 import { lazy, Suspense, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -44,13 +46,15 @@ export function RefreshMarket({
   if (runtime)
     return (
       <p className="metadata">
-        Synthetic cached history. External refresh disabled in this demo.
+        {tr(
+          'market_data:synthetic_cached_history_external_refresh_disabl_3ecb23',
+        )}
       </p>
     )
   return (
     <div className="investment-toolbar">
       {backfill && (
-        <Field label="Backfill from">
+        <Field label={tr('market_data:backfill_from_33c216')}>
           <input
             type="date"
             value={start}
@@ -64,7 +68,9 @@ export function RefreshMarket({
           checked={force}
           onChange={(e) => setForce(e.target.checked)}
         />{' '}
-        Force refresh (provider limits still apply)
+        {tr(
+          'market_data:force_refresh_provider_limits_still_apply__79f7fd',
+        )}{' '}
       </label>
       <Button
         variant="outline"
@@ -82,16 +88,18 @@ export function RefreshMarket({
         }
       >
         {mutation.isPending
-          ? 'Refreshing…'
+          ? tr('dynamic:refreshing__961411')
           : assetId
-            ? 'Refresh security'
-            : 'Refresh market data'}
+            ? tr('dynamic:refresh_security_3a8bc2')
+            : tr('dynamic:refresh_market_data_51dafb')}
       </Button>
       {mutation.error && <ErrorState text={mutation.error.message} />}
       {mutation.isSuccess && (
         <p role="status" className="metadata">
-          Refresh finished. Check provider status and coverage below;
-          unavailable data remains cached.
+          {' '}
+          {tr(
+            'market_data:refresh_finished_check_provider_status_and_cover_8c2dbd',
+          )}{' '}
           {outcome.success && (
             <>
               {' '}
@@ -116,7 +124,11 @@ export function MarketDataSettings() {
   })
   const mutation = useWrite()
   if (query.isPending)
-    return <LoadingState text="Loading market-data settings…" />
+    return (
+      <LoadingState
+        text={tr('market_data:loading_market_data_settings__365fbb')}
+      />
+    )
   if (query.isError)
     return (
       <ErrorState
@@ -128,11 +140,13 @@ export function MarketDataSettings() {
   return (
     <>
       <PageHeader
-        title="Market Data"
-        description="Local price cache · Optional provider synchronization"
+        title={tr('market_data:market_data_3be934')}
+        description={tr(
+          'market_data:local_price_cache_optional_provider_synchronizat_a0af6c',
+        )}
       />
       <div className="investment-toolbar">
-        <Field label="Reporting currency">
+        <Field label={tr('market_data:reporting_currency_8b1716')}>
           <select
             value={data.settings.reporting_currency}
             onChange={(e) =>
@@ -148,7 +162,7 @@ export function MarketDataSettings() {
             ))}
           </select>
         </Field>
-        <Field label="FX source">
+        <Field label={tr('market_data:fx_source_68735c')}>
           <select
             value={data.settings.fx_provider}
             onChange={(e) =>
@@ -159,8 +173,12 @@ export function MarketDataSettings() {
               })
             }
           >
-            <option value="ECB">ECB reference rates</option>
-            <option value="SYNTHETIC">Synthetic demo only</option>
+            <option value="ECB">
+              {tr('market_data:ecb_reference_rates_e50234')}
+            </option>
+            <option value="SYNTHETIC">
+              {tr('market_data:synthetic_demo_only_eb5355')}
+            </option>
           </select>
         </Field>
         <label>
@@ -176,27 +194,34 @@ export function MarketDataSettings() {
               })
             }
           />{' '}
-          Enable automatic refresh while the API is running
+          {tr(
+            'market_data:enable_automatic_refresh_while_the_api_is_runnin_3d17bf',
+          )}{' '}
         </label>
       </div>
       <p className="metadata">
-        Automatic refresh checks every {data.interval_minutes} minutes. Cached
-        views work offline. Credentials stay in the backend environment;
-        restarting the API reloads them.
+        {' '}
+        {tr('market_data:automatic_refresh_checks_every_c28978')}{' '}
+        {data.interval_minutes}{' '}
+        {tr(
+          'market_data:minutes_cached_views_work_offline_credentials_st_23184d',
+        )}{' '}
       </p>
       <RefreshMarket />
       {mutation.error && <ErrorState text={mutation.error.message} />}
       <SectionHeader
-        title="Providers"
-        detail="Only symbols and requested dates are sent to providers. Account balances and activities stay local."
+        title={tr('market_data:providers_87b7c0')}
+        detail={tr(
+          'market_data:only_symbols_and_requested_dates_are_sent_to_pro_1c15da',
+        )}
       />
       <div className="table-scroll">
         <table className="investment-table">
           <thead>
             <tr>
-              <th>Provider</th>
-              <th>Configuration</th>
-              <th>Coverage and limits</th>
+              <th>{tr('market_data:provider_7ceee3')}</th>
+              <th>{tr('market_data:configuration_754164')}</th>
+              <th>{tr('market_data:coverage_and_limits_9a6610')}</th>
             </tr>
           </thead>
           <tbody>
@@ -205,8 +230,8 @@ export function MarketDataSettings() {
                 <td>{p.id}</td>
                 <td>
                   {p.configured
-                    ? 'Available configuration'
-                    : 'API key not configured'}
+                    ? tr('dynamic:available_configuration_11b611')
+                    : tr('dynamic:api_key_not_configured_3260a8')}
                 </td>
                 <td>{p.detail}</td>
               </tr>
@@ -215,31 +240,35 @@ export function MarketDataSettings() {
         </table>
       </div>
       <p className="metadata">
-        Configure BRAPI_API_TOKEN and ALPHA_VANTAGE_API_KEY in the local .env
-        file. Never paste credentials into this interface. Brapi raw history
-        requires BRAPI_RAW_HISTORY=true and an eligible plan.
+        {tr(
+          'market_data:configure_brapi_api_token_and_alpha_vantage_api__2ca7b5',
+        )}
       </p>
       <SectionHeader
-        title="Synchronization status"
-        detail="Provider failures never delete cached observations."
+        title={tr('market_data:synchronization_status_6957c9')}
+        detail={tr(
+          'market_data:provider_failures_never_delete_cached_observatio_46e79d',
+        )}
       />
       {!data.sync.length ? (
         <EmptyState
-          title="No synchronization yet"
-          detail="Refresh supported securities to populate the local cache."
+          title={tr('market_data:no_synchronization_yet_81bf04')}
+          detail={tr(
+            'market_data:refresh_supported_securities_to_populate_the_loc_ed60d6',
+          )}
         />
       ) : (
         <div className="table-scroll">
           <table className="investment-table">
             <thead>
               <tr>
-                <th>Scope</th>
-                <th>Provider</th>
-                <th>Last success</th>
-                <th>Last attempt</th>
-                <th>Status</th>
-                <th>Coverage</th>
-                <th>Retry after</th>
+                <th>{tr('market_data:scope_4651a3')}</th>
+                <th>{tr('market_data:provider_7ceee3')}</th>
+                <th>{tr('market_data:last_success_d9958c')}</th>
+                <th>{tr('market_data:last_attempt_82aee1')}</th>
+                <th>{tr('market_data:status_bae7d5')}</th>
+                <th>{tr('market_data:coverage_80e135')}</th>
+                <th>{tr('market_data:retry_after_75342d')}</th>
               </tr>
             </thead>
             <tbody>
@@ -247,13 +276,17 @@ export function MarketDataSettings() {
                 <tr key={s.scope}>
                   <td>
                     {s.scope === 'FX'
-                      ? 'Exchange rates'
+                      ? tr('dynamic:exchange_rates_f7600c')
                       : (s.symbol ?? s.scope.slice(0, 8))}
                   </td>
                   <td>{s.provider}</td>
-                  <td>{s.succeeded_at?.slice(0, 16) ?? 'Never'}</td>
-                  <td>{s.attempted_at?.slice(0, 16) ?? 'Never'}</td>
-                  <td>{s.error ?? 'Updated'}</td>
+                  <td>
+                    {s.succeeded_at?.slice(0, 16) ?? tr('dynamic:never_80c305')}
+                  </td>
+                  <td>
+                    {s.attempted_at?.slice(0, 16) ?? tr('dynamic:never_80c305')}
+                  </td>
+                  <td>{s.error ?? tr('dynamic:updated_f2f857')}</td>
                   <td>
                     {s.first_date ?? '—'} / {s.last_date ?? '—'}
                   </td>
@@ -281,8 +314,9 @@ function PricingForm({
   if (runtime)
     return (
       <p className="metadata">
-        Provider configuration is disabled in the demo. Add dated manual
-        observations through the security editor.
+        {tr(
+          'market_data:provider_configuration_is_disabled_in_the_demo_a_7e7acc',
+        )}
       </p>
     )
   return (
@@ -297,31 +331,41 @@ function PricingForm({
         })
       }}
     >
-      <Field label="Pricing mode">
+      <Field label={tr('market_data:pricing_mode_1c466a')}>
         <select
           value={data.mode}
           onChange={(e) =>
             setData({ ...data, mode: e.target.value as 'MANUAL' | 'AUTOMATIC' })
           }
         >
-          <option value="AUTOMATIC">Automatic with manual fallback</option>
-          <option value="MANUAL">Manual observations only</option>
+          <option value="AUTOMATIC">
+            {tr('market_data:automatic_with_manual_fallback_f719a5')}
+          </option>
+          <option value="MANUAL">
+            {tr('market_data:manual_observations_only_8f72cb')}
+          </option>
         </select>
       </Field>
-      <Field label="Price provider">
+      <Field label={tr('market_data:price_provider_be317e')}>
         <select
           value={data.provider ?? ''}
           onChange={(e) =>
             setData({ ...data, provider: e.target.value || null })
           }
         >
-          <option value="">Resolve from exchange</option>
-          <option value="BRAPI">Brapi</option>
-          <option value="ALPHA">Alpha Vantage</option>
-          <option value="SYNTHETIC">Synthetic demo</option>
+          <option value="">
+            {tr('market_data:resolve_from_exchange_82b6be')}
+          </option>
+          <option value="BRAPI">{tr('market_data:brapi_55b4de')}</option>
+          <option value="ALPHA">
+            {tr('market_data:alpha_vantage_770315')}
+          </option>
+          <option value="SYNTHETIC">
+            {tr('market_data:synthetic_demo_b890c0')}
+          </option>
         </select>
       </Field>
-      <Field label="Provider symbol override">
+      <Field label={tr('market_data:provider_symbol_override_ee9926')}>
         <input
           value={data.symbol_override ?? ''}
           onChange={(e) =>
@@ -331,10 +375,10 @@ function PricingForm({
             })
           }
           maxLength={40}
-          placeholder="Use exchange mapping"
+          placeholder={tr('market_data:use_exchange_mapping_e70663')}
         />
       </Field>
-      <Field label="Corporate-action gap from">
+      <Field label={tr('market_data:corporate_action_gap_from_ec74e6')}>
         <input
           type="date"
           value={data.blocked_from ?? ''}
@@ -343,7 +387,7 @@ function PricingForm({
           }
         />
       </Field>
-      <Field label="Corporate-action gap through">
+      <Field label={tr('market_data:corporate_action_gap_through_004b39')}>
         <input
           type="date"
           value={data.blocked_to ?? ''}
@@ -352,9 +396,15 @@ function PricingForm({
           }
         />
       </Field>
-      <Button disabled={mutation.isPending}>Save pricing</Button>
+      <Button disabled={mutation.isPending}>
+        {tr('market_data:save_pricing_602725')}
+      </Button>
       {mutation.error && <ErrorState text={mutation.error.message} />}
-      {mutation.isSuccess && <p role="status">Pricing preferences saved.</p>}
+      {mutation.isSuccess && (
+        <p role="status">
+          {tr('market_data:pricing_preferences_saved__1943d9')}
+        </p>
+      )}
     </form>
   )
 }
@@ -372,7 +422,11 @@ export function SecurityMarketData({
     queryFn: () => getAssetMarket(id, offset, asOf),
   })
   if (query.isPending)
-    return <LoadingState text="Loading cached price history…" />
+    return (
+      <LoadingState
+        text={tr('market_data:loading_cached_price_history__f06f9a')}
+      />
+    )
   if (query.isError)
     return (
       <ErrorState
@@ -384,16 +438,20 @@ export function SecurityMarketData({
   return (
     <section>
       <SectionHeader
-        title="Pricing and history"
-        detail="Adjusted series are excluded from valuation. Manual entries switch this security to manual mode; automatic mode can be restored here."
+        title={tr('market_data:pricing_and_history_e492f3')}
+        detail={tr(
+          'market_data:adjusted_series_are_excluded_from_valuation_manu_f3a6bc',
+        )}
       />
       <p className="metadata">
         {data.mapping
           ? `${data.mapping.provider} · ${data.mapping.symbol} · ${data.mapping.currency}`
           : data.mapping_error}{' '}
-        · {data.sync?.error ?? 'Cached data'}{' '}
+        · {data.sync?.error ?? tr('dynamic:cached_data_e8bbf7')}{' '}
         {data.sync?.succeeded_at
-          ? `· Updated ${data.sync.succeeded_at.slice(0, 16)}`
+          ? tr('messages:message_515e7a5162d5', {
+              value0: data.sync.succeeded_at.slice(0, 16),
+            })
           : ''}
       </p>
       {data.current && (
@@ -405,46 +463,55 @@ export function SecurityMarketData({
             />
           </strong>
           <small>
-            {data.current.source} · Quote dated {data.current.price_date}
+            {data.current.source} {tr('market_data:_quote_dated_1446c3')}{' '}
+            {data.current.price_date}
             {data.current.fetched_at
-              ? ` · Retrieved ${data.current.fetched_at.slice(0, 16)}`
-              : ' · Manual observation'}
+              ? tr('messages:message_3ffb3153ed40', {
+                  value0: data.current.fetched_at.slice(0, 16),
+                })
+              : tr('dynamic:_manual_observation_94063c')}
           </small>
         </div>
       )}
       <SecurityHistory id={id} asOf={asOf} />
       <RefreshMarket assetId={id} backfill />
       <details>
-        <summary>Pricing preferences and coverage</summary>
+        <summary>
+          {tr('market_data:pricing_preferences_and_coverage_87fd5e')}
+        </summary>
         <PricingForm
           key={JSON.stringify(data.pricing)}
           id={id}
           initial={data.pricing}
         />
         <p className="metadata">
-          Corporate actions are not automated. Mark an affected date range
-          unavailable until the activity history is corrected. An empty ending
-          date leaves the gap open.
+          {tr(
+            'market_data:corporate_actions_are_not_automated_mark_an_affe_788d73',
+          )}
         </p>
       </details>
       <details>
-        <summary>Cached price observations</summary>
+        <summary>{tr('market_data:cached_price_observations_9674c5')}</summary>
         {!data.observations.length ? (
           <EmptyState
-            title="No cached prices"
-            detail="Add a manual observation or refresh a supported provider."
+            title={tr('market_data:no_cached_prices_8074fa')}
+            detail={tr(
+              'market_data:add_a_manual_observation_or_refresh_a_supported__cfcd16',
+            )}
           />
         ) : (
           <div className="table-scroll">
             <table className="investment-table">
-              <caption className="sr-only">Cached security prices</caption>
+              <caption className="sr-only">
+                {tr('market_data:cached_security_prices_c536ec')}
+              </caption>
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th className="number">Price</th>
-                  <th>Source</th>
-                  <th>Convention</th>
-                  <th>Retrieved</th>
+                  <th>{tr('market_data:date_eb9a4b')}</th>
+                  <th className="number">{tr('market_data:price_3e8248')}</th>
+                  <th>{tr('market_data:source_6da13a')}</th>
+                  <th>{tr('market_data:convention_fa84f1')}</th>
+                  <th>{tr('market_data:retrieved_5538ff')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -457,10 +524,13 @@ export function SecurityMarketData({
                     <td>{p.source}</td>
                     <td>
                       {p.price_type === 'ADJUSTED'
-                        ? 'Adjusted / not eligible'
+                        ? tr('dynamic:adjusted_not_eligible_734a85')
                         : p.price_type}
                     </td>
-                    <td>{p.fetched_at?.slice(0, 16) ?? 'Manual entry'}</td>
+                    <td>
+                      {p.fetched_at?.slice(0, 16) ??
+                        tr('dynamic:manual_entry_0ba9f7')}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -473,14 +543,14 @@ export function SecurityMarketData({
             disabled={!offset}
             onClick={() => setOffset(Math.max(0, offset - 200))}
           >
-            Previous prices
+            {tr('market_data:previous_prices_497281')}
           </Button>
           <Button
             variant="ghost"
             disabled={data.observations.length < 200}
             onClick={() => setOffset(offset + 200)}
           >
-            Next prices
+            {tr('market_data:next_prices_b281bb')}
           </Button>
         </div>
       </details>
@@ -497,7 +567,10 @@ function SecurityHistory({ id, asOf }: { id: string; asOf: string }) {
     queryKey: ['market-data', 'security-history', id, end],
     queryFn: ({ signal }) => getSecurityHistory(id, end, signal),
   })
-  if (query.isPending) return <LoadingState text="Loading security chart…" />
+  if (query.isPending)
+    return (
+      <LoadingState text={tr('market_data:loading_security_chart__5ba06b')} />
+    )
   if (query.isError)
     return (
       <ErrorState
@@ -508,12 +581,16 @@ function SecurityHistory({ id, asOf }: { id: string; asOf: string }) {
   if (!query.data.points.some((p) => p.value !== null))
     return (
       <EmptyState
-        title="No eligible historical prices"
-        detail="Add dated manual observations or backfill raw history. Adjusted prices cannot value these holdings."
+        title={tr('market_data:no_eligible_historical_prices_234ab4')}
+        detail={tr(
+          'market_data:add_dated_manual_observations_or_backfill_raw_hi_f59623',
+        )}
       />
     )
   return (
-    <Suspense fallback={<LoadingState text="Loading chart…" />}>
+    <Suspense
+      fallback={<LoadingState text={tr('market_data:loading_chart__b9eab5')} />}
+    >
       <ValueChart history={query.data} security />
     </Suspense>
   )
@@ -522,9 +599,11 @@ function SecurityHistory({ id, asOf }: { id: string; asOf: string }) {
 export function PortfolioHistory({
   accountId,
   asOf,
+  onSecurity,
 }: {
   accountId: string
   asOf: string
+  onSecurity?: (id: string) => void
 }) {
   const [range, setRange] = useState('3M')
   const [currency, setCurrency] = useState('')
@@ -557,51 +636,55 @@ export function PortfolioHistory({
   })
   const report = valuation.data?.reporting
   return (
-    <section>
-      <SectionHeader
-        title="Portfolio value"
-        detail="Historical cash and quantities · Not a return or performance measure"
-      />
+    <section className="portfolio-history">
       {report && (
         <div className="investment-primary">
           <span className="metadata">
-            Reporting currency · {report.currency}
+            {' '}
+            {tr('market_data:portfolio_value_73adb8')} · {report.currency}
           </span>
           <strong>
             {report.total_value === null ? (
-              'Incomplete valuation'
+              tr('dynamic:incomplete_valuation_6b0844')
             ) : (
               <Money value={report.total_value} currency={report.currency} />
             )}
           </strong>
           {report.total_value === null && (
             <small>
-              Known subtotal:{' '}
+              {' '}
+              {tr('market_data:known_subtotal__24b58c')}{' '}
               <Money value={report.known_value} currency={report.currency} /> ·{' '}
-              {report.missing_prices} missing prices ·{' '}
-              {report.missing_fx.length} missing FX rates
+              {report.missing_prices} {tr('market_data:missing_prices__9dadce')}{' '}
+              {report.missing_fx.length}{' '}
+              {tr('market_data:missing_fx_rates_c83941')}{' '}
             </small>
           )}
         </div>
       )}
       <div className="investment-toolbar">
-        <nav className="range-tabs" aria-label="Portfolio history range">
+        <nav
+          className="range-tabs"
+          aria-label={tr('market_data:portfolio_history_range_c2d368')}
+        >
           {['1M', '3M', '6M', '1Y', 'ALL'].map((r) => (
             <button
-              key={r}
+              key={ui(r)}
               aria-pressed={r === range}
               onClick={() => setRange(r)}
             >
-              {r}
+              {ui(r)}
             </button>
           ))}
         </nav>
-        <Field label="Valuation currency">
+        <Field label={tr('market_data:valuation_currency_83a461')}>
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
           >
-            <option value="">Configured currency</option>
+            <option value="">
+              {tr('market_data:configured_currency_881c53')}
+            </option>
             {['BRL', 'USD', 'EUR', 'JPY'].map((c) => (
               <option key={c}>{c}</option>
             ))}
@@ -610,7 +693,11 @@ export function PortfolioHistory({
       </div>
       {valuation.isError && <ErrorState text={valuation.error.message} />}
       {query.isPending ? (
-        <LoadingState text="Reconstructing historical portfolio values…" />
+        <LoadingState
+          text={tr(
+            'market_data:reconstructing_historical_portfolio_values__100132',
+          )}
+        />
       ) : query.isError ? (
         <ErrorState
           text={query.error.message}
@@ -618,19 +705,44 @@ export function PortfolioHistory({
         />
       ) : (
         <>
-          <Suspense fallback={<LoadingState text="Loading chart…" />}>
+          <Suspense
+            fallback={
+              <LoadingState text={tr('market_data:loading_chart__b9eab5')} />
+            }
+          >
             <ValueChart history={query.data} />
           </Suspense>
-          <p className="metadata">{query.data.warning}</p>
+          <details className="chart-data">
+            <summary>
+              {tr(
+                'market_data:historical_cash_and_quantities_not_a_return_or_p_ca7cca',
+              )}
+            </summary>
+            <p className="metadata">{query.data.warning}</p>
+          </details>
           {query.data.points.some((p) => p.value === null) && (
             <p role="status" className="metadata">
-              History is incomplete where prices or FX are unavailable. No
-              values are interpolated across gaps.
+              {tr(
+                'market_data:history_is_incomplete_where_prices_or_fx_are_una_cbb439',
+              )}
             </p>
           )}
         </>
       )}
       <RefreshMarket />
+      {report && onSecurity && (
+        <details className="advanced-evidence">
+          <summary>
+            {tr('investment_analytics:portfolio_composition_e8ba11')}
+          </summary>
+          <PortfolioComposition
+            accountId={accountId}
+            asOf={end}
+            currency={report.currency}
+            onSecurity={onSecurity}
+          />
+        </details>
+      )}
     </section>
   )
 }

@@ -1,3 +1,5 @@
+import { DetailDrawer } from '@/components/detail-drawer'
+import { t as tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field, TransactionForm, TransactionComposer } from '@/components/forms'
@@ -92,11 +94,13 @@ export default function Transactions({
         />
       )}
       <PageHeader
-        title={account?.name ?? 'Transactions'}
+        title={account?.name ?? tr('dynamic:transactions_1e3281')}
         description={
           account
             ? `${label(account.type)} · ${account.currency}${account.active ? '' : ' · Inactive'}`
-            : 'Your financial ledger. Transfers stay separate from spending.'
+            : tr(
+                'dynamic:your_financial_ledger_transfers_stay_separate_fr_ef279b',
+              )
         }
       >
         <Button
@@ -105,96 +109,117 @@ export default function Transactions({
             setCreating(!creating)
           }}
         >
-          {creating ? 'Close form' : '+ Add Transaction'}
+          {creating
+            ? tr('dynamic:close_form_56adc8')
+            : tr('dynamic:_add_transaction_d1583a')}
         </Button>
       </PageHeader>
       {account && (
         <div className="account-detail-strip">
           <span className="metadata">
-            Calculated balance · All recorded dates
+            {tr('transactions:calculated_balance_all_recorded_dates_57ff7d')}
           </span>
           <Money value={account.balance} currency={account.currency} />
           <span className="metadata">
-            {account.institution ?? 'No institution'}
+            {account.institution ?? tr('dynamic:no_institution_cc8c5e')}
           </span>
         </div>
       )}
       {ruleSource && (
-        <RuleEditor
-          key={ruleSource.id}
-          initialDraft={{
-            name: `Classify ${ruleSource.payee?.name ?? ruleSource.description}`.slice(
-              0,
-              120,
-            ),
-            enabled: true,
-            priority: 100,
-            match_mode: 'ALL',
-            conditions: [
-              {
-                field: 'description',
-                operator: 'contains',
-                value: ruleSource.description,
+        <DetailDrawer
+          title={tr('rules:transaction_rules_eafa08')}
+          onClose={() => setRuleSource(undefined)}
+        >
+          <RuleEditor
+            key={ruleSource.id}
+            initialDraft={{
+              name: `Classify ${ruleSource.payee?.name ?? ruleSource.description}`.slice(
+                0,
+                120,
+              ),
+              enabled: true,
+              priority: 100,
+              match_mode: 'ALL',
+              conditions: [
+                {
+                  field: 'description',
+                  operator: 'contains',
+                  value: ruleSource.description,
+                },
+              ],
+              actions: {
+                payee_id: ruleSource.payee_id,
+                category_id: ruleSource.category_id,
               },
-            ],
-            actions: {
-              payee_id: ruleSource.payee_id,
-              category_id: ruleSource.category_id,
-            },
-          }}
-          accounts={accounts}
-          categories={categories}
-          onSaved={() => setRuleSource(undefined)}
-          valueName={(field, value) =>
-            field === 'category_id'
-              ? (categories.find((c) => c.id === value)?.name ?? 'Category')
-              : field === 'payee_id'
-                ? (ruleSource.payee?.name ?? 'Payee')
-                : (value ?? '')
-          }
-        />
+            }}
+            accounts={accounts}
+            categories={categories}
+            onSaved={() => setRuleSource(undefined)}
+            valueName={(field, value) =>
+              field === 'category_id'
+                ? (categories.find((c) => c.id === value)?.name ?? 'Category')
+                : field === 'payee_id'
+                  ? (ruleSource.payee?.name ?? 'Payee')
+                  : (value ?? '')
+            }
+          />
+        </DetailDrawer>
       )}
       {creating && (
-        <TransactionComposer
-          accounts={accounts}
-          categories={categories}
-          onSaved={() => {
-            setCreating(false)
-            setOffset(0)
-          }}
-        />
-      )}
-      {editing && !['INCOME', 'EXPENSE'].includes(editing.transaction_type) ? (
-        <ReviewTransaction
-          key={editing.id}
-          row={editing}
-          onSaved={() => setEditing(undefined)}
-        />
-      ) : (
-        editing && (
-          <TransactionForm
-            key={editing?.id ?? 'new'}
-            transaction={editing}
-            accounts={account ? [account] : accounts}
+        <DetailDrawer
+          title={tr('dynamic:_add_transaction_d1583a')}
+          onClose={() => setCreating(false)}
+        >
+          <TransactionComposer
+            accounts={accounts}
             categories={categories}
             onSaved={() => {
-              setEditing(undefined)
               setCreating(false)
               setOffset(0)
             }}
           />
-        )
+        </DetailDrawer>
+      )}
+      {editing && (
+        <DetailDrawer
+          title={editing.description}
+          onClose={() => setEditing(undefined)}
+        >
+          {editing &&
+          !['INCOME', 'EXPENSE'].includes(editing.transaction_type) ? (
+            <ReviewTransaction
+              key={editing.id}
+              row={editing}
+              onSaved={() => setEditing(undefined)}
+            />
+          ) : (
+            editing && (
+              <TransactionForm
+                key={editing?.id ?? 'new'}
+                transaction={editing}
+                accounts={account ? [account] : accounts}
+                categories={categories}
+                onSaved={() => {
+                  setEditing(undefined)
+                  setCreating(false)
+                  setOffset(0)
+                }}
+              />
+            )
+          )}
+        </DetailDrawer>
       )}
       <section className="panel">
-        <h2>Transaction history</h2>
+        <h2>{tr('transactions:transaction_history_aa7d3d')}</h2>
         {(filters.spending_only ||
           filters.uncategorized ||
           filters.payee_id ||
           filters.currency) && (
           <p className="metadata">
-            Spending drill-down: {filters.currency}{' '}
-            {filters.uncategorized ? ' / Uncategorized' : ''}. Linked refunds
-            reduce spending.{' '}
+            {' '}
+            {tr('transactions:spending_drill_down__fbe771')} {filters.currency}{' '}
+            {filters.uncategorized ? tr('dynamic:_uncategorized_21dbf0') : ''}{' '}
+            {tr('transactions:_linked_refunds_reduce_spending__159121')}{' '}
             <Button
               size="sm"
               variant="ghost"
@@ -205,27 +230,29 @@ export default function Transactions({
                 setSelected([])
               }}
             >
-              Clear drill-down filters
+              {tr('transactions:clear_drill_down_filters_45329f')}
             </Button>
           </p>
         )}
         <div className="filter-bar">
-          <Field label="Search transactions">
+          <Field label={tr('transactions:search_transactions_f6d97d')}>
             <input
               type="search"
               maxLength={500}
-              placeholder="Description, merchant or payee"
+              placeholder={tr(
+                'transactions:description_merchant_or_payee_1579d6',
+              )}
               value={filters.search ?? ''}
               onChange={(e) => filter('search', e.target.value)}
             />
           </Field>
-          <Field label="Filter account">
+          <Field label={tr('transactions:filter_account_b31a18')}>
             <select
               disabled={!!account}
               value={filters.account_id ?? ''}
               onChange={(e) => filter('account_id', e.target.value)}
             >
-              <option value="">All accounts</option>
+              <option value="">{tr('transactions:all_accounts_6a19f2')}</option>
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
@@ -233,12 +260,12 @@ export default function Transactions({
               ))}
             </select>
           </Field>
-          <Field label="Filter type">
+          <Field label={tr('transactions:filter_type_60c8f1')}>
             <select
               value={filters.transaction_type ?? ''}
               onChange={(e) => filter('transaction_type', e.target.value)}
             >
-              <option value="">All types</option>
+              <option value="">{tr('transactions:all_types_30c8a0')}</option>
               {transactionTypes.map((t) => (
                 <option key={t} value={t}>
                   {label(t)}
@@ -246,12 +273,14 @@ export default function Transactions({
               ))}
             </select>
           </Field>
-          <Field label="Filter category">
+          <Field label={tr('transactions:filter_category_41feed')}>
             <select
               value={filters.category_id ?? ''}
               onChange={(e) => filter('category_id', e.target.value)}
             >
-              <option value="">All categories</option>
+              <option value="">
+                {tr('transactions:all_categories_060be0')}
+              </option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -274,72 +303,93 @@ export default function Transactions({
           }
         >
           <summary>
-            More filters - dates, review, bank status and amount
+            {tr(
+              'transactions:more_filters_dates_review_bank_status_and_amount_344b3c',
+            )}
           </summary>
           <div className="filter-bar">
-            <Field label="From date">
+            <Field label={tr('transactions:from_date_3b5d11')}>
               <input
                 type="date"
                 value={filters.date_from ?? ''}
                 onChange={(e) => filter('date_from', e.target.value)}
               />
             </Field>
-            <Field label="To date">
+            <Field label={tr('transactions:to_date_af244d')}>
               <input
                 type="date"
                 value={filters.date_to ?? ''}
                 onChange={(e) => filter('date_to', e.target.value)}
               />
             </Field>
-            <Field label="Filter review">
+            <Field label={tr('transactions:filter_review_1df629')}>
               <select
                 value={filters.review_status ?? ''}
                 onChange={(e) => filter('review_status', e.target.value)}
               >
-                <option value="">All review states</option>
-                <option value="NEEDS_REVIEW">Needs review</option>
-                <option value="REVIEWED">Reviewed</option>
+                <option value="">
+                  {tr('transactions:all_review_states_9a6241')}
+                </option>
+                <option value="NEEDS_REVIEW">
+                  {tr('transactions:needs_review_33a506')}
+                </option>
+                <option value="REVIEWED">
+                  {tr('transactions:reviewed_31ef85')}
+                </option>
               </select>
             </Field>
-            <Field label="Bank status">
+            <Field label={tr('transactions:bank_status_03c91a')}>
               <select
                 value={filters.clearing_status ?? ''}
                 onChange={(e) => filter('clearing_status', e.target.value)}
               >
-                <option value="">All bank states</option>
-                <option value="UNCLEARED">Uncleared</option>
-                <option value="CLEARED">Cleared</option>
-                <option value="RECONCILED">Reconciled</option>
+                <option value="">
+                  {tr('transactions:all_bank_states_a20599')}
+                </option>
+                <option value="UNCLEARED">
+                  {tr('transactions:uncleared_7e9161')}
+                </option>
+                <option value="CLEARED">
+                  {tr('transactions:cleared_a5654a')}
+                </option>
+                <option value="RECONCILED">
+                  {tr('transactions:reconciled_e6c704')}
+                </option>
               </select>
             </Field>
-            <Field label="Minimum amount">
+            <Field label={tr('transactions:minimum_amount_8c44f9')}>
               <input
                 inputMode="decimal"
                 value={filters.amount_min ?? ''}
                 onChange={(e) => filter('amount_min', e.target.value)}
               />
             </Field>
-            <Field label="Maximum amount">
+            <Field label={tr('transactions:maximum_amount_924bc6')}>
               <input
                 inputMode="decimal"
                 value={filters.amount_max ?? ''}
                 onChange={(e) => filter('amount_max', e.target.value)}
               />
             </Field>
-            <Field label="Sort transactions">
+            <Field label={tr('transactions:sort_transactions_7ac775')}>
               <select
                 value={filters.sort ?? 'date_desc'}
                 onChange={(e) => filter('sort', e.target.value)}
               >
-                <option value="date_desc">Newest first</option>
-                <option value="date_asc">Oldest first</option>
+                <option value="date_desc">
+                  {tr('transactions:newest_first_f5ec77')}
+                </option>
+                <option value="date_asc">
+                  {tr('transactions:oldest_first_6a99c6')}
+                </option>
               </select>
             </Field>
           </div>
         </details>
         <p className="metadata">
-          Amount filters use positive magnitudes in each record’s original
-          currency. Review is separate from bank reconciliation.
+          {tr(
+            'transactions:amount_filters_use_positive_magnitudes_in_each_r_1bad54',
+          )}
         </p>
         {selected.length > 0 && !invalidRange && !rows.isError && rows.data && (
           <BulkTransactionActions
@@ -356,15 +406,22 @@ export default function Transactions({
         {invalidRange ? (
           <p role="alert">
             {invalidDates
-              ? 'Start date must not follow end date.'
-              : 'Use valid nonnegative amounts, with minimum no greater than maximum.'}
+              ? tr('dynamic:start_date_must_not_follow_end_date__89fe31')
+              : tr(
+                  'dynamic:use_valid_nonnegative_amounts_with_minimum_no_gr_650a4c',
+                )}
           </p>
         ) : rows.isPending ? (
-          <LoadingState text="Loading transactions…" />
+          <LoadingState
+            text={tr('transactions:loading_transactions__08d0e4')}
+          />
         ) : rows.isError ? (
           <p role="alert">
-            Could not load transactions.{' '}
-            <Button onClick={() => void rows.refetch()}>Retry</Button>
+            {' '}
+            {tr('transactions:could_not_load_transactions__4bd4ed')}{' '}
+            <Button onClick={() => void rows.refetch()}>
+              {tr('transactions:retry_9f5cd8')}
+            </Button>
           </p>
         ) : (
           <TransactionTable
@@ -396,7 +453,9 @@ export default function Transactions({
             onDelete={(row) => {
               if (
                 window.confirm(
-                  'Delete this transaction? The record will remain in history but will no longer affect balances.',
+                  tr(
+                    'dynamic:delete_this_transaction_the_record_will_remain_i_394bff',
+                  ),
                 )
               )
                 mutation.mutate(
@@ -426,10 +485,11 @@ export default function Transactions({
               setSelected([])
             }}
           >
-            Previous
+            {tr('transactions:previous_50f942')}
           </Button>
           <span className="text-sm">
-            Page {offset / 50 + 1}
+            {' '}
+            {tr('transactions:page_fb0627')} {offset / 50 + 1}
             {rows.data &&
               !invalidRange &&
               ` · ${rows.data.total} matching entries`}
@@ -446,7 +506,7 @@ export default function Transactions({
               setSelected([])
             }}
           >
-            Next
+            {tr('transactions:next_bc9819')}
           </Button>
         </div>
       </section>

@@ -1,0 +1,66 @@
+/* Transform/opacity interaction layer. Financial text is never interpolated. */
+:root {
+  --motion-fast: 140ms;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+:is(.section-navigation, .range-tabs) button:has(.motion-choice-label),
+.primary-nav .nav-item {
+  position: relative;
+  isolation: isolate;
+}
+.motion-selection {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--motion-indicator, var(--muted));
+}
+.motion-choice-label {
+  position: relative;
+}
+.reference-shell .nav-item:has(.motion-selection) {
+  background: transparent;
+}
+.primary-nav {
+  --motion-indicator: var(--nav-active);
+}
+.reference-shell
+  .main-content
+  :is(.section-navigation, .range-tabs)
+  button[aria-pressed='true']:has(.motion-selection) {
+  background: transparent;
+}
+.reference-shell .main-content > .section-navigation {
+  --motion-indicator: var(--background);
+}
+.spending-insights-page > .section-navigation {
+  --motion-indicator: var(--foreground);
+}
+:is(
+  .nav-item,
+  .range-tabs button,
+  .section-navigation button,
+  [data-slot='button'],
+  .icon-button
+) {
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease),
+    opacity var(--motion-fast) var(--motion-ease);
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  [data-slot='button']:not(:disabled):active,
+  .icon-button:not(:disabled):active {
+    scale: 0.985;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}

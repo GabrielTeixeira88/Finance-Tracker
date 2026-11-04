@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { request } from './api'
+import { request, localDate } from './api'
 
 const money = z.string().regex(/^-?\d+(\.\d+)?$/)
 const totals = z.object({
@@ -75,6 +75,37 @@ export const budgetSchema = z.object({
     projection: money.nullable(),
     status: z.string(),
   }),
+  narrative: z
+    .object({
+      changes: z.array(
+        z.object({
+          category_id: z.string().nullable(),
+          name: z.string(),
+          current: money,
+          previous: money,
+          change: money,
+          kind: z.string(),
+        }),
+      ),
+      previous_days: z.number(),
+      previous_spending: money.optional(),
+      change_percent: money.nullable().optional(),
+      comparisons: z
+        .array(
+          z.object({
+            category_id: z.string().nullable(),
+            current: money,
+            previous: money,
+            change: money,
+          }),
+        )
+        .optional(),
+      remaining_days: z.number(),
+      recent_daily: money.nullable(),
+      budget_status: z.string(),
+      weekdays: z.array(z.object({ weekday: z.number(), value: money })),
+    })
+    .optional(),
 })
 export type BudgetReport = z.infer<typeof budgetSchema>
 export const getBudget = async (
@@ -84,7 +115,7 @@ export const getBudget = async (
 ) =>
   budgetSchema.parse(
     await request(
-      `/budgets/monthly?${new URLSearchParams({ month, currency })}`,
+      `/budgets/monthly?${new URLSearchParams({ month, currency, as_of: localDate() })}`,
       { signal },
     ),
   )

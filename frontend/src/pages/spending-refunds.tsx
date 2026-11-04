@@ -1,3 +1,4 @@
+import { t as tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -75,19 +76,18 @@ export default function Refunds({
   const write = useWrite()
   return (
     <section className="editor-surface">
-      <h2>Purchase refunds</h2>
+      <h2>{tr('spending_refunds:purchase_refunds_8f65e7')}</h2>
       <p className="metadata">
-        Explicitly associate a credit with its purchase. Unmatched credits
-        remain income. Refunds reduce spending on the credit date, using the
-        purchase's current category and payee. Combined refunds cannot exceed
-        the purchase.
+        {tr(
+          'spending_refunds:explicitly_associate_a_credit_with_its_purchase__70a177',
+        )}
       </p>
       <form
-        aria-label="Refund editor"
+        aria-label={tr('spending_refunds:refund_editor_3b8d1f')}
         onSubmit={(e) => {
           e.preventDefault()
           if (mode === 'new' && !moneyInput.safeParse(amount).success) {
-            setError('Enter a positive exact refund amount.')
+            setError(tr('dynamic:enter_a_positive_exact_refund_amount__85027e'))
             return
           }
           setError('')
@@ -128,25 +128,33 @@ export default function Refunds({
               expenses.error?.message ||
               credits.error?.message ||
               links.error?.message ||
-              'Unable to load refunds'
+              tr('dynamic:unable_to_load_refunds_b201d0')
             }
           />
         )}
         <fieldset className="filter-bar" disabled={write.isPending}>
-          <Field label="Search refund purchase/credit">
+          <Field
+            label={tr('spending_refunds:search_refund_purchase_credit_8f2653')}
+          >
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search description or payee"
+              placeholder={tr(
+                'spending_refunds:search_description_or_payee_80dc3b',
+              )}
             />
           </Field>
-          <Field label="Original purchase">
+          <Field label={tr('spending_refunds:original_purchase_2e2d66')}>
             <select
               required
               value={purchase}
               onChange={(e) => setPurchase(e.target.value)}
             >
-              <option value="">Choose purchase (latest 100 matches)</option>
+              <option value="">
+                {tr(
+                  'spending_refunds:choose_purchase_latest_100_matches__a32ab6',
+                )}
+              </option>
               {expenses.data?.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.transaction_date} · {t.description} · {t.amount}{' '}
@@ -155,17 +163,21 @@ export default function Refunds({
               ))}
             </select>
           </Field>
-          <Field label="Refund operation">
+          <Field label={tr('spending_refunds:refund_operation_939cfa')}>
             <select value={mode} onChange={(e) => setMode(e.target.value)}>
-              <option value="new">Record a new credit</option>
+              <option value="new">
+                {tr('spending_refunds:record_a_new_credit_f0e1cd')}
+              </option>
               <option value="existing">
-                Link an existing credit (no new money)
+                {tr(
+                  'spending_refunds:link_an_existing_credit_no_new_money__edbfeb',
+                )}
               </option>
             </select>
           </Field>
           {mode === 'new' ? (
             <>
-              <Field label="Refund account">
+              <Field label={tr('spending_refunds:refund_account_d7ac4d')}>
                 <select
                   required
                   value={account}
@@ -180,7 +192,7 @@ export default function Refunds({
                     ))}
                 </select>
               </Field>
-              <Field label="Refund amount">
+              <Field label={tr('spending_refunds:refund_amount_b7a4c9')}>
                 <input
                   required
                   inputMode="decimal"
@@ -188,7 +200,7 @@ export default function Refunds({
                   onChange={(e) => setAmount(e.target.value)}
                 />
               </Field>
-              <Field label="Refund date">
+              <Field label={tr('spending_refunds:refund_date_62e797')}>
                 <input
                   required
                   type="date"
@@ -196,7 +208,7 @@ export default function Refunds({
                   onChange={(e) => setDay(e.target.value)}
                 />
               </Field>
-              <Field label="Refund description">
+              <Field label={tr('spending_refunds:refund_description_745e99')}>
                 <input
                   required
                   value={description}
@@ -205,13 +217,15 @@ export default function Refunds({
               </Field>
             </>
           ) : (
-            <Field label="Existing credit">
+            <Field label={tr('spending_refunds:existing_credit_23a828')}>
               <select
                 required
                 value={credit}
                 onChange={(e) => setCredit(e.target.value)}
               >
-                <option value="">Choose credit</option>
+                <option value="">
+                  {tr('spending_refunds:choose_credit_c02ed1')}
+                </option>
                 {credits.data?.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.transaction_date} · {t.description} · {t.amount}{' '}
@@ -221,17 +235,21 @@ export default function Refunds({
               </select>
             </Field>
           )}
-          <Button type="submit">Save refund</Button>
+          <Button type="submit">
+            {tr('spending_refunds:save_refund_34e5c4')}
+          </Button>
         </fieldset>
       </form>
       <p className="metadata">
-        Linked purchases and credits protect financial fields. Unlink before
-        correcting their amount, account or date. Unlinking keeps the credit in
-        the ledger and restores income classification.
+        {tr(
+          'spending_refunds:linked_purchases_and_credits_protect_financial_f_b0b6e8',
+        )}
       </p>
       {links.data?.length ? (
         <details>
-          <summary>Recent refund links (up to 50)</summary>
+          <summary>
+            {tr('spending_refunds:recent_refund_links_up_to_50__d88276')}
+          </summary>
           {links.data.map((link) => {
             const t = expenses.data?.find((t) => t.id === link.purchase_id)
             return (
@@ -240,7 +258,8 @@ export default function Refunds({
                   {t?.description ?? `Purchase ${link.purchase_id}`}{' '}
                   {t && <Money value={t.amount} currency={t.currency} />}
                   <small className="metadata block">
-                    Credit {link.refund_id}
+                    {' '}
+                    {tr('spending_refunds:credit_8a45d3')} {link.refund_id}
                   </small>
                 </span>
                 <Button
@@ -250,7 +269,9 @@ export default function Refunds({
                   onClick={() => {
                     if (
                       window.confirm(
-                        'Unlink refund? The credit remains, and will count as income.',
+                        tr(
+                          'dynamic:unlink_refund_the_credit_remains_and_will_count__61408b',
+                        ),
                       )
                     )
                       write.mutate({
@@ -259,7 +280,7 @@ export default function Refunds({
                       })
                   }}
                 >
-                  Unlink
+                  {tr('spending_refunds:unlink_0dc291')}
                 </Button>
               </div>
             )

@@ -1,5 +1,5 @@
 import { useSection } from '@/lib/navigation'
-import { SectionNavigation } from '@/components/section-navigation'
+import { ActivityNavigation } from '@/components/activity-navigation'
 import { type Account, type Category } from '@/lib/api'
 import Transactions from './transactions'
 import Schedules from './schedules'
@@ -31,11 +31,11 @@ export default function TransactionWorkspace(props: {
   )
   return (
     <>
-      <SectionNavigation
-        label="Transaction views"
-        items={items}
-        value={view}
-        onChange={setView}
+      <ActivityNavigation
+        account={!!props.account}
+        tool={view === 'activity' ? '' : view}
+        onTransactions={() => setView('activity')}
+        onTool={(next) => setView(next as typeof view)}
       />
       {view === 'reconciliation' ? (
         <Reconciliation {...props} />

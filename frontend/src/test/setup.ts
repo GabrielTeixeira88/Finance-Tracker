@@ -2,6 +2,17 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 
+window.matchMedia = (query: string) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener() {},
+  removeListener() {},
+  addEventListener() {},
+  removeEventListener() {},
+  dispatchEvent: () => true,
+})
+
 // jsdom does not implement native modal methods; browser checks cover focus/Escape.
 HTMLDialogElement.prototype.showModal = function () {
   this.setAttribute('open', '')

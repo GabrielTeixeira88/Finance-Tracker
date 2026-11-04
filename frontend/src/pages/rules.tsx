@@ -1,3 +1,5 @@
+import { DetailDrawer } from '@/components/detail-drawer'
+import { t as tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
@@ -83,70 +85,76 @@ export function Rules({
   return (
     <section className="panel">
       <div className="flex justify-between items-center">
-        <h2>Transaction rules</h2>
+        <h2>{tr('rules:transaction_rules_eafa08')}</h2>
         <Button
           onClick={() => {
             setEditor({})
             setPreview(undefined)
           }}
         >
-          Create rule
+          {tr('rules:create_rule_69c3ac')}
         </Button>
       </div>
       <p className="metadata">
-        Lower priority numbers run first. Manual choices win. Saving applies
-        only to future ordinary transactions.
+        {tr('rules:lower_priority_numbers_run_first_manual_choices__a5cc95')}
       </p>
       <div className="filter-bar">
-        <Field label="Search rules">
+        <Field label={tr('rules:search_rules_d6162b')}>
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </Field>
-        <Field label="Rule status">
+        <Field label={tr('rules:rule_status_9f01fa')}>
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="all">All rules</option>
-            <option value="enabled">Enabled</option>
-            <option value="disabled">Disabled</option>
+            <option value="all">{tr('rules:all_rules_f0e38d')}</option>
+            <option value="enabled">{tr('rules:enabled_df174a')}</option>
+            <option value="disabled">{tr('rules:disabled_f4f447')}</option>
           </select>
         </Field>
       </div>
       {editor && (
-        <RuleEditor
-          key={
-            editor.rule?.id ??
-            editor.suggestion?.id ??
-            editor.initialDraft?.name ??
-            'new'
-          }
-          {...editor}
-          accounts={accounts}
-          categories={categories}
-          valueName={valueName}
-          onSaved={() => setEditor(undefined)}
-        />
+        <DetailDrawer
+          title={tr('rules:transaction_rules_eafa08')}
+          onClose={() => setEditor(undefined)}
+        >
+          <RuleEditor
+            key={
+              editor.rule?.id ??
+              editor.suggestion?.id ??
+              editor.initialDraft?.name ??
+              'new'
+            }
+            {...editor}
+            accounts={accounts}
+            categories={categories}
+            valueName={valueName}
+            onSaved={() => setEditor(undefined)}
+          />
+        </DetailDrawer>
       )}
       {rules.isPending ? (
-        <LoadingState text="Loading rules…" />
+        <LoadingState text={tr('rules:loading_rules__10065d')} />
       ) : rules.isError ? (
         <ErrorState
-          text="Unable to load rules"
+          text={tr('rules:unable_to_load_rules_d56e06')}
           retry={() => void rules.refetch()}
         />
       ) : (
         <>
           {!rules.data.length && (
             <EmptyState
-              title="No rules yet"
-              detail="Create a narrow rule and preview its effect before applying it."
+              title={tr('rules:no_rules_yet_2a1ac5')}
+              detail={tr(
+                'rules:create_a_narrow_rule_and_preview_its_effect_befo_343a32',
+              )}
             />
           )}
           {!!rules.data.length && !visibleRules.length && (
             <EmptyState
-              title="No matching rules"
-              detail="Change the search or status filter."
+              title={tr('rules:no_matching_rules_266dab')}
+              detail={tr('rules:change_the_search_or_status_filter__45c28e')}
             />
           )}
           {visibleRules.map((rule) => (
@@ -154,8 +162,11 @@ export function Rules({
               <div>
                 <strong>{rule.name}</strong>
                 <p className="metadata">
-                  {rule.enabled ? 'Enabled' : 'Disabled'} · Priority{' '}
-                  {rule.priority} · {rule.match_mode}
+                  {rule.enabled
+                    ? tr('dynamic:enabled_df174a')
+                    : tr('dynamic:disabled_f4f447')}{' '}
+                  {tr('rules:_priority_96469a')} {rule.priority} ·{' '}
+                  {rule.match_mode}
                 </p>
                 <p>
                   {rule.conditions
@@ -179,10 +190,12 @@ export function Rules({
                 <Button
                   size="sm"
                   variant="outline"
-                  aria-label={`Edit ${rule.name}`}
+                  aria-label={tr('messages:message_f8d9f06aa37b', {
+                    value0: rule.name,
+                  })}
                   onClick={() => setEditor({ rule })}
                 >
-                  Edit
+                  {tr('rules:edit_530164')}
                 </Button>
                 <Button
                   size="sm"
@@ -197,14 +210,16 @@ export function Rules({
                     })
                   }}
                 >
-                  {rule.enabled ? 'Disable' : 'Enable'}
+                  {rule.enabled
+                    ? tr('dynamic:disable_9a7d4e')
+                    : tr('dynamic:enable_20063a')}
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => void inspect(rule)}
                 >
-                  Preview history
+                  {tr('rules:preview_history_53df55')}
                 </Button>
                 <Button
                   size="sm"
@@ -220,7 +235,7 @@ export function Rules({
                     setPreview(undefined)
                   }}
                 >
-                  Duplicate
+                  {tr('rules:duplicate_972d57')}
                 </Button>
                 <Button
                   size="sm"
@@ -240,7 +255,7 @@ export function Rules({
                     }
                   }}
                 >
-                  Delete
+                  {tr('rules:delete_f6fdbe')}
                 </Button>
               </div>
             </div>
@@ -274,7 +289,7 @@ export function Rules({
                 )
             }}
           >
-            Apply previewed changes
+            {tr('rules:apply_previewed_changes_3a75e2')}
           </Button>
         </>
       )}
@@ -282,29 +297,29 @@ export function Rules({
         <ErrorState text={error || write.error!.message} />
       )}
       {feedback && <p role="status">{feedback}</p>}
-      <h2 className="mt-6">Suggested automation</h2>
+      <h2 className="mt-6">{tr('rules:suggested_automation_d75f1b')}</h2>
       <p className="metadata">
-        Suggestions come from consistent explicit corrections, never from an AI
-        service. Acceptance creates a future-only rule.
+        {tr('rules:suggestions_come_from_consistent_explicit_correc_f1ad8f')}
       </p>
       {suggestions.isPending ? (
-        <LoadingState text="Loading suggestions…" />
+        <LoadingState text={tr('rules:loading_suggestions__886bd1')} />
       ) : suggestions.isError ? (
         <ErrorState
-          text="Unable to load suggestions"
+          text={tr('rules:unable_to_load_suggestions_af53ee')}
           retry={() => void suggestions.refetch()}
         />
       ) : (
         <>
           {!suggestions.data.some((s) => s.status === 'PENDING') && (
-            <EmptyState title="No pending suggestions" />
+            <EmptyState title={tr('rules:no_pending_suggestions_6f26fc')} />
           )}
           {suggestions.data.map((s) => (
             <div className="automation-row" key={s.id}>
               <div>
                 <strong>{s.name}</strong>
                 <p>
-                  {s.support_count} distinct corrected transactions ·{' '}
+                  {s.support_count}{' '}
+                  {tr('rules:distinct_corrected_transactions__1127aa')}{' '}
                   {label(s.status)}
                 </p>
                 <p className="metadata">
@@ -334,13 +349,13 @@ export function Rules({
                       })
                     }
                   >
-                    Accept
+                    {tr('rules:accept_bb54db')}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => setEditor({ suggestion: s })}
                   >
-                    Edit suggestion
+                    {tr('rules:edit_suggestion_01f1cf')}
                   </Button>
                   <Button
                     variant="outline"
@@ -351,7 +366,7 @@ export function Rules({
                       })
                     }
                   >
-                    Dismiss
+                    {tr('rules:dismiss_70afe9')}
                   </Button>
                 </div>
               )}
@@ -372,14 +387,14 @@ function Preview({
 }) {
   return (
     <section className="editor-surface">
-      <h3>Rule preview — no changes saved</h3>
+      <h3>{tr('rules:rule_preview_no_changes_saved_b8b138')}</h3>
       <p>
-        {result.match_count} matches · {result.change_count} would change ·{' '}
-        {result.skipped_fields} fields skipped
+        {result.match_count} {tr('rules:matches__6ab392')} {result.change_count}{' '}
+        {tr('rules:would_change__7422b3')} {result.skipped_fields}{' '}
+        {tr('rules:fields_skipped_d36e02')}{' '}
       </p>
       <p className="metadata">
-        Up to 50 representative matches. Higher-priority rules and manual
-        overrides are included.
+        {tr('rules:up_to_50_representative_matches_higher_priority__8f6082')}
       </p>
       <ul>
         {result.rows.map((row) => (
@@ -393,8 +408,9 @@ function Preview({
               {row.proposed.map((a) => (
                 <p key={a.field}>
                   {label(a.field.replace('_id', ''))}:{' '}
-                  {valueName(a.field, a.before) || 'Unassigned'} →{' '}
-                  {valueName(a.field, a.after)}
+                  {valueName(a.field, a.before) ||
+                    tr('dynamic:unassigned_e57016')}{' '}
+                  → {valueName(a.field, a.after)}
                 </p>
               ))}
               {row.skipped.map((a, i) => (
@@ -476,10 +492,10 @@ export function RuleEditor({
     <section className="editor-surface">
       <h3>
         {suggestion
-          ? 'Edit suggested rule'
+          ? tr('dynamic:edit_suggested_rule_d35b32')
           : rule
-            ? 'Edit rule'
-            : 'Create rule'}
+            ? tr('dynamic:edit_rule_1f53b2')
+            : tr('dynamic:create_rule_69c3ac')}
       </h3>
       <form
         onSubmit={(event) => {
@@ -501,7 +517,7 @@ export function RuleEditor({
       >
         <fieldset disabled={write.isPending || busy}>
           <div className="form-grid">
-            <Field label="Rule name">
+            <Field label={tr('rules:rule_name_9e84d7')}>
               <input
                 required
                 maxLength={120}
@@ -514,7 +530,7 @@ export function RuleEditor({
             draft.conditions.length === 1 &&
             draft.conditions[0].field === 'description' &&
             draft.conditions[0].operator === 'contains' && (
-              <Field label="Description contains">
+              <Field label={tr('rules:description_contains_020eae')}>
                 <input
                   required
                   maxLength={500}
@@ -531,12 +547,12 @@ export function RuleEditor({
             aria-expanded={advanced}
             onClick={() => setAdvanced(!advanced)}
           >
-            Advanced conditions and priority
+            {tr('rules:advanced_conditions_and_priority_8ad8b8')}
           </Button>
           {advanced && (
             <div className="advanced-fields">
               <div className="form-grid">
-                <Field label="Priority">
+                <Field label={tr('rules:priority_886cbf')}>
                   <input
                     type="number"
                     min={0}
@@ -548,18 +564,22 @@ export function RuleEditor({
                     }
                   />
                 </Field>
-                <Field label="Match mode">
+                <Field label={tr('rules:match_mode_97c46f')}>
                   <select
                     value={draft.match_mode}
                     onChange={(e) =>
                       update({ match_mode: e.target.value as 'ALL' | 'ANY' })
                     }
                   >
-                    <option value="ALL">All conditions</option>
-                    <option value="ANY">Any condition</option>
+                    <option value="ALL">
+                      {tr('rules:all_conditions_771ea0')}
+                    </option>
+                    <option value="ANY">
+                      {tr('rules:any_condition_424666')}
+                    </option>
                   </select>
                 </Field>
-                <Field label="Rule enabled">
+                <Field label={tr('rules:rule_enabled_5b1cf1')}>
                   <input
                     type="checkbox"
                     checked={draft.enabled}
@@ -569,7 +589,11 @@ export function RuleEditor({
               </div>
               {draft.conditions.map((c, i) => (
                 <div className="filter-bar" key={i}>
-                  <Field label={`Condition ${i + 1} field`}>
+                  <Field
+                    label={tr('messages:message_f7a60143c2b2', {
+                      value0: i + 1,
+                    })}
+                  >
                     <select
                       value={c.field}
                       onChange={(e) =>
@@ -587,7 +611,11 @@ export function RuleEditor({
                       ))}
                     </select>
                   </Field>
-                  <Field label={`Condition ${i + 1} operator`}>
+                  <Field
+                    label={tr('messages:message_391a282cfd9b', {
+                      value0: i + 1,
+                    })}
+                  >
                     <select
                       value={c.operator}
                       onChange={(e) =>
@@ -606,7 +634,11 @@ export function RuleEditor({
                       ))}
                     </select>
                   </Field>
-                  <Field label={`Condition ${i + 1} value`}>
+                  <Field
+                    label={tr('messages:message_873b14191460', {
+                      value0: i + 1,
+                    })}
+                  >
                     {[
                       'account_id',
                       'category_id',
@@ -620,7 +652,9 @@ export function RuleEditor({
                           changeCondition(i, { value: e.target.value })
                         }
                       >
-                        <option value="">Choose value</option>
+                        <option value="">
+                          {tr('rules:choose_value_fc65ad')}
+                        </option>
                         {(c.field === 'account_id'
                           ? accounts.map((a) => ({ id: a.id, name: a.name }))
                           : c.field === 'category_id'
@@ -663,7 +697,8 @@ export function RuleEditor({
                       })
                     }
                   >
-                    Remove condition {i + 1}
+                    {' '}
+                    {tr('rules:remove_condition_858fb1')} {i + 1}
                   </Button>
                 </div>
               ))}
@@ -680,11 +715,11 @@ export function RuleEditor({
                   })
                 }
               >
-                Add condition
+                {tr('rules:add_condition_42fe69')}
               </Button>
             </div>
           )}
-          <h3 className="mt-4">Metadata actions</h3>
+          <h3 className="mt-4">{tr('rules:metadata_actions_a71185')}</h3>
           <div className="form-grid">
             <PayeePicker
               initial={
@@ -699,7 +734,7 @@ export function RuleEditor({
                 update({ actions: { ...draft.actions, payee_id: id || null } })
               }
             />
-            <Field label="Set category">
+            <Field label={tr('rules:set_category_d8b3fe')}>
               <select
                 value={draft.actions.category_id ?? ''}
                 onChange={(e) =>
@@ -711,7 +746,9 @@ export function RuleEditor({
                   })
                 }
               >
-                <option value="">No category action</option>
+                <option value="">
+                  {tr('rules:no_category_action_e70d62')}
+                </option>
                 {categories.map((c) => (
                   <option value={c.id} key={c.id}>
                     {c.name}
@@ -719,7 +756,7 @@ export function RuleEditor({
                 ))}
               </select>
             </Field>
-            <Field label="Set review status">
+            <Field label={tr('rules:set_review_status_00dfb8')}>
               <select
                 value={draft.actions.review_status ?? ''}
                 onChange={(e) =>
@@ -731,9 +768,11 @@ export function RuleEditor({
                   })
                 }
               >
-                <option value="">No review action</option>
-                <option value="REVIEWED">Reviewed</option>
-                <option value="NEEDS_REVIEW">Needs review</option>
+                <option value="">{tr('rules:no_review_action_6b5c6c')}</option>
+                <option value="REVIEWED">{tr('rules:reviewed_31ef85')}</option>
+                <option value="NEEDS_REVIEW">
+                  {tr('rules:needs_review_33a506')}
+                </option>
               </select>
             </Field>
           </div>
@@ -753,13 +792,15 @@ export function RuleEditor({
                 }
               }}
             >
-              Preview draft
+              {tr('rules:preview_draft_7997b9')}
             </Button>
             <Button type="submit">
-              {suggestion ? 'Accept edited suggestion' : 'Save rule'}
+              {suggestion
+                ? tr('dynamic:accept_edited_suggestion_ab86a4')
+                : tr('dynamic:save_rule_9e1aa5')}
             </Button>
             <Button type="button" variant="outline" onClick={onSaved}>
-              Cancel
+              {tr('rules:cancel_77dfd2')}
             </Button>
           </div>
         </fieldset>

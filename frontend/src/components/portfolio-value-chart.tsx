@@ -1,7 +1,11 @@
+import { useChartMotion } from '@/lib/motion'
+import { t as tr } from '@/lib/i18n'
+import { getLocale } from '@/lib/preferences'
 import { useId } from 'react'
 import {
   Area,
   AreaChart,
+  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -15,11 +19,14 @@ export function PortfolioValueChart({
   history,
   security = false,
   label,
+  hero = false,
 }: {
   history: MarketHistory
   security?: boolean
   label?: string
+  hero?: boolean
 }) {
+  const chartMotion = useChartMotion()
   const id = useId().replaceAll(':', '')
   const valid = history.points.flatMap((p) =>
     p.value === null ? [] : [{ date: p.date, balance: p.value }],
@@ -35,12 +42,15 @@ export function PortfolioValueChart({
   return (
     <figure
       className="balance-chart"
-      aria-label={`${history.currency} ${label ?? (security ? 'security price' : 'portfolio value')} history`}
+      aria-label={tr('messages:message_8d36ab5ecf0b', {
+        value0: history.currency,
+        value1: label ?? (security ? 'security price' : 'portfolio value'),
+      })}
     >
       <ResponsiveContainer
         width="100%"
-        height={250}
-        initialDimension={{ width: 800, height: 250 }}
+        height={hero ? 280 : 300}
+        initialDimension={{ width: 800, height: 300 }}
       >
         <AreaChart
           data={data}
@@ -50,17 +60,18 @@ export function PortfolioValueChart({
             <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="0%"
-                stopColor="var(--chart-line)"
+                stopColor="var(--investment-chart)"
                 stopOpacity={0.13}
               />
               <stop
                 offset="100%"
-                stopColor="var(--chart-line)"
+                stopColor="var(--investment-chart)"
                 stopOpacity={0}
               />
             </linearGradient>
           </defs>
           <XAxis
+            hide={hero}
             dataKey="time"
             type="number"
             domain={['dataMin', 'dataMax']}
@@ -68,9 +79,9 @@ export function PortfolioValueChart({
             axisLine={false}
             tickLine={false}
             minTickGap={45}
-            tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
+            tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
             tickFormatter={(time: number) =>
-              new Intl.DateTimeFormat(navigator.language, {
+              new Intl.DateTimeFormat(getLocale(), {
                 month: 'short',
                 day: 'numeric',
                 timeZone: 'UTC',
@@ -86,58 +97,91 @@ export function PortfolioValueChart({
                 <div className="chart-tooltip">
                   <p className="metadata">{p.date}</p>
                   {p.value === null ? (
-                    'Incomplete valuation'
+                    tr('dynamic:incomplete_valuation_6b0844')
                   ) : (
                     <Money value={p.value} currency={history.currency} />
                   )}
+                  {history.purchase_markers
+                    ?.filter((m) => m.date === p.date)
+                    .map((m, index) => (
+                      <p key={index} className="metadata">
+                        {tr('real_market:purchase')}: {m.symbol} · {m.quantity}
+                      </p>
+                    ))}
                 </div>
               ) : null
             }}
           />
           <Area
-            type="stepAfter"
+            type={hero ? 'linear' : 'stepAfter'}
             dataKey="coordinate"
             connectNulls={false}
-            stroke="var(--chart-line)"
+            stroke="var(--investment-chart)"
             strokeWidth={1.8}
             fill={`url(#${id})`}
-            isAnimationActive={false}
+            {...chartMotion}
             name={label ?? 'Portfolio value'}
           />
+          {[...new Set(history.purchase_markers?.map((m) => m.date))].map(
+            (date) => {
+              const point = data.find((p) => p.date === date)
+              return point?.coordinate == null ? null : (
+                <ReferenceDot
+                  key={date}
+                  x={point.time}
+                  y={point.coordinate}
+                  r={3}
+                  fill="var(--background)"
+                  stroke="var(--investment-chart)"
+                  aria-label={`${tr('real_market:purchase')} ${date}`}
+                />
+              )
+            },
+          )}
         </AreaChart>
       </ResponsiveContainer>
-      <figcaption className="metadata">
+      <figcaption className={hero ? 'sr-only' : 'metadata'}>
         {label ??
-          (security ? 'Eligible security prices' : 'Cash plus securities')}{' '}
-        · {history.currency} · Gaps mean missing coverage ·{' '}
+          (security
+            ? tr('dynamic:eligible_security_prices_7853e0')
+            : tr('dynamic:cash_plus_securities_040611'))}{' '}
+        · {history.currency}{' '}
+        {tr('portfolio_value_chart:_gaps_mean_missing_coverage__9602ec')}{' '}
         {label
-          ? 'Dated records; no projected returns'
+          ? tr('dynamic:dated_records_no_projected_returns_ac3c2f')
           : security
-            ? 'Original quote currency'
+            ? tr('dynamic:original_quote_currency_55eaa2')
             : history.fx_provider === 'SYNTHETIC'
-              ? 'Synthetic demo FX'
-              : 'Dated ECB FX'}
+              ? tr('dynamic:synthetic_demo_fx_897c81')
+              : tr('dynamic:dated_ecb_fx_aa705b')}
       </figcaption>
-      <details className="chart-data">
+      <details className={hero ? 'chart-data hero-chart-data' : 'chart-data'}>
         <summary>
           {label
-            ? `View ${label.toLowerCase()} chart data`
+            ? tr('messages:message_a7e0f12def92', {
+                value0: label.toLowerCase(),
+              })
             : security
-              ? 'View security chart data'
-              : 'View portfolio chart data'}
+              ? tr('dynamic:view_security_chart_data_153230')
+              : tr('dynamic:view_portfolio_chart_data_d0470d')}
         </summary>
         <div className="table-scroll">
           <table>
             <caption className="sr-only">
-              Exact historical {label ?? 'portfolio'} values
+              {' '}
+              {tr('portfolio_value_chart:exact_historical_2a09a9')}{' '}
+              {label ?? tr('dynamic:portfolio_5f1a04')}{' '}
+              {tr('portfolio_value_chart:values_048b0c')}{' '}
             </caption>
             <thead>
               <tr>
-                <th scope="col">Date</th>
+                <th scope="col">{tr('portfolio_value_chart:date_eb9a4b')}</th>
                 <th scope="col" className="amount-cell">
-                  Value
+                  {tr('portfolio_value_chart:value_8dce17')}
                 </th>
-                <th scope="col">Coverage</th>
+                <th scope="col">
+                  {tr('portfolio_value_chart:coverage_80e135')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -146,7 +190,7 @@ export function PortfolioValueChart({
                   <td>{p.date}</td>
                   <td className="amount-cell">
                     {p.value === null ? (
-                      'Unavailable'
+                      tr('dynamic:unavailable_2c9c1f')
                     ) : (
                       <Money value={p.value} currency={history.currency} />
                     )}
@@ -154,11 +198,14 @@ export function PortfolioValueChart({
                   <td>
                     {label
                       ? p.value === null
-                        ? 'Unavailable'
-                        : 'Available'
+                        ? tr('dynamic:unavailable_2c9c1f')
+                        : tr('dynamic:available_7c62a1')
                       : p.missing_assets.length || p.missing_fx.length
-                        ? `${p.missing_assets.length} unpriced assets; ${p.missing_fx.length} missing FX rates`
-                        : 'Available'}
+                        ? tr('messages:message_9afeaf4d1eb8', {
+                            value0: p.missing_assets.length,
+                            value1: p.missing_fx.length,
+                          })
+                        : tr('dynamic:available_7c62a1')}
                   </td>
                 </tr>
               ))}

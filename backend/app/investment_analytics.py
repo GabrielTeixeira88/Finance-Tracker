@@ -311,11 +311,14 @@ def income(session, start, end, account_ids=None, asset_id=None):
                 for field in ("gross", "fees", "taxes", "net"):
                     bucket[field] += entry[field]
             breakdowns[dimension] = [buckets[k] for k in sorted(buckets)]
+    from app.fixed_income_reporting import redemption_results
+
     return investments.wire(
         {
             "start": start,
             "end": end,
             "method": "RECORDED_INVESTMENT_INCOME",
+            "redemptions": redemption_results(session, rows, accounts, assets, start, asset_id),
             "events": events,
             "months": [groups[k] for k in sorted(groups)],
             "breakdowns": breakdowns,

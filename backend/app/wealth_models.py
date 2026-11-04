@@ -110,3 +110,16 @@ class GoalEntry(Record, Base):
             sqlite_where=text("voided_at IS NULL AND account_id IS NOT NULL"),
         ),
     )
+
+
+class GoalAccountFunding(Record, Base):
+    """Reserve one whole investment account, not an additional financial asset.
+
+    The account is exclusive across goals. Its gross, dated ledger valuation is
+    authoritative; no editable progress/balance is stored in this association.
+    """
+
+    __tablename__ = "goal_account_funding"
+    goal_id: Mapped[UUID] = mapped_column(ForeignKey("goals.id"), unique=True)
+    account_id: Mapped[UUID] = mapped_column(ForeignKey("financial_accounts.id"), unique=True)
+    effective_date: Mapped[date] = mapped_column(Date)

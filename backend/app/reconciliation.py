@@ -242,7 +242,7 @@ def candidate_view(session, source):
     if (
         source.normalized_data
         and not source.validation_errors
-        and source.source_type in {"CSV", "OFX", "GMAIL"}
+        and source.source_type in {"CSV", "OFX", "GMAIL", "PLUGGY"}
     ):
         candidate = Candidate.model_validate(source.normalized_data)
         status, ids, reason = ingestion_matching.duplicates(
@@ -316,7 +316,7 @@ def change_source(session, source_id, data):
         if data.action == "REOPEN":
             sd.rejected_ids = []
     else:
-        if source.source_type not in {"CSV", "OFX", "GMAIL"} or source.validation_errors:
+        if source.source_type not in {"CSV", "OFX", "GMAIL", "PLUGGY"} or source.validation_errors:
             raise HTTPException(422, "Only valid ordinary ingestion sources can be linked")
         if data.action == "UNLINK" and (not source.transaction_id or sd.detached):
             raise HTTPException(409, "This source has no active link")
@@ -489,7 +489,7 @@ def statement_view(session, statement):
         .where(
             ImportBatch.account_id == account.id,
             ImportBatch.status == "DRAFT",
-            SourceRecord.source_type.in_(["OFX", "CSV", "GMAIL"]),
+            SourceRecord.source_type.in_(["OFX", "CSV", "GMAIL", "PLUGGY"]),
         )
     ):
         sd = disposition(session, source.id)

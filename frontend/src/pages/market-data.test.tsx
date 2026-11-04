@@ -48,6 +48,7 @@ function setup(
   component: React.ReactNode,
   handler: (path: string, init?: RequestInit) => unknown,
 ) {
+  window.history.replaceState(null, '', '#/settings')
   const fetch = vi.fn(
     async (path: string, init?: RequestInit) =>
       new Response(JSON.stringify(handler(path, init))),

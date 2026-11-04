@@ -1,3 +1,4 @@
+import { t as tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { Field } from './forms'
 import { Button } from './ui/button'
@@ -17,17 +18,20 @@ export function ReviewTransaction({
   const write = useWrite()
   return (
     <section className="editor-surface">
-      <h2>Review transaction</h2>
+      <h2>{tr('transaction_review:review_transaction_a248f5')}</h2>
       <p>
         {row.description} · {row.transaction_date} ·{' '}
         {label(row.transaction_type)}
       </p>
       <Money value={row.amount} currency={row.currency} />
       <p className="metadata">
-        Posting details are protected.{' '}
+        {' '}
+        {tr('transaction_review:posting_details_are_protected__31f359')}{' '}
         {row.transfer_id
-          ? `Review changes apply to both sides of transfer ${row.transfer_id}.`
-          : 'Opening balance remains part of financial history.'}
+          ? tr('messages:message_05040175434b', { value0: row.transfer_id })
+          : tr(
+              'dynamic:opening_balance_remains_part_of_financial_histor_f54bd6',
+            )}
       </p>
       <form
         onSubmit={(event) => {
@@ -42,20 +46,24 @@ export function ReviewTransaction({
           )
         }}
       >
-        <Field label="Review status">
+        <Field label={tr('transaction_review:review_status_0fe6b8')}>
           <select
             value={status}
             disabled={write.isPending}
             onChange={(e) => setStatus(e.target.value as typeof status)}
           >
-            <option value="REVIEWED">Reviewed</option>
-            <option value="NEEDS_REVIEW">Needs review</option>
+            <option value="REVIEWED">
+              {tr('transaction_review:reviewed_31ef85')}
+            </option>
+            <option value="NEEDS_REVIEW">
+              {tr('transaction_review:needs_review_33a506')}
+            </option>
           </select>
         </Field>
         {write.isError && <p role="alert">{write.error.message}</p>}
         <div className="flex gap-2 mt-3">
           <Button disabled={write.isPending} type="submit">
-            Save review
+            {tr('transaction_review:save_review_f450a9')}
           </Button>
           <Button
             variant="outline"
@@ -63,7 +71,7 @@ export function ReviewTransaction({
             disabled={write.isPending}
             onClick={onSaved}
           >
-            Cancel
+            {tr('transaction_review:cancel_77dfd2')}
           </Button>
         </div>
       </form>
@@ -118,12 +126,15 @@ export function BulkTransactionActions({
         )
       }}
     >
-      <p role="status">{rows.length} selected on this page</p>
+      <p role="status">
+        {rows.length}{' '}
+        {tr('transaction_review:selected_on_this_page_66d6f6')}{' '}
+      </p>
       <fieldset
         disabled={write.isPending || refreshing || !rows.length}
         className="filter-bar"
       >
-        <Field label="Bulk action">
+        <Field label={tr('transaction_review:bulk_action_a3f85d')}>
           <select
             value={action}
             onChange={(e) => {
@@ -131,23 +142,29 @@ export function BulkTransactionActions({
               setPayee('')
             }}
           >
-            <option value="REVIEWED">Mark reviewed</option>
-            <option value="NEEDS_REVIEW">Mark needs review</option>
+            <option value="REVIEWED">
+              {tr('transaction_review:mark_reviewed_277c92')}
+            </option>
+            <option value="NEEDS_REVIEW">
+              {tr('transaction_review:mark_needs_review_d32241')}
+            </option>
             <option value="category" disabled={special}>
-              Assign category
+              {tr('transaction_review:assign_category_7dd454')}
             </option>
             <option value="payee" disabled={special}>
-              Assign payee
+              {tr('transaction_review:assign_payee_aec2fb')}
             </option>
           </select>
         </Field>
         {action === 'category' && (
-          <Field label="Assign category">
+          <Field label={tr('transaction_review:assign_category_7dd454')}>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
-              <option value="">Uncategorized (clear)</option>
+              <option value="">
+                {tr('transaction_review:uncategorized_clear__e10b92')}
+              </option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -158,18 +175,20 @@ export function BulkTransactionActions({
         )}
         {action === 'payee' && <PayeePicker onChange={setPayee} />}
         <Button type="submit" disabled={invalid || write.isPending}>
-          Apply to selected
+          {tr('transaction_review:apply_to_selected_5e7867')}
         </Button>
       </fieldset>
       {special && (
         <p className="metadata">
-          Transfers and opening balances support review only. Transfer sides are
-          reviewed together.
+          {tr(
+            'transaction_review:transfers_and_opening_balances_support_review_on_701201',
+          )}
         </p>
       )}
       {write.isError && (
         <p role="alert">
-          {write.error.message} Check the list before retrying.
+          {write.error.message}{' '}
+          {tr('transaction_review:check_the_list_before_retrying__9397fb')}{' '}
         </p>
       )}
     </form>

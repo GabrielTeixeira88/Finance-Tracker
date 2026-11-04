@@ -52,8 +52,9 @@ test('reconciliation subviews preserve separate review and bank concepts', async
   const { user } = setup()
   expect(await screen.findByText('No source records yet')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Statements' }))
-  expect(await screen.findByText('Cleared balance')).toBeInTheDocument()
   expect(screen.getByLabelText('Statement account')).toHaveValue('a')
+  await user.click(await screen.findByRole('button', { name: /2026-10-31/ }))
+  expect(await screen.findByText('Cleared balance')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Existing duplicates' }))
   expect(
     await screen.findByText(
@@ -64,6 +65,7 @@ test('reconciliation subviews preserve separate review and bank concepts', async
 test('completion requires a reason and sends exact preview token with idempotency key', async () => {
   const { user, fetch } = setup()
   await user.click(screen.getByRole('button', { name: 'Statements' }))
+  await user.click(await screen.findByRole('button', { name: /2026-10-31/ }))
   const button = await screen.findByRole('button', {
     name: 'Complete and lock',
   })
@@ -93,6 +95,7 @@ test('completion requires a reason and sends exact preview token with idempotenc
 test('sub-cent differences cannot be completed even if display rounds to zero', async () => {
   const { user } = setup('0.000001')
   await user.click(screen.getByRole('button', { name: 'Statements' }))
+  await user.click(await screen.findByRole('button', { name: /2026-10-31/ }))
   await screen.findByRole('button', { name: 'Complete and lock' })
   await user.type(
     screen.getByLabelText('Statement decision reason'),

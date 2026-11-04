@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   fireEvent,
   render,
@@ -10,7 +10,7 @@ import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import { SpendingWorkspace } from './spending'
 import type { Account } from '@/lib/api'
-import type { BudgetReport } from '@/lib/budget-api'
+import { budgetFixture as fixture } from '@/test/fixtures/synthetic/budget'
 
 const accounts: Account[] = [
   {
@@ -24,74 +24,21 @@ const accounts: Account[] = [
   },
 ]
 const categories = [{ id: 'c', name: 'Synthetic Groceries' }]
-function fixture(): BudgetReport {
-  const row = {
-    category_id: 'c',
-    name: 'Synthetic Groceries',
-    target_id: 't',
-    group_id: 'g',
-    sort_order: 0,
-    active: true,
-    rollover_enabled: true,
-    override: false,
-    target: '500',
-    carryover: '100',
-    available: '600',
-    spent: '650.123456',
-    remaining: '-50.123456',
-    percent: '108.35',
-    status: 'Over target',
-    previous: '400',
-    change: '250.123456',
-    change_percent: '62.53',
-  }
-  return {
-    month: '2026-09',
-    currency: 'BRL',
-    as_of: '2026-10-10',
-    date_from: '2026-09-01',
-    date_to: '2026-09-30',
-    other_currencies: [],
-    categories: [row],
-    groups: [{ ...row, id: 'g', name: 'Essentials' }],
-    summary: {
-      target: '500',
-      carryover: '100',
-      available: '600',
-      income: '1000',
-      expenses: '650.123456',
-      net_flow: '349.876544',
-      budgeted_spending: '650.123456',
-      unbudgeted_spending: '0',
-      remaining: '-50.123456',
-      percent: '108.35',
-      over_count: 1,
-      previous: '400',
-      change: '250.123456',
-      change_percent: '62.53',
-    },
-    daily: [{ date: '2026-09-10', amount: '650.123456' }],
-    trend: [
-      {
-        month: '2026-09',
-        income: '1000',
-        expenses: '650.123456',
-        net_flow: '349.876544',
-      },
-    ],
-    payees: [{ id: 'p', name: 'Synthetic Market', spent: '650.123456' }],
-    pace: {
-      elapsed_days: 30,
-      days_in_month: 30,
-      elapsed_percent: '100',
-      projection: null,
-      status: 'closed',
-    },
-  }
-}
+
 function setup(
-  options: { empty?: boolean; fail?: boolean; pending?: boolean } = {},
+  options: {
+    empty?: boolean
+    fail?: boolean
+    pending?: boolean
+    budgetSetup?: boolean
+  } = {},
 ) {
+  window.history.replaceState(
+    null,
+    '',
+    '#/dashboard?view=spending&start=2026-09-01&end=2026-09-30' +
+      (options.budgetSetup ? '&detail=budget&setup=true' : ''),
+  )
   const navigate = vi.fn()
   const fetch = vi.fn(async (path: string, init?: RequestInit) => {
     if (options.pending) return new Promise<Response>(() => {})
@@ -102,6 +49,20 @@ function setup(
     if (init?.method) return new Response('{}')
     if (path.startsWith('/api/transactions')) return new Response('[]')
     const data = fixture()
+    if (path.startsWith('/api/spending/summary'))
+      return new Response(
+        JSON.stringify({
+          income: data.summary.income,
+          expenses: data.summary.expenses,
+          daily: options.empty ? [] : data.daily,
+          categories: options.empty
+            ? []
+            : data.categories.map((row) => ({
+                category_id: row.category_id,
+                spent: row.spent,
+              })),
+        }),
+      )
     const month = new URL(path, 'http://local').searchParams.get('month')!
     data.month = month
     data.date_from = `${month}-01`
@@ -136,9 +97,11 @@ function setup(
 }
 it('renders exact spending and drills into categories/days using backend filters', async () => {
   const { navigate } = setup()
-  const category = await screen.findByRole('button', {
+  const categories = await screen.findAllByRole('button', {
     name: /Synthetic Groceries/,
   })
+  expect(categories).toHaveLength(1)
+  const category = categories[0]
   expect(category).toHaveTextContent('R$650.123456')
   await userEvent.click(category)
   expect(navigate).toHaveBeenLastCalledWith({
@@ -148,16 +111,14 @@ it('renders exact spending and drills into categories/days using backend filters
     date_to: '2026-09-30',
     category_id: 'c',
   })
-  await userEvent.click(
-    screen.getByRole('button', { name: /2026-09-10.*view transactions/ }),
-  )
+  await userEvent.click(screen.getByRole('button', { name: /2026-09-10:/ }))
   expect(navigate).toHaveBeenLastCalledWith({
     currency: 'BRL',
     spending_only: 'true',
     date_from: '2026-09-10',
     date_to: '2026-09-10',
   })
-  await userEvent.click(screen.getByRole('button', { name: 'Budgets' }))
+  await userEvent.click(screen.getByRole('button', { name: /Manage/ }))
   const row = screen.getByRole('row', { name: /Synthetic Groceries/ })
   expect(row).toHaveTextContent('Over target')
   expect(row).toHaveTextContent('Rollover R$100.00')
@@ -168,13 +129,16 @@ it('keeps the selected month across views and supports year boundaries', async (
   fireEvent.change(screen.getByLabelText('Budget month'), {
     target: { value: '2026-01' },
   })
-  await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Previous month' }),
+  )
   await waitFor(() =>
     expect(
       fetch.mock.calls.some(([url]) => url.includes('month=2025-12')),
     ).toBe(true),
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Insights' }))
+  await userEvent.click(screen.getByRole('button', { name: /Insights/ }))
+  await userEvent.click(screen.getByLabelText('Choose dates'))
   expect(screen.getByLabelText('Budget month')).toHaveValue('2025-12')
   await userEvent.click(screen.getByRole('button', { name: 'Next month' }))
   expect(screen.getByLabelText('Budget month')).toHaveValue('2026-01')
@@ -182,7 +146,7 @@ it('keeps the selected month across views and supports year boundaries', async (
 it('saves a month override with exact amount, group order and optional signed rollover', async () => {
   const { fetch } = setup()
   await screen.findByText('Where it went')
-  await userEvent.click(screen.getByRole('button', { name: 'Budgets' }))
+  await userEvent.click(screen.getByRole('button', { name: /Manage/ }))
   await userEvent.click(
     screen.getByRole('button', { name: 'Edit target Synthetic Groceries' }),
   )
@@ -224,6 +188,7 @@ it('saves a month override with exact amount, group order and optional signed ro
 it('creates a target, edits a group and confirms copying only targets', async () => {
   const { fetch } = setup()
   await screen.findByText('Where it went')
+  await userEvent.click(screen.getByRole('button', { name: /Manage/ }))
   await userEvent.click(screen.getByRole('button', { name: 'Add target' }))
   await userEvent.type(screen.getByLabelText('Target amount (BRL)'), '700')
   await userEvent.click(screen.getByRole('button', { name: 'Save target' }))
@@ -266,7 +231,9 @@ it('creates a target, edits a group and confirms copying only targets', async ()
 it('exposes insights with payee drill-down and exact cash-flow history', async () => {
   const { navigate } = setup()
   await screen.findByText('Where it went')
-  await userEvent.click(screen.getByRole('button', { name: 'Insights' }))
+  await userEvent.click(screen.getByRole('button', { name: /Insights/ }))
+  await userEvent.click(screen.getByRole('button', { name: 'What changed' }))
+  expect(window.location.hash).toContain('stage=changed')
   const table = screen.getByRole('table')
   expect(within(table).getByText('R$349.876544')).toBeInTheDocument()
   await userEvent.click(
@@ -279,9 +246,9 @@ it('exposes insights with payee drill-down and exact cash-flow history', async (
 it('shows compact useful empty states', async () => {
   setup({ empty: true })
   expect(
-    await screen.findByText('No spending in this month'),
+    await screen.findByText('No spending in this period'),
   ).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Budgets' }))
+  await userEvent.click(screen.getByRole('button', { name: /Manage/ }))
   expect(screen.getByText('No monthly targets yet')).toBeInTheDocument()
 })
 it('shows recoverable report errors', async () => {
@@ -295,4 +262,41 @@ it('shows loading without empty financial values', () => {
   setup({ pending: true })
   expect(screen.getByRole('status')).toHaveTextContent('Calculating spending')
   expect(screen.queryByText('Where it went')).not.toBeInTheDocument()
+})
+
+it('exposes exact bar values on keyboard focus and dismisses the tooltip with Escape', async () => {
+  setup()
+  const day = await screen.findByRole('button', { name: /2026-09-10:/ })
+  fireEvent.focus(day)
+  expect(screen.getByRole('tooltip')).toHaveTextContent('R$650.123456')
+  expect(day).toHaveAttribute('aria-describedby', 'spending-chart-tooltip')
+  fireEvent.keyDown(day, { key: 'Escape' })
+  expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+})
+
+it('keeps existing target edits one-month scoped even when opened from ongoing budget setup', async () => {
+  setup({ budgetSetup: true })
+  await userEvent.click(
+    await screen.findByRole('button', {
+      name: 'Edit target Synthetic Groceries',
+    }),
+  )
+  expect(screen.getByLabelText('Target applies to')).toHaveValue('month')
+  await userEvent.click(screen.getByRole('button', { name: 'Close details' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Add target' }))
+  expect(screen.getByLabelText('Target applies to')).toHaveValue('default')
+})
+
+it('filters the spending plan without changing ledger data or losing its route context', async () => {
+  const { fetch } = setup()
+  await screen.findByText('Where it went')
+  await userEvent.click(screen.getByRole('button', { name: /Insights/ }))
+  await userEvent.click(
+    await screen.findByRole('button', { name: /^Over target/ }),
+  )
+  expect(window.location.hash).toContain('plan_filter=over')
+  const plan = screen.getByRole('table', { name: 'Spending plan' })
+  expect(within(plan).getByText('Synthetic Groceries')).toBeVisible()
+  expect(within(plan).queryByText('Uncategorized')).not.toBeInTheDocument()
+  expect(fetch.mock.calls.every(([, options]) => !options?.method)).toBe(true)
 })

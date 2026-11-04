@@ -1,3 +1,5 @@
+import { CandidateInspector } from '@/components/candidate-inspector'
+import { t as tr, ui } from '@/lib/i18n'
 import { useState } from 'react'
 import { readRoute } from '@/lib/navigation'
 import { WorkflowSteps } from '@/components/section-navigation'
@@ -90,7 +92,7 @@ export default function ImportWorkspace({
     request(path, { method, body: JSON.stringify(data) })
   const payload = async () => {
     if (!file || !accountId)
-      throw new Error('Choose a file and target account.')
+      throw new Error(ui('Choose a file and target account.'))
     return {
       filename: file.name,
       content_base64: await fileContent(file),
@@ -111,8 +113,10 @@ export default function ImportWorkspace({
   return (
     <>
       <PageHeader
-        title="Imports"
-        description="Local CSV and OFX statements. Review first; nothing posts on upload."
+        title={tr('import_workspace:imports_e42328')}
+        description={tr(
+          'import_workspace:local_csv_and_ofx_statements_review_first_nothin_396f25',
+        )}
       />
       <WorkflowSteps
         steps={['Choose file', 'Map columns', 'Review and resolve', 'Confirm']}
@@ -131,7 +135,7 @@ export default function ImportWorkspace({
       )}
       {batchId ? (
         batch.isPending ? (
-          <LoadingState text="Loading import…" />
+          <LoadingState text={tr('import_workspace:loading_import__5976c1')} />
         ) : batch.isError ? (
           <ErrorState
             text={batch.error.message}
@@ -178,9 +182,9 @@ export default function ImportWorkspace({
             }}
           >
             <fieldset disabled={operation.isPending} className="editor-surface">
-              <h2>1. File and target account</h2>
+              <h2>{tr('import_workspace:1_file_and_target_account_ea258b')}</h2>
               <div className="filter-bar">
-                <Field label="Statement file">
+                <Field label={tr('import_workspace:statement_file_e29c9d')}>
                   <input
                     type="file"
                     accept=".csv,.ofx"
@@ -191,13 +195,15 @@ export default function ImportWorkspace({
                     }}
                   />
                 </Field>
-                <Field label="Target account">
+                <Field label={tr('import_workspace:target_account_17a8da')}>
                   <select
                     required
                     value={accountId}
                     onChange={(e) => setAccountId(e.target.value)}
                   >
-                    <option value="">Choose account</option>
+                    <option value="">
+                      {tr('import_workspace:choose_account_9ccef0')}
+                    </option>
                     {accounts
                       .filter((a) => a.active)
                       .map((a) => (
@@ -209,19 +215,24 @@ export default function ImportWorkspace({
                 </Field>
               </div>
               <p className="metadata">
-                Maximum 2 MiB / 2,000 rows. Files stay on this machine. Bank
-                identifiers are masked; you must confirm the destination.
+                {tr(
+                  'import_workspace:maximum_2_mib_2_000_rows_files_stay_on_this_mach_a9c126',
+                )}
               </p>
               {!file && (
                 <p className="metadata">
-                  Choose a statement to see its format and mapping options.
+                  {tr(
+                    'import_workspace:choose_a_statement_to_see_its_format_and_mapping_d70c03',
+                  )}
                 </p>
               )}
               {file && csv && (
                 <>
-                  <h2 className="mt-4">2. CSV format and mapping</h2>
+                  <h2 className="mt-4">
+                    {tr('import_workspace:2_csv_format_and_mapping_2a2da4')}
+                  </h2>
                   <div className="filter-bar">
-                    <Field label="Saved profile">
+                    <Field label={tr('import_workspace:saved_profile_3c7f9c')}>
                       <select
                         value={profileId}
                         onChange={(e) => {
@@ -239,7 +250,9 @@ export default function ImportWorkspace({
                           setSample([])
                         }}
                       >
-                        <option value="">New mapping</option>
+                        <option value="">
+                          {tr('import_workspace:new_mapping_8a1a5f')}
+                        </option>
                         {profiles.data?.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.name}
@@ -247,18 +260,22 @@ export default function ImportWorkspace({
                         ))}
                       </select>
                     </Field>
-                    <Field label="Delimiter">
+                    <Field label={tr('import_workspace:delimiter_5e96ff')}>
                       <select
                         value={config.delimiter}
                         onChange={(e) =>
                           configure('delimiter', e.target.value as ',' | ';')
                         }
                       >
-                        <option value=",">Comma</option>
-                        <option value=";">Semicolon</option>
+                        <option value=",">
+                          {tr('import_workspace:comma_b9ee3d')}
+                        </option>
+                        <option value=";">
+                          {tr('import_workspace:semicolon_727cec')}
+                        </option>
                       </select>
                     </Field>
-                    <Field label="Encoding">
+                    <Field label={tr('import_workspace:encoding_5821fe')}>
                       <select
                         value={config.encoding}
                         onChange={(e) =>
@@ -268,22 +285,32 @@ export default function ImportWorkspace({
                           )
                         }
                       >
-                        <option value="utf-8-sig">UTF-8 / BOM</option>
-                        <option value="cp1252">Windows-1252</option>
+                        <option value="utf-8-sig">
+                          {tr('import_workspace:utf_8_bom_e9fefe')}
+                        </option>
+                        <option value="cp1252">
+                          {tr('import_workspace:windows_1252_694498')}
+                        </option>
                       </select>
                     </Field>
-                    <Field label="Header row">
+                    <Field label={tr('import_workspace:header_row_c27655')}>
                       <select
                         value={String(config.has_header)}
                         onChange={(e) =>
                           configure('has_header', e.target.value === 'true')
                         }
                       >
-                        <option value="true">First row contains headers</option>
-                        <option value="false">No header</option>
+                        <option value="true">
+                          {tr(
+                            'import_workspace:first_row_contains_headers_33f8a8',
+                          )}
+                        </option>
+                        <option value="false">
+                          {tr('import_workspace:no_header_323b0a')}
+                        </option>
                       </select>
                     </Field>
-                    <Field label="Date format">
+                    <Field label={tr('import_workspace:date_format_94ee88')}>
                       <select
                         value={config.date_format}
                         onChange={(e) =>
@@ -293,12 +320,20 @@ export default function ImportWorkspace({
                           )
                         }
                       >
-                        <option value="%Y-%m-%d">YYYY-MM-DD</option>
-                        <option value="%d/%m/%Y">DD/MM/YYYY</option>
-                        <option value="%m/%d/%Y">MM/DD/YYYY</option>
+                        <option value="%Y-%m-%d">
+                          {tr('import_workspace:yyyy_mm_dd_d3f8f7')}
+                        </option>
+                        <option value="%d/%m/%Y">
+                          {tr('import_workspace:dd_mm_yyyy_5d95ad')}
+                        </option>
+                        <option value="%m/%d/%Y">
+                          {tr('import_workspace:mm_dd_yyyy_119c60')}
+                        </option>
                       </select>
                     </Field>
-                    <Field label="Decimal separator">
+                    <Field
+                      label={tr('import_workspace:decimal_separator_f2ea84')}
+                    >
                       <select
                         value={config.decimal_separator}
                         onChange={(e) =>
@@ -308,11 +343,17 @@ export default function ImportWorkspace({
                           )
                         }
                       >
-                        <option value=".">Point (12.50)</option>
-                        <option value=",">Comma (12,50)</option>
+                        <option value=".">
+                          {tr('import_workspace:point_12_50__f3f5d2')}
+                        </option>
+                        <option value=",">
+                          {tr('import_workspace:comma_12_50__c25862')}
+                        </option>
                       </select>
                     </Field>
-                    <Field label="Thousands separator">
+                    <Field
+                      label={tr('import_workspace:thousands_separator_c8f9d9')}
+                    >
                       <select
                         value={config.thousands_separator}
                         onChange={(e) =>
@@ -323,12 +364,20 @@ export default function ImportWorkspace({
                           )
                         }
                       >
-                        <option value="">None</option>
-                        <option value=".">Point</option>
-                        <option value=",">Comma</option>
+                        <option value="">
+                          {tr('import_workspace:none_6eef66')}
+                        </option>
+                        <option value=".">
+                          {tr('import_workspace:point_f79a28')}
+                        </option>
+                        <option value=",">
+                          {tr('import_workspace:comma_b9ee3d')}
+                        </option>
                       </select>
                     </Field>
-                    <Field label="Amount convention">
+                    <Field
+                      label={tr('import_workspace:amount_convention_c9e19e')}
+                    >
                       <select
                         value={config.amount_mode}
                         onChange={(e) => {
@@ -347,20 +396,34 @@ export default function ImportWorkspace({
                           setConfig({ ...config, amount_mode: mode, columns })
                         }}
                       >
-                        <option value="signed">Negative = outgoing</option>
-                        <option value="reversed">Positive = outgoing</option>
+                        <option value="signed">
+                          {tr('import_workspace:negative_outgoing_658efe')}
+                        </option>
+                        <option value="reversed">
+                          {tr('import_workspace:positive_outgoing_fed0dd')}
+                        </option>
                         <option value="type">
-                          Positive amount + type column
+                          {tr(
+                            'import_workspace:positive_amount_type_column_dcf26c',
+                          )}
                         </option>
                         <option value="debit_credit">
-                          Separate debit and credit
+                          {tr(
+                            'import_workspace:separate_debit_and_credit_bb2c92',
+                          )}
                         </option>
                       </select>
                     </Field>
-                    <Field label="Source namespace (for bank IDs)">
+                    <Field
+                      label={tr(
+                        'import_workspace:source_namespace_for_bank_ids__6e50e0',
+                      )}
+                    >
                       <input
                         maxLength={120}
-                        placeholder="Stable bank/export identifier"
+                        placeholder={tr(
+                          'import_workspace:stable_bank_export_identifier_9534bf',
+                        )}
                         value={config.source_namespace}
                         onChange={(e) =>
                           setConfig({
@@ -389,13 +452,15 @@ export default function ImportWorkspace({
                       })
                     }
                   >
-                    Inspect columns
+                    {tr('import_workspace:inspect_columns_f27872')}
                   </Button>
                   {headers.length > 0 && (
                     <>
                       <div className="table-scroll mt-3">
                         <table>
-                          <caption className="sr-only">Source sample</caption>
+                          <caption className="sr-only">
+                            {tr('import_workspace:source_sample_0c0a4f')}
+                          </caption>
                           <thead>
                             <tr>
                               {headers.map((h, i) => (
@@ -427,7 +492,12 @@ export default function ImportWorkspace({
                           'external_id',
                           'type',
                         ].map((field) => (
-                          <Field label={`Map ${label(field)}`} key={field}>
+                          <Field
+                            label={tr('messages:message_3410bc39c4fb', {
+                              value0: label(field),
+                            })}
+                            key={field}
+                          >
                             <select
                               value={config.columns[field] ?? ''}
                               onChange={(e) => {
@@ -437,7 +507,9 @@ export default function ImportWorkspace({
                                 setConfig({ ...config, columns })
                               }}
                             >
-                              <option value="">Not mapped</option>
+                              <option value="">
+                                {tr('import_workspace:not_mapped_fe85da')}
+                              </option>
                               {headers.map((h, i) => (
                                 <option key={i} value={i}>
                                   {i + 1}. {h}
@@ -450,7 +522,7 @@ export default function ImportWorkspace({
                     </>
                   )}
                   <div className="filter-bar mt-3">
-                    <Field label="Profile name">
+                    <Field label={tr('import_workspace:profile_name_775747')}>
                       <input
                         maxLength={120}
                         value={profileName}
@@ -475,7 +547,9 @@ export default function ImportWorkspace({
                         )
                       }
                     >
-                      {profileId ? 'Update profile' : 'Save profile'}
+                      {profileId
+                        ? tr('dynamic:update_profile_837b6d')
+                        : tr('dynamic:save_profile_f597c0')}
                     </Button>
                     {profileId && (
                       <Button
@@ -484,7 +558,9 @@ export default function ImportWorkspace({
                         onClick={() => {
                           if (
                             window.confirm(
-                              'Delete this mapping profile? Import history is retained.',
+                              tr(
+                                'dynamic:delete_this_mapping_profile_import_history_is_re_106ce9',
+                              ),
                             )
                           )
                             void run(async () => {
@@ -496,7 +572,7 @@ export default function ImportWorkspace({
                             })
                         }}
                       >
-                        Delete profile
+                        {tr('import_workspace:delete_profile_7035d2')}
                       </Button>
                     )}
                   </div>
@@ -507,16 +583,16 @@ export default function ImportWorkspace({
                 type="submit"
                 disabled={!file || !accountId || (csv && !headers.length)}
               >
-                Preview transactions
+                {tr('import_workspace:preview_transactions_72f34a')}
               </Button>
             </fieldset>
           </form>
         </>
       )}
       <section className="mt-6">
-        <h2>Import history</h2>
+        <h2>{tr('import_workspace:import_history_e0d1de')}</h2>
         {history.isPending ? (
-          <LoadingState text="Loading imports…" />
+          <LoadingState text={tr('import_workspace:loading_imports__8028cb')} />
         ) : history.isError ? (
           <ErrorState
             text={history.error.message}
@@ -524,21 +600,25 @@ export default function ImportWorkspace({
           />
         ) : !history.data.length ? (
           <EmptyState
-            title="No imports yet"
-            detail="Choose a local statement to begin."
+            title={tr('import_workspace:no_imports_yet_c2f9d8')}
+            detail={tr(
+              'import_workspace:choose_a_local_statement_to_begin__3363e1',
+            )}
           />
         ) : (
           <div className="table-scroll">
             <table>
-              <caption className="sr-only">Import history</caption>
+              <caption className="sr-only">
+                {tr('import_workspace:import_history_e0d1de')}
+              </caption>
               <thead>
                 <tr>
-                  <th>File</th>
-                  <th>Account</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Imported / linked</th>
-                  <th>Duplicates / errors</th>
+                  <th>{tr('import_workspace:file_2c3caf')}</th>
+                  <th>{tr('import_workspace:account_85dfa3')}</th>
+                  <th>{tr('import_workspace:date_eb9a4b')}</th>
+                  <th>{tr('import_workspace:status_bae7d5')}</th>
+                  <th>{tr('import_workspace:imported_linked_e39b2f')}</th>
+                  <th>{tr('import_workspace:duplicates_errors_170aa1')}</th>
                   <th />
                 </tr>
               </thead>
@@ -564,7 +644,7 @@ export default function ImportWorkspace({
                         variant="outline"
                         onClick={() => setBatchId(b.id)}
                       >
-                        Open import
+                        {tr('import_workspace:open_import_21904d')}
                       </Button>
                     </td>
                   </tr>
@@ -580,7 +660,7 @@ export default function ImportWorkspace({
             disabled={!offset}
             onClick={() => setOffset(Math.max(0, offset - 50))}
           >
-            Previous imports
+            {tr('import_workspace:previous_imports_d460e8')}
           </Button>
           <Button
             size="sm"
@@ -588,7 +668,7 @@ export default function ImportWorkspace({
             disabled={(history.data?.length ?? 0) < 50}
             onClick={() => setOffset(offset + 50)}
           >
-            Next imports
+            {tr('import_workspace:next_imports_3a65c8')}
           </Button>
         </div>
       </section>
@@ -623,18 +703,24 @@ export function ImportReview({
   const completed = batch.status === 'COMPLETED'
   const account = accounts.find((a) => a.id === batch.account_id)
   return (
-    <section>
+    <section
+      className={
+        editing ? 'candidate-review has-inspector' : 'candidate-review'
+      }
+    >
       <div className="section-header">
         <h2>
-          {completed ? 'Import summary' : '3. Review and confirm'} ·{' '}
-          {batch.filename}
+          {completed
+            ? tr('dynamic:import_summary_2f1bd4')
+            : tr('dynamic:3_review_and_confirm_cae3e8')}{' '}
+          · {batch.filename}
         </h2>
         <Button variant="outline" disabled={busy} onClick={onBack}>
           {batch.source_type === 'GMAIL'
-            ? 'Back to Gmail queue'
+            ? tr('dynamic:back_to_gmail_queue_7c9117')
             : completed
-              ? 'New import'
-              : 'Back to file / mapping'}
+              ? tr('dynamic:new_import_36e5c0')
+              : tr('dynamic:back_to_file_mapping_7a374c')}
         </Button>
       </div>
       <p>
@@ -653,24 +739,30 @@ export function ImportReview({
       </p>
       {!completed && (
         <p className="metadata">
-          New income:{' '}
+          {' '}
+          {tr('import_workspace:new_income__d36434')}{' '}
           <Money value={batch.incoming} currency={account?.currency ?? 'BRL'} />{' '}
-          · New expenses:{' '}
-          <Money value={batch.outgoing} currency={account?.currency ?? 'BRL'} />
-          . Linking does not change balances. Confirmation does not mark
-          transactions reviewed.
+          {tr('import_workspace:_new_expenses__80c78b')}{' '}
+          <Money value={batch.outgoing} currency={account?.currency ?? 'BRL'} />{' '}
+          {tr(
+            'import_workspace:_linking_does_not_change_balances_confirmation_d_2871a7',
+          )}{' '}
         </p>
       )}
       <div className="table-scroll mt-3">
         <table>
-          <caption className="sr-only">Import preview rows</caption>
+          <caption className="sr-only">
+            {tr('import_workspace:import_preview_rows_f0cb91')}
+          </caption>
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Description / source</th>
-              <th>Payee / category</th>
-              <th className="text-right">Amount</th>
-              <th>Status / decision</th>
+              <th>{tr('import_workspace:date_eb9a4b')}</th>
+              <th>{tr('import_workspace:description_source_a40fc7')}</th>
+              <th>{tr('import_workspace:payee_category_f3b907')}</th>
+              <th className="text-right">
+                {tr('import_workspace:amount_43dc85')}
+              </th>
+              <th>{tr('import_workspace:status_decision_cc70cd')}</th>
               <th />
             </tr>
           </thead>
@@ -684,10 +776,14 @@ export function ImportReview({
                   <span>
                     {row.candidate?.description ??
                       row.raw.description ??
-                      'Invalid row'}
+                      tr('dynamic:invalid_row_20400a')}
                   </span>
                   <details className="metadata">
-                    <summary>Original source · row {row.row_number}</summary>
+                    <summary>
+                      {' '}
+                      {tr('import_workspace:original_source_row_65206e')}{' '}
+                      {row.row_number}
+                    </summary>
                     {Object.entries(row.raw)
                       .filter(([key]) => key !== 'external_id')
                       .map(([k, v]) => (
@@ -698,7 +794,9 @@ export function ImportReview({
                   </details>
                   {row.rules.map((r, i) => (
                     <small className="block metadata" key={i}>
-                      Rule: {r.rule_name} · {label(r.field)}
+                      {' '}
+                      {tr('import_workspace:rule__90deab')} {r.rule_name} ·{' '}
+                      {label(r.field)}
                     </small>
                   ))}
                 </td>
@@ -706,10 +804,12 @@ export function ImportReview({
                   {payees.data?.find((p) => p.id === row.candidate?.payee_id)
                     ?.name ??
                     row.candidate?.payee_name ??
-                    (row.candidate?.payee_id ? 'Assigned payee' : '—')}
+                    (row.candidate?.payee_id
+                      ? tr('dynamic:assigned_payee_02110c')
+                      : '—')}
                   <small className="block metadata">
                     {categories.find((c) => c.id === row.candidate?.category_id)
-                      ?.name ?? 'Uncategorized'}
+                      ?.name ?? tr('dynamic:uncategorized_4ef7d7')}
                   </small>
                 </td>
                 <td className="text-right tabular-nums">
@@ -745,7 +845,9 @@ export function ImportReview({
                       className="metadata"
                       key={`${s.schedule_id}${s.due_date}`}
                     >
-                      Schedule: {s.name} · {s.due_date} · {label(s.status)}
+                      {' '}
+                      {tr('import_workspace:schedule__5810a8')} {s.name} ·{' '}
+                      {s.due_date} · {label(s.status)}
                     </p>
                   ))}
                 </td>
@@ -757,7 +859,9 @@ export function ImportReview({
                       disabled={busy}
                       onClick={() => setEditing(row.id)}
                     >
-                      Review row {row.row_number}
+                      {' '}
+                      {tr('import_workspace:review_row_c75e99')}{' '}
+                      {row.row_number}
                     </Button>
                   )}
                 </td>
@@ -773,7 +877,7 @@ export function ImportReview({
           disabled={!page}
           onClick={() => setPage(page - 1)}
         >
-          Previous rows
+          {tr('import_workspace:previous_rows_c99654')}
         </Button>
         <span className="metadata">
           {page + 1} / {Math.max(1, Math.ceil(batch.rows.length / 50))}
@@ -784,23 +888,38 @@ export function ImportReview({
           disabled={(page + 1) * 50 >= batch.rows.length}
           onClick={() => setPage(page + 1)}
         >
-          Next rows
+          {tr('import_workspace:next_rows_c98c10')}
         </Button>
       </div>
       {editing && batch.rows.some((r) => r.id === editing) && (
-        <RowEditor
-          key={editing}
-          row={batch.rows.find((r) => r.id === editing)!}
-          categories={categories}
-          busy={busy}
+        <CandidateInspector
+          title={tr('import_workspace:review_row_c75e99')}
           onClose={() => setEditing(null)}
-          onSave={(d) =>
-            onDecision(
-              batch.rows.find((r) => r.id === editing)!,
-              d,
-            )
-          }
-        />
+        >
+          <dl className="source-evidence">
+            {Object.entries(batch.rows.find((r) => r.id === editing)!.raw)
+              .filter(([key]) => key !== 'external_id')
+              .map(([key, value]) => (
+                <div key={key}>
+                  <dt>{label(key)}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+          </dl>
+          <RowEditor
+            key={editing}
+            row={batch.rows.find((r) => r.id === editing)!}
+            categories={categories}
+            busy={busy}
+            onClose={() => setEditing(null)}
+            onSave={(d) =>
+              onDecision(
+                batch.rows.find((r) => r.id === editing)!,
+                d,
+              )
+            }
+          />
+        </CandidateInspector>
       )}
       {!completed && (
         <div className="mt-4">
@@ -809,14 +928,18 @@ export function ImportReview({
               type="checkbox"
               checked={confirmed}
               onChange={(e) => setConfirmed(e.target.checked)}
-            />
-            I confirm this statement belongs to {account?.name} and have
-            reviewed the import decisions.
+            />{' '}
+            {tr('import_workspace:i_confirm_this_statement_belongs_to_956ece')}{' '}
+            {account?.name}{' '}
+            {tr(
+              'import_workspace:and_have_reviewed_the_import_decisions__94fb0d',
+            )}{' '}
           </label>
           {!batch.ready && (
             <p role="status" className="metadata">
-              Resolve possible duplicates, schedules and ambiguous
-              classifications; explicitly skip invalid rows.
+              {tr(
+                'import_workspace:resolve_possible_duplicates_schedules_and_ambigu_a01164',
+              )}
             </p>
           )}
           <Button
@@ -831,7 +954,7 @@ export function ImportReview({
                 void onConfirm()
             }}
           >
-            Confirm import
+            {tr('import_workspace:confirm_import_4c63db')}
           </Button>
         </div>
       )}
@@ -867,7 +990,10 @@ function RowEditor({
         void onSave(decision)
       }}
     >
-      <h3>Review row {row.row_number}</h3>
+      <h3>
+        {' '}
+        {tr('import_workspace:review_row_c75e99')} {row.row_number}
+      </h3>
       {row.matches
         .filter((match) => match.amount)
         .map((match) => (
@@ -880,11 +1006,13 @@ function RowEditor({
           </div>
         ))}
       <p className="metadata">
-        {row.reason}. Metadata choices preserve the original source and never
-        change amounts.
+        {row.reason}{' '}
+        {tr(
+          'import_workspace:_metadata_choices_preserve_the_original_source_a_6c9ecb',
+        )}{' '}
       </p>
       <fieldset disabled={busy} className="filter-bar">
-        <Field label="Row action">
+        <Field label={tr('import_workspace:row_action_50dcf8')}>
           <select
             value={decision.action}
             onChange={(e) =>
@@ -898,19 +1026,25 @@ function RowEditor({
               })
             }
           >
-            <option value="SKIP">Skip row</option>
+            <option value="SKIP">
+              {tr('import_workspace:skip_row_42c65e')}
+            </option>
             {valid && (
               <option value="NEW">
-                Import as new {row.candidate?.transaction_type.toLowerCase()}
+                {' '}
+                {tr('import_workspace:import_as_new_1bb772')}{' '}
+                {row.candidate?.transaction_type.toLowerCase()}
               </option>
             )}
             {valid && row.status !== 'CONFLICT' && row.matches.length > 0 && (
-              <option value="LINK">Link existing transaction</option>
+              <option value="LINK">
+                {tr('import_workspace:link_existing_transaction_d8ce89')}
+              </option>
             )}
           </select>
         </Field>
         {decision.action === 'LINK' && (
-          <Field label="Existing transaction">
+          <Field label={tr('import_workspace:existing_transaction_7774bf')}>
             <select
               required
               value={decision.transaction_id ?? ''}
@@ -918,7 +1052,9 @@ function RowEditor({
                 setDecision({ ...decision, transaction_id: e.target.value })
               }
             >
-              <option value="">Choose transaction</option>
+              <option value="">
+                {tr('import_workspace:choose_transaction_1ffa24')}
+              </option>
               {row.matches.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.description} · {m.id.slice(0, 8)}
@@ -929,7 +1065,7 @@ function RowEditor({
         )}
         {decision.action === 'NEW' && (
           <>
-            <Field label="Category">
+            <Field label={tr('import_workspace:category_a3c686')}>
               <select
                 value={
                   decision.category_id === undefined
@@ -943,7 +1079,9 @@ function RowEditor({
                   })
                 }
               >
-                <option value="">Uncategorized</option>
+                <option value="">
+                  {tr('import_workspace:uncategorized_4ef7d7')}
+                </option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -964,7 +1102,7 @@ function RowEditor({
                 setDecision({ ...decision, payee_id: id || null })
               }
             />
-            <Field label="Review status">
+            <Field label={tr('import_workspace:review_status_0fe6b8')}>
               <select
                 value={
                   decision.review_status ??
@@ -975,8 +1113,12 @@ function RowEditor({
                   setDecision({ ...decision, review_status: e.target.value })
                 }
               >
-                <option value="NEEDS_REVIEW">Needs review</option>
-                <option value="REVIEWED">Reviewed</option>
+                <option value="NEEDS_REVIEW">
+                  {tr('import_workspace:needs_review_33a506')}
+                </option>
+                <option value="REVIEWED">
+                  {tr('import_workspace:reviewed_31ef85')}
+                </option>
               </select>
             </Field>
             {(row.candidate?.ambiguity ||
@@ -992,17 +1134,21 @@ function RowEditor({
                       acknowledge_classification: e.target.checked,
                     })
                   }
-                />
-                I confirm this is a new ordinary{' '}
-                {row.candidate?.transaction_type.toLowerCase()}, not an already
-                recorded payment or internal transfer.
+                />{' '}
+                {tr('import_workspace:i_confirm_this_is_a_new_ordinary_cece82')}{' '}
+                {row.candidate?.transaction_type.toLowerCase()}{' '}
+                {tr(
+                  'import_workspace:_not_an_already_recorded_payment_or_internal_tra_d5a90c',
+                )}{' '}
               </label>
             )}
           </>
         )}
         {decision.action !== 'SKIP' &&
           row.schedules.some((s) => s.status === 'EXPECTED') && (
-            <Field label="Optional schedule match">
+            <Field
+              label={tr('import_workspace:optional_schedule_match_5046d8')}
+            >
               <select
                 value={
                   decision.schedule_id
@@ -1018,7 +1164,9 @@ function RowEditor({
                   })
                 }}
               >
-                <option value="">Do not complete a schedule</option>
+                <option value="">
+                  {tr('import_workspace:do_not_complete_a_schedule_aad361')}
+                </option>
                 {row.schedules
                   .filter((s) => s.status === 'EXPECTED')
                   .map((s) => (
@@ -1032,9 +1180,11 @@ function RowEditor({
               </select>
             </Field>
           )}
-        <Button type="submit">Save row decision</Button>
+        <Button type="submit">
+          {tr('import_workspace:save_row_decision_486302')}
+        </Button>
         <Button type="button" variant="outline" onClick={onClose}>
-          Close review
+          {tr('import_workspace:close_review_8507ba')}
         </Button>
       </fieldset>
     </form>

@@ -1,4 +1,10 @@
-import { useSection } from '@/lib/navigation'
+import { DetailDrawer } from '@/components/detail-drawer'
+import { analyticsPeriods } from '@/lib/investment-analytics'
+import { ActivityNavigation } from '@/components/activity-navigation'
+import { InvestmentHero } from '@/components/investment-hero'
+import { t as tr, ui } from '@/lib/i18n'
+import { InvestmentOverviewRows } from '@/components/investment-overview-rows'
+import { useSection, useRoute, navigateTo } from '@/lib/navigation'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
@@ -29,9 +35,9 @@ import { useWrite } from '@/lib/use-write'
 import { TransactionTable } from '@/components/transaction-table'
 import { ActivityForm, AssetForm, PriceForm } from './investment-forms'
 import BrokerageImports from './investment-imports'
-import { PortfolioHistory, SecurityMarketData } from './market-data'
+import FixedIncome from './fixed-income'
+import { SecurityMarketData } from './market-data'
 import InvestmentAnalytics, {
-  AnalyticsSummary,
   SecurityClassification,
   SecurityResults,
 } from './investment-analytics'
@@ -45,9 +51,32 @@ function Value({
   currency: string
 }) {
   return value === null ? (
-    <span className="metadata">Unavailable</span>
+    <span className="metadata">{tr('investments:unavailable_2c9c1f')}</span>
   ) : (
     <Money value={value} currency={currency} />
+  )
+}
+
+function DetailValues({
+  currency,
+  rows,
+}: {
+  currency: string
+  rows: [string, string | null][]
+}) {
+  return (
+    <aside className="investment-detail-values">
+      <dl>
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt>{ui(label)}</dt>
+            <dd>
+              <Value value={value} currency={currency} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </aside>
   )
 }
 export function HoldingsTable({
@@ -70,36 +99,56 @@ export function HoldingsTable({
     )
     .filter((r) => !currency || r.currency === currency)
     .sort((a, b) =>
-      sort === 'quantity'
-        ? decimalUnits(a.quantity) > decimalUnits(b.quantity)
-          ? -1
-          : decimalUnits(a.quantity) < decimalUnits(b.quantity)
-            ? 1
-            : 0
-        : a.symbol.localeCompare(b.symbol),
+      sort === 'value'
+        ? a.currency.localeCompare(b.currency) ||
+          (a.market_value === null
+            ? b.market_value === null
+              ? a.symbol.localeCompare(b.symbol)
+              : 1
+            : b.market_value === null
+              ? -1
+              : decimalUnits(a.market_value) === decimalUnits(b.market_value)
+                ? a.symbol.localeCompare(b.symbol)
+                : decimalUnits(a.market_value) > decimalUnits(b.market_value)
+                  ? -1
+                  : 1)
+        : sort === 'quantity'
+          ? decimalUnits(a.quantity) > decimalUnits(b.quantity)
+            ? -1
+            : decimalUnits(a.quantity) < decimalUnits(b.quantity)
+              ? 1
+              : 0
+          : a.symbol.localeCompare(b.symbol),
     )
   return (
     <>
       <div className="investment-toolbar">
-        <Field label="Search holdings">
+        <Field label={tr('investments:search_holdings_5feeb3')}>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Symbol or security"
+            placeholder={tr('investments:symbol_or_security_ceb6f4')}
           />
         </Field>
-        <Field label="Sort holdings">
+        <Field label={tr('investments:sort_holdings_08672e')}>
           <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option value="symbol">Security A–Z</option>
-            <option value="quantity">Quantity descending</option>
+            <option value="symbol">
+              {tr('investments:security_a_z_1eb636')}
+            </option>
+            <option value="quantity">
+              {tr('investments:quantity_descending_d3beb1')}
+            </option>
+            <option value="value">{tr('parity:market_value_sort')}</option>
           </select>
         </Field>
-        <Field label="Holding currency">
+        <Field label={tr('investments:holding_currency_49bfd0')}>
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
           >
-            <option value="">All original currencies</option>
+            <option value="">
+              {tr('investments:all_original_currencies_f78b93')}
+            </option>
             {[...new Set(rows.map((row) => row.currency))]
               .sort()
               .map((code) => (
@@ -110,17 +159,27 @@ export function HoldingsTable({
       </div>
       {!filtered.length ? (
         <EmptyState
-          title={rows.length ? 'No matching holdings' : 'No holdings yet'}
+          title={
+            rows.length
+              ? tr('dynamic:no_matching_holdings_77d59c')
+              : tr('dynamic:no_holdings_yet_b35017')
+          }
           detail={
             rows.length
-              ? 'Change the security search or currency filter.'
-              : 'Create a security, fund an investment account, then add a BUY activity.'
+              ? tr(
+                  'dynamic:change_the_security_search_or_currency_filter__f55800',
+                )
+              : tr(
+                  'dynamic:create_a_security_fund_an_investment_account_the_c0e384',
+                )
           }
         />
       ) : (
         <div className="table-scroll">
           <table className="investment-table">
-            <caption className="sr-only">Investment holdings</caption>
+            <caption className="sr-only">
+              {tr('investments:investment_holdings_7b4b4d')}
+            </caption>
             <thead>
               <tr>
                 {[
@@ -135,7 +194,7 @@ export function HoldingsTable({
                   'Realized P&L',
                 ].map((h) => (
                   <th scope="col" key={h}>
-                    {h}
+                    {ui(h)}
                   </th>
                 ))}
               </tr>
@@ -153,7 +212,9 @@ export function HoldingsTable({
                     <small>{r.name}</small>
                     <small>
                       {r.exchange} · {r.currency}
-                      {decimalUnits(r.quantity) === 0n ? ' · Closed' : ''}
+                      {decimalUnits(r.quantity) === 0n
+                        ? tr('dynamic:_closed_14cd2b')
+                        : ''}
                     </small>
                   </td>
                   {accounts && (
@@ -170,11 +231,12 @@ export function HoldingsTable({
                     <Value value={r.last_price} currency={r.currency} />
                     {r.price_date && (
                       <small>
-                        {r.price_date} · {r.price_source ?? 'Unknown source'}
+                        {r.price_date} ·{' '}
+                        {r.price_source ?? tr('dynamic:unknown_source_09d244')}
                         {r.price_freshness === 'STALE'
-                          ? ' · Stale cache'
+                          ? tr('dynamic:_stale_cache_45929e')
                           : r.price_stale
-                            ? ' · Carried prior quote'
+                            ? tr('dynamic:_carried_prior_quote_a876e0')
                             : ''}
                       </small>
                     )}
@@ -216,7 +278,11 @@ function Activities({
   })
   const write = useWrite()
   if (rows.isPending)
-    return <LoadingState text="Loading investment activities…" />
+    return (
+      <LoadingState
+        text={tr('investments:loading_investment_activities__2855ca')}
+      />
+    )
   if (rows.isError)
     return (
       <ErrorState text={rows.error.message} retry={() => void rows.refetch()} />
@@ -224,16 +290,22 @@ function Activities({
   return (
     <>
       <SectionHeader
-        title="Investment activity"
-        detail="Investment cash postings are separate from personal income and consumption."
+        title={tr('investments:investment_activity_f52165')}
+        detail={tr(
+          'investments:investment_cash_postings_are_separate_from_perso_26ed51',
+        )}
       />
       {write.isError && <ErrorState text={write.error.message} />}
       {rows.data.length === 0 ? (
-        <EmptyState title="No activities on this page" />
+        <EmptyState
+          title={tr('investments:no_activities_on_this_page_e6103e')}
+        />
       ) : (
         <div className="table-scroll">
           <table className="investment-table">
-            <caption className="sr-only">Investment activities</caption>
+            <caption className="sr-only">
+              {tr('investments:investment_activities_a7e558')}
+            </caption>
             <thead>
               <tr>
                 {[
@@ -257,7 +329,7 @@ function Activities({
                   <td>
                     {r.activity_type} ·{' '}
                     {assets.find((a) => a.id === r.asset_id)?.symbol ||
-                      'Account cash'}
+                      tr('dynamic:account_cash_99eb24')}
                     <small>{r.notes}</small>
                   </td>
                   <td>{accounts.find((a) => a.id === r.account_id)?.name}</td>
@@ -277,7 +349,7 @@ function Activities({
                   </td>
                   <td>
                     {r.voided_at ? (
-                      <span>Voided</span>
+                      <span>{tr('investments:voided_45aa9f')}</span>
                     ) : (
                       <Button
                         variant="ghost"
@@ -286,7 +358,9 @@ function Activities({
                         onClick={() => {
                           if (
                             window.confirm(
-                              'Void this activity and recalculate all later positions? History and source identity are retained. Invalid corrections will be rejected.',
+                              tr(
+                                'dynamic:void_this_activity_and_recalculate_all_later_pos_c5b606',
+                              ),
                             )
                           )
                             write.mutate({
@@ -294,7 +368,7 @@ function Activities({
                             })
                         }}
                       >
-                        Void
+                        {tr('investments:void_207c7c')}
                       </Button>
                     )}
                   </td>
@@ -310,15 +384,18 @@ function Activities({
           disabled={!offset}
           onClick={() => setOffset(offset - 50)}
         >
-          Previous activities
+          {tr('investments:previous_activities_c2781d')}
         </Button>
-        <span className="metadata">Page {offset / 50 + 1}</span>
+        <span className="metadata">
+          {' '}
+          {tr('investments:page_fb0627')} {offset / 50 + 1}
+        </span>
         <Button
           size="sm"
           disabled={rows.data.length < 50}
           onClick={() => setOffset(offset + 50)}
         >
-          Next activities
+          {tr('investments:next_activities_b038db')}
         </Button>
       </div>
     </>
@@ -341,7 +418,11 @@ export default function Investments({
     queryFn: ({ signal }) => getDemo(signal),
   })
   if (demo.isPending)
-    return <LoadingState text="Loading investment workspace…" />
+    return (
+      <LoadingState
+        text={tr('investments:loading_investment_workspace__6ffc67')}
+      />
+    )
   if (demo.isError)
     return (
       <ErrorState text={demo.error.message} retry={() => void demo.refetch()} />
@@ -370,15 +451,27 @@ export function InvestmentWorkspace({
   initialDate?: string
   initialView?: string
 }) {
-  const [accountId, setAccountId] = useState(initialAccount)
-  const [asOf, setAsOf] = useState(
-    initialDate || new Date().toLocaleDateString('en-CA'),
-  )
+  const route = useRoute()
+  const accountId = route.params.get('account') ?? initialAccount
+  const asOf =
+    route.params.get('end') ||
+    initialDate ||
+    new Date().toLocaleDateString('en-CA')
+  const setContext = (values: Record<string, string>) =>
+    navigateTo('Investments', undefined, {
+      ...Object.fromEntries(route.params),
+      ...values,
+    })
+  const setAccountId = (account: string) => setContext({ account })
+  const setAsOf = (end: string) => {
+    if (end) setContext({ end })
+  }
   const [tab, setTab] = useSection(
     [
       'Overview',
       'Performance',
       'Allocation',
+      'Fixed Income',
       'Income',
       'Holdings',
       'Activity',
@@ -387,7 +480,8 @@ export function InvestmentWorkspace({
     ],
     initialView,
   )
-  const [security, setSecurity] = useState('')
+  const security = route.params.get('asset') ?? ''
+  const setSecurity = (asset: string) => setContext({ asset })
   const [editor, setEditor] = useState<'activity' | 'asset' | 'price' | null>(
     null,
   )
@@ -409,86 +503,143 @@ export function InvestmentWorkspace({
     enabled: !!accountId,
   })
   const selected = assets.data?.find((a) => a.id === security)
+  const holding = portfolio.data?.holdings.find((h) => h.asset_id === security)
+  const account = portfolio.data?.accounts.find((a) => a.id === accountId)
   const onOpen = (id: string) => {
     setSecurity(id)
     setEditor(null)
   }
   const close = () => setEditor(null)
+  const isInsights = ['Allocation', 'Performance', 'Income'].includes(tab)
   return (
-    <div className="investment-workspace">
-      <PageHeader
-        title={
-          selected
-            ? selected.name
-            : accountId
-              ? accounts.find((a) => a.id === accountId)?.name ||
-                'Investment account'
-              : 'Investments'
-        }
-        description={
-          selected
-            ? `${selected.symbol} · ${selected.exchange} · ${selected.currency}`
-            : 'Activity-derived positions · Weighted-average cost · Cached market prices'
-        }
-      >
-        {(security || accountId) && (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setSecurity('')
-              setAccountId('')
-              setEditor(null)
-            }}
-          >
-            All investments
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          onClick={() => setEditor(editor === 'asset' ? null : 'asset')}
+    <div
+      className={`investment-workspace ${isInsights ? 'insights-workspace' : ''} ${tab === 'Overview' && !security ? 'investment-dashboard' : ''}`}
+    >
+      {isInsights && <h1 className="sr-only">{ui(tab)}</h1>}
+      {!isInsights && (
+        <PageHeader
+          title={
+            selected
+              ? selected.name
+              : accountId
+                ? accounts.find((a) => a.id === accountId)?.name ||
+                  tr('dynamic:investment_account_f3d13a')
+                : tr('dynamic:investments_5de64a')
+          }
+          description={
+            selected
+              ? `${selected.symbol} · ${selected.exchange} · ${selected.currency}`
+              : tr(
+                  'dynamic:activity_derived_positions_weighted_average_cost_9cf21c',
+                )
+          }
         >
-          Add security
-        </Button>
-        <Button
-          onClick={() => setEditor(editor === 'activity' ? null : 'activity')}
-        >
-          Add activity
-        </Button>
-        {selected && (
-          <Button
-            variant="outline"
-            onClick={() => setEditor(editor === 'price' ? null : 'price')}
-          >
-            Add manual price
-          </Button>
-        )}
-      </PageHeader>
-      <div className="investment-toolbar">
-        <nav className="range-tabs" aria-label="Investment views">
-          {[
-            'Overview',
-            'Performance',
-            'Allocation',
-            'Income',
-            'Holdings',
-            'Activity',
-            'Accounts',
-            'Imports',
-          ].map((t) => (
-            <button
-              key={t}
-              aria-pressed={tab === t}
+          {(security || accountId) && (
+            <Button
+              variant="ghost"
               onClick={() => {
-                setTab(t)
-                setSecurity('')
+                setContext({ view: 'Overview', asset: '', account: '' })
                 setEditor(null)
               }}
             >
-              {t}
-            </button>
-          ))}
-        </nav>
-        <Field label="Portfolio account">
+              {tr('investments:all_investments_294ede')}
+            </Button>
+          )}
+          {tab !== 'Fixed Income' && selected?.asset_type !== 'BOND' && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setEditor(editor === 'asset' ? null : 'asset')}
+              >
+                {tr('investments:add_security_1b9631')}
+              </Button>
+              <Button
+                onClick={() =>
+                  setEditor(editor === 'activity' ? null : 'activity')
+                }
+              >
+                {tr('investments:add_activity_63b759')}
+              </Button>
+            </>
+          )}
+          {selected && selected.asset_type !== 'BOND' && (
+            <Button
+              variant="outline"
+              onClick={() => setEditor(editor === 'price' ? null : 'price')}
+            >
+              {tr('investments:add_manual_price_fa0895')}
+            </Button>
+          )}
+        </PageHeader>
+      )}
+      {['Activity', 'Imports'].includes(tab) && (
+        <ActivityNavigation
+          investment
+          tool={tab === 'Imports' ? 'imports' : ''}
+          onTool={() => setContext({ view: 'Imports', asset: '' })}
+        />
+      )}
+      <div className="investment-toolbar">
+        {!['Activity', 'Imports'].includes(tab) && tab !== 'Overview' && (
+          <nav
+            className="range-tabs"
+            aria-label={tr('investments:investment_views_008588')}
+          >
+            {(['Performance', 'Allocation', 'Income'].includes(tab)
+              ? ['Allocation', 'Performance', 'Income']
+              : ['Holdings', 'Fixed Income'].includes(tab)
+                ? ['Overview', 'Holdings', 'Fixed Income']
+                : ['Overview', 'Activity', 'Imports']
+            ).map((t) => (
+              <button
+                key={ui(t)}
+                aria-pressed={tab === t}
+                onClick={() => {
+                  setContext({ view: t, asset: '' })
+                  setEditor(null)
+                }}
+              >
+                {t === 'Fixed Income'
+                  ? tr('fixed_income:title')
+                  : t === 'Allocation'
+                    ? ui('Overview')
+                    : ui(t)}
+              </button>
+            ))}
+          </nav>
+        )}
+        {isInsights && tab !== 'Allocation' && (
+          <nav
+            className="range-tabs analytics-period-tabs"
+            aria-label={tr('investment_analytics:analytics_period_2d5f60')}
+          >
+            {analyticsPeriods.map((range) => (
+              <button
+                key={range}
+                aria-pressed={
+                  (route.params.get('range') ||
+                    (tab === 'Income' ? 'ALL' : '3M')) === range
+                }
+                onClick={() => setContext({ range })}
+              >
+                {ui(range)}
+              </button>
+            ))}
+          </nav>
+        )}
+        {isInsights && tab !== 'Income' && (
+          <Field label={tr('investment_analytics:analytics_currency_ceeca4')}>
+            <select
+              value={route.params.get('currency') || 'BRL'}
+              onChange={(e) => setContext({ currency: e.target.value })}
+            >
+              {['BRL', 'USD', 'EUR', 'JPY'].map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </Field>
+        )}
+        <Field label={tr('investments:portfolio_account_cf6a1f')}>
           <select
             value={accountId}
             onChange={(e) => {
@@ -496,7 +647,9 @@ export function InvestmentWorkspace({
               setEditor(null)
             }}
           >
-            <option value="">All investment accounts</option>
+            <option value="">
+              {tr('investments:all_investment_accounts_031796')}
+            </option>
             {accounts
               .filter((a) => a.type === 'INVESTMENT')
               .map((a) => (
@@ -506,7 +659,7 @@ export function InvestmentWorkspace({
               ))}
           </select>
         </Field>
-        <Field label="Valuation as of">
+        <Field label={tr('investments:valuation_as_of_58c88f')}>
           <input
             type="date"
             value={asOf}
@@ -519,7 +672,7 @@ export function InvestmentWorkspace({
           text={
             assets.error?.message ||
             portfolio.error?.message ||
-            'Unable to load investments'
+            tr('dynamic:unable_to_load_investments_25cef5')
           }
           retry={() => {
             void assets.refetch()
@@ -527,25 +680,70 @@ export function InvestmentWorkspace({
           }}
         />
       ) : assets.isPending || portfolio.isPending ? (
-        <LoadingState text="Reconstructing investment positions…" />
+        <LoadingState
+          text={tr('investments:reconstructing_investment_positions__51ffea')}
+        />
       ) : (
         <>
-          {editor === 'asset' && <AssetForm onSaved={close} />}
-          {editor === 'activity' && (
-            <ActivityForm
-              accounts={accounts}
-              assets={assets.data}
-              initialAccount={accountId}
-              onSaved={close}
-            />
-          )}
-          {editor === 'price' && selected && (
-            <PriceForm asset={selected} onSaved={close} />
+          {editor && (
+            <DetailDrawer
+              title={
+                editor === 'asset'
+                  ? tr('investments:add_security_1b9631')
+                  : editor === 'price'
+                    ? tr('investments:add_manual_price_fa0895')
+                    : tr('investments:add_activity_63b759')
+              }
+              onClose={close}
+            >
+              {editor === 'asset' && <AssetForm onSaved={close} />}
+              {editor === 'activity' && (
+                <ActivityForm
+                  accounts={accounts}
+                  assets={assets.data}
+                  initialAccount={accountId}
+                  onSaved={close}
+                />
+              )}
+              {editor === 'price' && selected && (
+                <PriceForm asset={selected} onSaved={close} />
+              )}
+            </DetailDrawer>
           )}
           {security && selected ? (
             <>
-              <SecurityMarketData key={security} id={security} asOf={asOf} />
-              <SecurityClassification id={security} />
+              {selected.asset_type === 'BOND' ? (
+                <FixedIncome
+                  asOf={asOf}
+                  accountId={accountId}
+                  assetId={security}
+                />
+              ) : (
+                <div className="investment-detail-grid">
+                  <SecurityMarketData
+                    key={security}
+                    id={security}
+                    asOf={asOf}
+                  />
+                  {holding && (
+                    <DetailValues
+                      currency={holding.currency}
+                      rows={[
+                        ['Market value', holding.market_value],
+                        ['Cost basis', holding.cost_basis],
+                        ['Average cost', holding.average_cost],
+                        ['Unrealized P&L', holding.unrealized],
+                        ['Realized P&L', holding.realized],
+                        ['Investment income', holding.income],
+                      ]}
+                    />
+                  )}
+                </div>
+              )}
+              <details>
+                <summary>{tr('investment_analytics:exposure_862ee3')}</summary>
+                <SecurityClassification id={security} />
+              </details>
               <SecurityResults
                 id={security}
                 accountId={accountId}
@@ -553,8 +751,10 @@ export function InvestmentWorkspace({
                 onSecurity={onOpen}
               />
               <SectionHeader
-                title="Position across accounts"
-                detail="Missing market prices are never substituted with cost basis."
+                title={tr('investments:position_across_accounts_93070c')}
+                detail={tr(
+                  'investments:missing_market_prices_are_never_substituted_with_70ecaf',
+                )}
               />
               <HoldingsTable
                 rows={portfolio.data.positions.filter(
@@ -571,10 +771,13 @@ export function InvestmentWorkspace({
                 assets={assets.data}
               />
             </>
+          ) : tab === 'Fixed Income' ? (
+            <FixedIncome asOf={asOf} accountId={accountId} />
           ) : tab === 'Imports' ? (
             <BrokerageImports accounts={accounts} />
           ) : ['Performance', 'Allocation', 'Income'].includes(tab) ? (
             <InvestmentAnalytics
+              externalRangeControls
               view={tab}
               accountId={accountId}
               asOf={asOf}
@@ -584,69 +787,117 @@ export function InvestmentWorkspace({
             <>
               {tab === 'Overview' && (
                 <>
-                  <PortfolioHistory accountId={accountId} asOf={asOf} />
-                  <AnalyticsSummary
+                  <div
+                    className={account ? 'investment-detail-grid' : undefined}
+                  >
+                    <InvestmentHero accountId={accountId} asOf={asOf} />
+                    {account && (
+                      <DetailValues
+                        currency={account.currency}
+                        rows={[
+                          ['Cash', account.cash],
+                          ['Market value', account.market_value],
+                          ['Cost basis', account.cost_basis],
+                          ['Unrealized P&L', account.unrealized ?? null],
+                          ['Realized P&L', account.realized],
+                          ['Investment income', account.income],
+                        ]}
+                      />
+                    )}
+                  </div>
+                  <InvestmentOverviewRows
+                    assets={assets.data}
                     accountId={accountId}
                     asOf={asOf}
-                    onOpen={() => setTab('Performance')}
+                    currency={route.params.get('currency') || 'BRL'}
+                    onAccount={(id) => navigateTo('Account', id, { end: asOf })}
+                    onSecurity={(id) => {
+                      setEditor(null)
+                      setContext({ view: 'Holdings', asset: id })
+                    }}
+                    onHoldings={() => setTab('Holdings')}
                   />
                   {portfolio.data.totals.length === 0 && (
                     <EmptyState
-                      title="No investment accounts yet"
-                      detail="Create an Investment account under Accounts, then fund it using Add Transaction → Transfer."
+                      title={tr(
+                        'investments:no_investment_accounts_yet_2bf6c8',
+                      )}
+                      detail={tr(
+                        'investments:create_an_investment_account_under_accounts_then_d1c43b',
+                      )}
                     />
                   )}
-                  {portfolio.data.totals.map((total) => (
-                    <section
-                      className="investment-summary"
-                      key={total.currency}
-                    >
-                      <div className="investment-primary">
-                        <span className="metadata">
-                          Total investment value · {total.currency}
-                        </span>
-                        <strong>
-                          <Value
-                            value={total.total_value}
-                            currency={total.currency}
-                          />
-                        </strong>
-                        <small>
-                          {total.missing_prices
-                            ? `${total.missing_prices} position(s) have no eligible price. Known values are partial.`
-                            : `Cash plus holdings at cached prices as of ${portfolio.data.as_of}.`}
-                        </small>
-                      </div>
-                      <div className="investment-metrics">
-                        <div>
-                          <span className="metadata">Unrealized P&amp;L</span>
-                          <Value
-                            value={total.unrealized ?? null}
-                            currency={total.currency}
-                          />
+                  <details className="chart-data">
+                    <summary>
+                      {tr('investments:total_investment_value__835b3e')}
+                    </summary>
+                    {portfolio.data.totals.map((total) => (
+                      <section
+                        className="investment-summary"
+                        key={total.currency}
+                      >
+                        <div className="investment-primary">
+                          <span className="metadata">
+                            {' '}
+                            {tr(
+                              'investments:total_investment_value__835b3e',
+                            )}{' '}
+                            {total.currency}
+                          </span>
+                          <strong>
+                            <Value
+                              value={total.total_value}
+                              currency={total.currency}
+                            />
+                          </strong>
+                          <small>
+                            {total.missing_prices
+                              ? tr('messages:message_7080704e3821', {
+                                  value0: total.missing_prices,
+                                })
+                              : tr('messages:message_e513f021946d', {
+                                  value0: portfolio.data.as_of,
+                                })}
+                          </small>
                         </div>
-                        {[
-                          ['Cash', total.cash],
-                          ['Known holdings value', total.known_holdings_value],
-                          ['Cost basis', total.cost_basis],
-                          ['Realized P&L', total.realized],
-                          ['Investment income', total.income],
-                        ].map(([label, value]) => (
-                          <div key={label}>
-                            <span className="metadata">{label}</span>
-                            <Money value={value} currency={total.currency} />
+                        <div className="investment-metrics">
+                          <div>
+                            <span className="metadata">
+                              {tr('investments:unrealized_p_l_73c67e')}
+                            </span>
+                            <Value
+                              value={total.unrealized ?? null}
+                              currency={total.currency}
+                            />
                           </div>
-                        ))}
-                      </div>
-                    </section>
-                  ))}
+                          {[
+                            ['Cash', total.cash],
+                            [
+                              'Known holdings value',
+                              total.known_holdings_value,
+                            ],
+                            ['Cost basis', total.cost_basis],
+                            ['Realized P&L', total.realized],
+                            ['Investment income', total.income],
+                          ].map(([label, value]) => (
+                            <div key={label}>
+                              <span className="metadata">{ui(label)}</span>
+                              <Money value={value} currency={total.currency} />
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                  </details>
                 </>
               )}
-              {(tab === 'Overview' || tab === 'Holdings') && (
+              {tab === 'Holdings' && (
                 <>
                   <SectionHeader
-                    title="Holdings"
-                    detail="Open a security for account-level positions and related activities."
+                    title={tr('investments:holdings_72f9d3')}
+                    detail={tr(
+                      'investments:open_a_security_for_account_level_positions_and__138912',
+                    )}
                   />
                   <HoldingsTable
                     rows={portfolio.data.holdings}
@@ -655,7 +906,9 @@ export function InvestmentWorkspace({
                   {assets.data.length > 0 && (
                     <details>
                       <summary>
-                        Security directory · {assets.data.length}
+                        {' '}
+                        {tr('investments:security_directory__a9cfe1')}{' '}
+                        {assets.data.length}
                       </summary>
                       <div className="investment-actions">
                         {assets.data.map((a) => (
@@ -681,11 +934,13 @@ export function InvestmentWorkspace({
                   assets={assets.data}
                 />
               )}
-              {(tab === 'Accounts' || tab === 'Overview') && (
+              {tab === 'Accounts' && (
                 <>
                   <SectionHeader
-                    title="Investment accounts"
-                    detail="Cash is included once in total value. Incomplete prices leave totals unavailable."
+                    title={tr('investments:investment_accounts_b56bf3')}
+                    detail={tr(
+                      'investments:cash_is_included_once_in_total_value_incomplete__90c80b',
+                    )}
                   />
                   <div className="table-scroll">
                     <table className="investment-table">
@@ -716,7 +971,11 @@ export function InvestmentWorkspace({
                               >
                                 {a.name}
                               </button>
-                              {!a.active && <small>Inactive</small>}
+                              {!a.active && (
+                                <small>
+                                  {tr('investments:inactive_09af57')}
+                                </small>
+                              )}
                             </td>
                             <td>{a.currency}</td>
                             {[
@@ -745,7 +1004,11 @@ export function InvestmentWorkspace({
                     accounts={accounts}
                     assets={assets.data}
                   />
-                  <SectionHeader title="Recent cash transfers and ordinary transactions" />
+                  <SectionHeader
+                    title={tr(
+                      'investments:recent_cash_transfers_and_ordinary_transactions_cf685a',
+                    )}
+                  />
                   {recent.isPending ? (
                     <LoadingState />
                   ) : recent.isError ? (

@@ -28,7 +28,15 @@ def preferences(session):
 class PriceBook:
     def __init__(self, session, end, settings=None):
         self.synthetic = (settings or preferences(session))["fx_provider"] == "SYNTHETIC"
+        from app.fixed_income import AccrualBook
+
         self.assets = {a.id: a for a in session.scalars(select(Asset))}
+        self.fixed = AccrualBook(
+            session,
+            end,
+            self.synthetic,
+            enabled=any(a.asset_type == "BOND" for a in self.assets.values()),
+        )
         self.config = {p.asset_id: p for p in session.scalars(select(AssetPricing))}
         self.series = defaultdict(list)
         for row in session.scalars(
@@ -38,7 +46,7 @@ class PriceBook:
         ):
             if row.price_type != "ADJUSTED":
                 self.series[(row.asset_id, row.source, False)].append(row)
-                if row.price_type == "RAW_CLOSE":
+                if row.price_type in {"RAW_CLOSE", "OFFICIAL_PU"}:
                     self.series[(row.asset_id, row.source, True)].append(row)
         self.dates = {key: [r.price_date for r in rows] for key, rows in self.series.items()}
 
@@ -51,6 +59,22 @@ class PriceBook:
             and (not config.blocked_to or day <= config.blocked_to)
         ):
             return None
+        contract = self.fixed.contracts.get(asset_id)
+        if contract:
+            if day > date.today():
+                return None
+            if (
+                contract.index_source == "SYNTHETIC" and not self.synthetic
+            ) or day < contract.settlement_date:
+                return None
+            if contract.instrument_type != "TESOURO_SELIC":
+                return self.fixed.price(asset_id, day)
+            # Tesouro uses dated market unit prices, not a monotonic CDI proxy.
+            key = asset_id, contract.index_source, True
+            offset = bisect_right(self.dates.get(key, []), day) - 1
+            if offset < 0 or (day - self.series[key][offset].price_date).days > CARRY_DAYS:
+                return None
+            return self.series[key][offset]
         if config and config.mode == "MANUAL":
             sources = ["MANUAL"]
         else:
@@ -253,6 +277,17 @@ def history(
         "method": "HISTORICAL_LEDGER_VALUE",
         "carry_days": CARRY_DAYS,
         "points": points,
+        "purchase_markers": [
+            {
+                "date": day,
+                "asset_id": security,
+                "symbol": book.assets[security].symbol,
+                "quantity": quantity,
+                "currency": book.assets[security].currency,
+            }
+            for day, _sequence, _account, security, quantity, _cash in events
+            if start <= day <= end and security and quantity > ZERO
+        ],
         "warning": "Portfolio value includes contributions and withdrawals; not investment "
         "performance. Corporate actions require ledger correction "
         "and explicit coverage review.",

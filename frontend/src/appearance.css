@@ -1,0 +1,361 @@
+@import '@fontsource/geist/latin-400.css';
+@import '@fontsource/geist/latin-500.css';
+@import '@fontsource/geist/latin-600.css';
+@import '@fontsource/geist/latin-700.css';
+@import '@fontsource/manrope/latin-400.css';
+@import '@fontsource/manrope/latin-500.css';
+@import '@fontsource/manrope/latin-600.css';
+@import '@fontsource/manrope/latin-700.css';
+@import '@fontsource/ibm-plex-sans/latin-400.css';
+@import '@fontsource/ibm-plex-sans/latin-500.css';
+@import '@fontsource/ibm-plex-sans/latin-600.css';
+@import '@fontsource/ibm-plex-sans/latin-700.css';
+@import '@fontsource/dm-sans/latin-400.css';
+@import '@fontsource/dm-sans/latin-500.css';
+@import '@fontsource/dm-sans/latin-600.css';
+@import '@fontsource/dm-sans/latin-700.css';
+@import '@fontsource/source-serif-4/latin-400.css';
+@import '@fontsource/source-serif-4/latin-500.css';
+@import '@fontsource/source-serif-4/latin-600.css';
+@import '@fontsource/source-serif-4/latin-700.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/source-sans-3/latin-700.css';
+@import '@fontsource/outfit/latin-400.css';
+@import '@fontsource/outfit/latin-500.css';
+@import '@fontsource/outfit/latin-600.css';
+@import '@fontsource/outfit/latin-700.css';
+@import '@fontsource/merriweather/latin-400.css';
+@import '@fontsource/merriweather/latin-500.css';
+@import '@fontsource/merriweather/latin-600.css';
+@import '@fontsource/merriweather/latin-700.css';
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/source-sans-3/latin-400.css';
+@import '@fontsource/source-sans-3/latin-500.css';
+@import '@fontsource/source-sans-3/latin-600.css';
+
+/* The bundled DM Sans face lacks tabular digits. Keep exact financial columns aligned. */
+:root[data-font='dm'] {
+  --app-money-font: 'Inter', sans-serif;
+}
+
+/* Appearance-only tokens. Financial semantics are independent of palette. */
+:root,
+.theme-preview {
+  --app-font: 'JetBrains Mono', monospace;
+  --app-display-font: 'Merriweather', Georgia, serif;
+  --app-money-font: var(--app-font);
+  --palette-hue: 65;
+  --palette-saturation: 12%;
+  --accent-hue: 74;
+  --accent-saturation: 40%;
+  --background: hsl(var(--palette-hue) var(--palette-saturation) 97%);
+  --card: hsl(var(--palette-hue) var(--palette-saturation) 94%);
+  --elevated: hsl(var(--palette-hue) var(--palette-saturation) 99%);
+  --foreground: hsl(var(--palette-hue) 12% 12%);
+  --muted-foreground: hsl(var(--palette-hue) 9% 39%);
+  --muted: hsl(var(--palette-hue) 13% 89%);
+  --border: hsl(var(--palette-hue) 12% 85%);
+  --input: hsl(var(--palette-hue) 10% 63%);
+  --positive: #28704f;
+  --negative: #ad3b42;
+  --warning: #85600b;
+  --theme-chart-line: hsl(var(--accent-hue) var(--accent-saturation) 35%);
+  --theme-chart-secondary: #597eab;
+  --theme-chart-3: #a67a36;
+  --theme-chart-4: #906d9c;
+  --theme-chart-5: #3f8585;
+  --theme-chart-6: #bd705c;
+  --ring: var(--chart-line);
+  --sidebar: var(--background);
+  --nav-active: var(--muted);
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+  color-scheme: light;
+  font-family: var(--app-font);
+}
+:root[data-palette='graphite'] {
+  --palette-hue: 240;
+  --palette-saturation: 2%;
+  --accent-hue: 235;
+  --accent-saturation: 2%;
+}
+:root[data-palette='forest'] {
+  --palette-hue: 162;
+  --accent-hue: 164;
+}
+:root[data-palette='plum'] {
+  --palette-hue: 286;
+  --accent-hue: 285;
+}
+[data-theme='dark'] {
+  --background: hsl(var(--palette-hue) var(--palette-saturation) 7%);
+  --card: hsl(var(--palette-hue) var(--palette-saturation) 10%);
+  --elevated: hsl(var(--palette-hue) var(--palette-saturation) 14%);
+  --foreground: hsl(var(--palette-hue) 12% 89%);
+  --muted-foreground: hsl(var(--palette-hue) 8% 65%);
+  --muted: hsl(var(--palette-hue) var(--palette-saturation) 16%);
+  --border: hsl(var(--palette-hue) 9% 20%);
+  --input: hsl(var(--palette-hue) 9% 38%);
+  --positive: #8dc7a2;
+  --negative: #e89998;
+  --warning: #d5b35d;
+  --theme-chart-line: hsl(var(--accent-hue) var(--accent-saturation) 62%);
+  --theme-chart-secondary: #8aabd0;
+  --theme-chart-3: #cfb06e;
+  --theme-chart-4: #b59bc6;
+  --theme-chart-5: #79b7b3;
+  --theme-chart-6: #d39c83;
+  --ring: var(--chart-line);
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+  color-scheme: dark;
+}
+.reference-shell,
+.reference-shell input,
+.reference-shell textarea,
+.reference-shell select,
+.reference-shell button,
+.recharts-wrapper {
+  font-family: var(--app-font);
+}
+.money {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+}
+.overview-info {
+  color: var(--warning);
+}
+.overview-chart {
+  height: clamp(300px, 38vh, 430px);
+}
+.overview-balance {
+  font-size: clamp(24px, 3vw, 30px);
+  letter-spacing: -0.045em;
+}
+.overview-landscape {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--chart-line) 5%, var(--background))
+  );
+}
+.appearance-settings {
+  max-width: 1000px;
+}
+.appearance-settings section {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+.preference-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.preference-choice {
+  text-align: left;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  display: grid;
+  gap: 8px;
+}
+.preference-choice[aria-pressed='true'] {
+  border-color: var(--ring);
+  outline: 1px solid var(--ring);
+}
+.font-preview {
+  font-size: 24px;
+}
+.palette-preview {
+  display: flex;
+  gap: 4px;
+  height: 32px;
+}
+.palette-preview i {
+  flex: 1;
+  border-radius: 4px;
+  background: hsl(var(--preview-hue) var(--preview-saturation, 18%) 14%);
+}
+.palette-preview i:nth-child(2) {
+  background: hsl(var(--preview-hue) var(--preview-saturation, 24%) 35%);
+}
+.palette-preview i:nth-child(3) {
+  background: hsl(var(--preview-hue) var(--preview-saturation, 34%) 70%);
+}
+.visual-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin: 24px 0;
+}
+.visual-grid > *,
+.composition-visual {
+  min-width: 0;
+}
+.composition-visual {
+  padding: 16px;
+  background: var(--card);
+  border-radius: 12px;
+}
+.composition-legend {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.composition-legend button,
+.composition-legend .legend-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  text-align: left;
+}
+.composition-legend .money {
+  margin-left: auto;
+}
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.chart-tooltip {
+  background: var(--elevated);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font: 12px var(--app-font);
+}
+.chart-tooltip .money {
+  display: block;
+  margin-top: 4px;
+}
+.goal-visual-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+.goal-visual {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--card);
+  text-align: left;
+}
+.goal-ring {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+}
+.goal-visual strong {
+  display: block;
+  margin-bottom: 8px;
+}
+.goal-visual .metadata {
+  display: block;
+  margin-top: 4px;
+}
+.financial-disclosure {
+  margin: 20px 0;
+}
+.financial-disclosure > summary {
+  padding: 12px 0;
+  cursor: pointer;
+  font-weight: 500;
+}
+@media (max-width: 768px) {
+  .visual-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .overview-chart {
+    height: 280px;
+  }
+  .goal-visual-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.composition-legend {
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.composition-legend .money {
+  white-space: nowrap;
+}
+.composition-legend button > span:not(.money) {
+  overflow-wrap: anywhere;
+}
+
+/* Approved Classic-dark calibration; other saved palettes remain independent. */
+[data-theme='dark'][data-palette='olive'] {
+  --background: hsl(0 3% 6%);
+  --card: hsl(30 4% 11%);
+  --elevated: hsl(30 4% 13%);
+  --foreground: hsl(55 10% 79%);
+  --muted-foreground: hsl(45 4% 49%);
+  --muted: hsl(30 3% 20%);
+  --border: hsl(30 3% 15%);
+  --theme-chart-line: hsl(72 46% 41%);
+  --spending-bar: hsl(151 29% 32%);
+  --nav-active: hsl(30 3% 20%);
+}
+:root {
+  --spending-bar: var(--positive);
+}
+
+/* Additional palettes keep financial semantic colors independent of the accent. */
+:root[data-palette='ocean'] {
+  --palette-hue: 205;
+  --accent-hue: 195;
+}
+:root[data-palette='indigo'] {
+  --palette-hue: 244;
+  --accent-hue: 245;
+}
+:root[data-palette='rose'] {
+  --palette-hue: 340;
+  --accent-hue: 345;
+}
+:root[data-font]:not([data-font='mono']) {
+  --app-display-font: var(--app-font);
+}
+.palette-preview i:last-child {
+  background: hsl(
+    var(--preview-accent, var(--preview-hue))
+      var(--preview-accent-saturation, 40%) 55%
+  );
+}
+
+.money,
+.tabular-nums,
+.overview-balance {
+  font-family: var(--app-money-font);
+}
+
+:root[data-palette='teal'] {
+  --palette-hue: 178;
+  --palette-saturation: 10%;
+  --accent-hue: 178;
+  --accent-saturation: 58%;
+}
+:root[data-palette='violet'] {
+  --palette-hue: 268;
+  --palette-saturation: 10%;
+  --accent-hue: 268;
+  --accent-saturation: 58%;
+}
+:root[data-palette='crimson'] {
+  --palette-hue: 4;
+  --palette-saturation: 8%;
+  --accent-hue: 4;
+  --accent-saturation: 58%;
+}

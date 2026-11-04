@@ -5,6 +5,12 @@
 .investment-workspace .page-actions {
   flex-wrap: wrap;
 }
+.investment-workspace > .page-header {
+  margin-bottom: 12px;
+}
+.investment-workspace > .investment-toolbar {
+  margin: 8px 0;
+}
 .investment-workspace .range-tabs {
   max-width: 100%;
   overflow-x: auto;
@@ -50,7 +56,7 @@
   gap: 8px;
 }
 .investment-primary strong {
-  font-size: clamp(24px, 3vw, 36px);
+  font-size: clamp(24px, 3vw, 30px);
   font-weight: 500;
   letter-spacing: -0.04em;
 }
@@ -131,4 +137,286 @@
   .investment-table {
     min-width: 760px;
   }
+}
+.portfolio-overview-rows {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 40px;
+  margin: 12px 0;
+}
+.portfolio-overview-rows .section-header {
+  margin-top: 8px;
+}
+.portfolio-account-row,
+.portfolio-holding-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+}
+.portfolio-account-row {
+  background: var(--muted);
+  padding: 18px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+}
+.portfolio-account-row small,
+.portfolio-holding-row small {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  margin-top: 6px;
+}
+.portfolio-holding-row {
+  padding: 13px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.portfolio-holding-row > span:last-child {
+  text-align: right;
+  flex-shrink: 0;
+}
+.portfolio-holding-row > span:first-child {
+  min-width: 0;
+}
+.portfolio-holding-row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+@media (max-width: 1000px) {
+  .portfolio-overview-rows {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+.exposure-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-block: 20px;
+}
+.exposure-grid .composition-visual {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 16px;
+  min-width: 0;
+}
+.exposure-grid .section-header {
+  margin: 0 0 8px;
+}
+.income-currency {
+  max-width: 200px;
+}
+.exposure-grid .composition-legend {
+  max-height: 100px;
+  overflow: auto;
+}
+.income-visual-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 24px;
+  margin-block: 24px;
+}
+.income-visual-grid > aside {
+  min-width: 0;
+}
+@media (max-width: 1200px) {
+  .exposure-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 800px) {
+  .exposure-grid,
+  .income-visual-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.portfolio-history {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 24px;
+}
+.portfolio-history > * {
+  grid-column: 1/-1;
+}
+.portfolio-history > .investment-primary {
+  grid-column: 1;
+  padding: 8px 0;
+}
+.portfolio-history > .investment-toolbar {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  margin: 8px 0;
+}
+.portfolio-history .balance-chart {
+  margin: 8px 0;
+}
+.portfolio-history .investment-primary strong {
+  font-size: var(--text-3xl);
+}
+.investment-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+.investment-detail-grid > * {
+  min-width: 0;
+}
+.investment-detail-grid .portfolio-history {
+  display: block;
+}
+.investment-detail-values {
+  background: var(--card);
+  padding: 20px 24px;
+  border-radius: 10px;
+  margin-top: 16px;
+}
+.investment-detail-values dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+.investment-detail-values dl > div:last-child {
+  border: 0;
+}
+.investment-detail-values dt {
+  color: var(--muted-foreground);
+}
+.investment-detail-values dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.investment-workspace .investment-table td {
+  padding: 10px 12px;
+}
+@media (max-width: 1000px) {
+  .investment-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .portfolio-history {
+    display: block;
+  }
+  .portfolio-history > .investment-toolbar {
+    margin: 8px 0;
+  }
+}
+
+.investment-hero-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.investment-hero-value {
+  display: block;
+  font-size: var(--text-3xl);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.investment-hero-results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 12px;
+}
+.investment-hero-results small {
+  color: var(--muted-foreground);
+}
+.investment-hero-ranges {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+.investment-hero .balance-chart {
+  margin: 0;
+}
+.investment-hero .balance-chart figcaption {
+  font-size: var(--text-2xs);
+}
+
+.investment-dashboard {
+  position: relative;
+}
+.investment-dashboard > .page-header {
+  margin-bottom: 12px;
+}
+.investment-dashboard > .page-header .metadata {
+  display: none;
+}
+.investment-dashboard > .investment-toolbar {
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.investment-dashboard > .investment-toolbar label {
+  font-size: 11px;
+}
+.investment-dashboard .portfolio-overview-rows {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+@media (max-width: 767px) {
+  .investment-dashboard .portfolio-overview-rows {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1100px) {
+  .investment-dashboard > .page-header {
+    position: absolute;
+    right: 64px;
+    top: 0;
+    margin: 0;
+  }
+  .investment-dashboard > .page-header > div:first-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .investment-dashboard > .investment-toolbar {
+    position: absolute;
+    top: 44px;
+    right: 0;
+    margin: 0;
+  }
+  .investment-dashboard > .investment-toolbar label > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .investment-hero-heading {
+    padding-top: 8px;
+    min-height: 100px;
+  }
+  .investment-hero-heading > select {
+    position: absolute;
+    top: 4px;
+    right: 0;
+  }
+  .investment-hero-heading > div > .metadata {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+.investment-hero-ranges {
+  background: transparent;
+}
+.investment-hero-ranges button {
+  border-radius: 24px;
+  padding: 8px 12px;
+}
+.investment-dashboard .portfolio-account-row {
+  background: var(--card);
 }

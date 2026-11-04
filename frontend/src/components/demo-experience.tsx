@@ -1,3 +1,4 @@
+import { t as tr, ui } from '@/lib/i18n'
 import { useState } from 'react'
 import {
   useIsMutating,
@@ -10,74 +11,109 @@ import { request } from '@/lib/api'
 import type { Page } from './app-shell'
 import { Button } from './ui/button'
 import { ErrorState, PageHeader } from './primitives'
+import { RealMarketDemo } from './real-market-demo'
 
-const stops: { page: Page; view?: string; title: string; detail: string }[] = [
-  {
-    page: 'Overview',
-    title: 'Your fictional financial life',
-    detail:
-      'Explore Alex Morgan’s October 2024–September 2026 history. Values come from the real ledger. You can edit this separate local workspace.',
-  },
-  {
-    page: 'Transactions',
-    title: 'Review a transaction',
-    detail:
-      'Search for Cedar, open a transaction, change its category or review status. Payee names preserve the original description.',
-  },
-  {
-    page: 'Budget',
-    title: 'Follow spending targets',
-    detail:
-      'Compare monthly targets with actual spending. Shopping and travel carry signed rollover; try another month.',
-  },
-  {
-    page: 'Investments',
-    title: 'Inspect holdings',
-    detail:
-      'Three brokerage accounts use fictional instruments and dated synthetic prices. Activities reconstruct both cash and positions.',
-  },
-  {
-    page: 'Performance',
-    title: 'Compare returns',
-    detail:
-      'Choose a period and inspect TWR, XIRR and coverage. The synthetic benchmark is explicitly a price proxy, not a total-return index.',
-  },
-  {
-    page: 'Transactions',
-    view: 'imports',
-    title: 'Import a fictional statement',
-    detail:
-      'Use Demo scenarios below to prepare a CSV/OFX preview. Review new, duplicate and ambiguous rows before confirming; previews never post.',
-  },
-  {
-    page: 'Transactions',
-    view: 'reconciliation',
-    title: 'One purchase, two sources',
-    detail:
-      'A fictional 85 BRL grocery purchase has Gmail notification and OFX evidence. It counts once. Select Cash to inspect a completed historical statement.',
-  },
-  {
-    page: 'Net Worth',
-    title: 'See assets and debts together',
-    detail:
-      'Inspect dated property, vehicle and debt observations alongside ledger cash and holdings. Missing coverage stays visible.',
-  },
-  {
-    page: 'Goals',
-    title: 'Explore goals, then make it yours',
-    detail:
-      'Goals allocate existing savings without creating assets. Try an edit, then Reset demo to restore the baseline. Gmail simulation is available in Settings.',
-  },
-]
+function tourStops(): {
+  page: Page
+  view?: string
+  title: string
+  detail: string
+}[] {
+  return [
+    {
+      page: 'Overview',
+      title: tr('tour:your_fictional_financial_life_60965b'),
+      detail: tr(
+        'tour:explore_alex_morgan_s_october_2024_september_202_b5dedf',
+      ),
+    },
+    {
+      page: 'Transactions',
+      title: tr('tour:review_a_transaction_a36a9f'),
+      detail: tr(
+        'tour:search_for_cedar_open_a_transaction_change_its_c_114ab1',
+      ),
+    },
+    {
+      page: 'Budget',
+      title: tr('tour:follow_spending_targets_2ded3e'),
+      detail: tr(
+        'tour:compare_monthly_targets_with_actual_spending_sho_6627e1',
+      ),
+    },
+    {
+      page: 'Investments',
+      title: tr('tour:inspect_holdings_58c457'),
+      detail: tr(
+        'tour:three_brokerage_accounts_use_fictional_instrumen_1e1a53',
+      ),
+    },
+    {
+      page: 'Performance',
+      title: tr('tour:compare_returns_ee9953'),
+      detail: tr(
+        'tour:choose_a_period_and_inspect_twr_xirr_and_coverag_cc9b18',
+      ),
+    },
+    {
+      page: 'Investments',
+      view: 'Fixed Income',
+      title: tr('fixed_income:compare_cdb'),
+      detail: tr('fixed_income:compare_guide'),
+    },
+    {
+      page: 'Investments',
+      view: 'Fixed Income',
+      title: tr('fixed_income:inspect_selic'),
+      detail: tr('fixed_income:selic_guide'),
+    },
+    {
+      page: 'Transactions',
+      view: 'imports',
+      title: tr('tour:import_a_fictional_statement_8ed923'),
+      detail: tr(
+        'tour:use_demo_scenarios_below_to_prepare_a_csv_ofx_pr_64c484',
+      ),
+    },
+    {
+      page: 'Transactions',
+      view: 'reconciliation',
+      title: tr('tour:one_purchase_two_sources_45bd92'),
+      detail: tr(
+        'tour:a_fictional_85_brl_grocery_purchase_has_gmail_no_61043e',
+      ),
+    },
+    {
+      page: 'Net Worth',
+      title: tr('tour:see_assets_and_debts_together_dd8cec'),
+      detail: tr(
+        'tour:inspect_dated_property_vehicle_and_debt_observat_ca54e7',
+      ),
+    },
+    {
+      page: 'Goals',
+      title: tr('tour:explore_goals_then_make_it_yours_2ba80b'),
+      detail: tr(
+        'tour:goals_allocate_existing_savings_without_creating_9cb985',
+      ),
+    },
+  ]
+}
 
 export function DemoExperience() {
-  const { runtime, reset } = useDemoRuntime()
-  const [step, setStep] = useState<number | null>(0)
+  const stops = tourStops()
+  const { runtime, reset, selectScenario } = useDemoRuntime()
+  const [step, setStep] = useState<number | null>(null)
   const [scenarios, setScenarios] = useState(false)
   const pending = useIsMutating()
   const action = useMutation({
     mutationFn: async () => {
       await reset?.()
+    },
+  })
+  const scenarioAction = useMutation({
+    mutationFn: async (scenario: string) => {
+      await selectScenario?.(scenario)
     },
   })
   if (!runtime) return null
@@ -87,57 +123,104 @@ export function DemoExperience() {
     navigateTo(stop.page, undefined, stop.view ? { view: stop.view } : {})
   }
   return (
-    <aside className="demo-experience" aria-label="Fictional demo controls">
-      <div className="flex flex-wrap items-center gap-3">
-        <strong className="text-sm">Fictional local demo</strong>
-        <span className="metadata">
-          {runtime.profile} · Sep 2026 · Separate local data
-        </span>
-        <div className="ml-auto flex flex-wrap gap-2">
-          <Button variant="ghost" size="sm" onClick={() => go(0)}>
-            Guided tour
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setScenarios(!scenarios)}
-          >
-            Demo scenarios
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pending > 0}
-            onClick={() => {
-              if (
-                window.confirm(
-                  'Reset this fictional demo? All demo edits will be replaced by the original dataset. Normal financial data is untouched.',
-                )
-              )
-                action.mutate()
-            }}
-          >
-            {action.isPending ? 'Resetting…' : 'Reset demo'}
-          </Button>
+    <aside
+      className="demo-experience"
+      aria-label={tr('demo_experience:fictional_demo_controls_d38e52')}
+    >
+      <details className="demo-menu">
+        <summary>{ui('Demo')}</summary>
+        <div className="demo-menu-content">
+          <div className="flex flex-wrap items-center gap-3">
+            <strong className="text-sm">
+              {tr('demo_experience:fictional_local_demo_4848ab')}
+            </strong>
+            <span className="metadata">
+              {runtime.profile} {runtime.end_date}
+            </span>
+            {runtime.scenarios && runtime.scenarios.length > 1 && (
+              <label className="metadata">
+                {tr('real_market:scenario')}
+                <select
+                  aria-label={tr('real_market:scenario')}
+                  value={runtime.scenario ?? 'synthetic'}
+                  disabled={pending > 0 || scenarioAction.isPending}
+                  onChange={(event) =>
+                    scenarioAction.mutate(event.target.value)
+                  }
+                >
+                  {runtime.scenarios.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <div className="ml-auto flex flex-wrap gap-2">
+              {runtime.scenario !== 'real-market-br' && (
+                <Button variant="ghost" size="sm" onClick={() => go(0)}>
+                  {tr('demo_experience:guided_tour_5a0d30')}
+                </Button>
+              )}
+              {runtime.scenario !== 'real-market-br' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setScenarios(!scenarios)}
+                >
+                  {tr('demo_experience:demo_scenarios_85b9bc')}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={pending > 0}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      tr(
+                        'dynamic:reset_this_fictional_demo_all_demo_edits_will_be_c96a26',
+                      ),
+                    )
+                  )
+                    action.mutate()
+                }}
+              >
+                {action.isPending
+                  ? tr('dynamic:resetting__6d27dc')
+                  : tr('dynamic:reset_demo_e5d736')}
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      </details>
       {action.isError && <ErrorState text={action.error.message} />}
+      {scenarioAction.isError && (
+        <ErrorState text={scenarioAction.error.message} />
+      )}
+      {runtime.scenario === 'real-market-br' && (
+        <p className="metadata" role="status">
+          {tr('real_market:disclosure')}
+        </p>
+      )}
+      {runtime.scenario === 'real-market-br' && <RealMarketDemo />}
       {step !== null && (
         <div className="demo-tour" aria-live="polite">
           <div>
             <span className="metadata">
-              Tour {step + 1} / {stops.length}
+              {' '}
+              {tr('demo_experience:tour_cd9e8f')} {step + 1} / {stops.length}
             </span>
             <h2 className="text-sm font-medium">{stops[step].title}</h2>
             <p className="metadata mt-1 max-w-3xl">{stops[step].detail}</p>
           </div>
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" onClick={() => setStep(null)}>
-              Skip tour
+              {tr('demo_experience:skip_tour_57bc79')}
             </Button>
             {step > 0 && (
               <Button size="sm" variant="outline" onClick={() => go(step - 1)}>
-                Previous
+                {tr('demo_experience:previous_50f942')}
               </Button>
             )}
             <Button
@@ -147,18 +230,21 @@ export function DemoExperience() {
                 step === stops.length - 1 ? setStep(null) : go(step + 1)
               }
             >
-              {step === stops.length - 1 ? 'Finish tour' : 'Next'}
+              {step === stops.length - 1
+                ? tr('dynamic:finish_tour_cee41f')
+                : tr('dynamic:next_bc9819')}
             </Button>
           </div>
         </div>
       )}
-      {scenarios && <DemoScenarios />}
+      {scenarios && runtime.scenario !== 'real-market-br' && <DemoScenarios />}
     </aside>
   )
 }
 
 export function DemoScenarios({ settings = false }: { settings?: boolean }) {
   const client = useQueryClient()
+  const { runtime } = useDemoRuntime()
   const action = useMutation({
     mutationFn: async (kind: string) =>
       request(`/demo-control/${kind}`, { method: 'POST' }),
@@ -170,17 +256,21 @@ export function DemoScenarios({ settings = false }: { settings?: boolean }) {
       })
     },
   })
+  if (runtime?.scenario === 'real-market-br') return null
   return (
     <section className="demo-scenarios">
       {settings && (
         <PageHeader
-          title="Gmail Notification Simulation"
-          description="Fictional messages pass through the real parser and review workflow. Gmail is not connected. No credentials or network access are used."
+          title={tr('demo_experience:gmail_notification_simulation_cf5d19')}
+          description={tr(
+            'demo_experience:fictional_messages_pass_through_the_real_parser__4759b2',
+          )}
         />
       )}
       <p className="metadata mb-3">
-        Synthetic examples only. Previews require explicit review and
-        confirmation. Repeating the notification retains its source identity.
+        {tr(
+          'demo_experience:synthetic_examples_only_previews_require_explici_e67c62',
+        )}
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -189,7 +279,7 @@ export function DemoScenarios({ settings = false }: { settings?: boolean }) {
           disabled={action.isPending}
           onClick={() => action.mutate('notification')}
         >
-          Simulate Gmail notification
+          {tr('demo_experience:simulate_gmail_notification_ffbf4f')}
         </Button>
         {['demo-checking.csv', 'demo-credit-card.csv', 'demo-checking.ofx'].map(
           (name) => (
@@ -200,15 +290,18 @@ export function DemoScenarios({ settings = false }: { settings?: boolean }) {
                 disabled={action.isPending}
                 onClick={() => action.mutate(`sample/${name}`)}
               >
-                Preview {name}
+                {' '}
+                {tr('demo_experience:preview_f1fbb2')} {name}
               </Button>
               <a
                 className="text-xs underline"
                 href={`/api/demo-control/files/${name}`}
                 download
-                aria-label={`Download ${name}`}
+                aria-label={tr('messages:message_316d33da8523', {
+                  value0: name,
+                })}
               >
-                Download
+                {tr('demo_experience:download_a479c9')}
               </a>
             </span>
           ),

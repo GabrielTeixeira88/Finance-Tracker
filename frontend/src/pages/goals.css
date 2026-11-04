@@ -1,0 +1,186 @@
+/* Adapted image-free goal card hierarchy: pinned goal-card.tsx, AGPL-3.0-only. */
+.goals-overview .page-header {
+  margin-bottom: 22px;
+}
+.goals-overview .wealth-metrics {
+  gap: 12px 32px;
+  margin: 0 0 24px;
+}
+.goals-overview .wealth-metrics > span {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: var(--text-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.goals-overview .wealth-metrics > span > .money,
+.goals-overview .wealth-metrics > span > span {
+  font-size: 16px;
+  letter-spacing: -0.025em;
+  text-transform: none;
+}
+.goals-overview .goal-visual-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 24px;
+}
+.goal-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  text-align: start;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+.goal-visual:hover {
+  border-color: var(--muted-foreground);
+}
+.goal-visual:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+.goal-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 12px;
+  padding: 16px 16px 13px;
+}
+.goal-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.goal-card-identity {
+  min-width: 0;
+}
+.goal-visual strong {
+  margin: 0;
+  font: 400 20px/1.25 var(--app-display-font);
+  overflow-wrap: anywhere;
+}
+.goal-card-deadline {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted-foreground);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.goal-card-completion {
+  flex-shrink: 0;
+  text-align: end;
+  font: 400 20px/1.25 var(--app-display-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+.goal-card-completion.is-positive {
+  color: var(--success);
+}
+.goal-card-completion.negative {
+  color: var(--destructive);
+}
+.goal-card-label {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: var(--text-2xs);
+  line-height: 1.5;
+  font-weight: 400;
+}
+.goal-card-completion .goal-card-label {
+  font-family: var(--app-font);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.goal-card-state {
+  align-self: flex-start;
+  padding: 2px 5px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.goal-card-state.negative {
+  color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 18%, var(--card));
+}
+.goal-card-amounts {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: auto;
+}
+.goal-card-amounts > span {
+  min-width: 0;
+}
+.goal-card-amounts > span > .money {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+.goal-card-label .money {
+  font-size: inherit;
+  font-weight: 400;
+}
+.goal-card-remaining {
+  text-align: end;
+}
+.goal-card-track {
+  display: block;
+  height: 5px;
+  position: relative;
+  background: var(--muted);
+}
+.goal-card-fill {
+  display: block;
+  height: 100%;
+  background: var(--muted-foreground);
+}
+.goal-card-fill.is-positive {
+  background: var(--success);
+}
+.goal-card-fill.is-overdue {
+  background: var(--destructive);
+}
+.goal-card-segments {
+  display: flex;
+  position: absolute;
+  inset: 0;
+}
+.goal-card-segments > span {
+  flex: 1;
+  border-inline-end: 1px solid var(--card);
+}
+.goal-card-segments > span:last-child {
+  border: 0;
+}
+@media (max-width: 1199px) {
+  .goals-overview .goal-visual-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 639px) {
+  .goals-overview .goal-visual-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .goal-visual {
+    transition: none;
+  }
+}

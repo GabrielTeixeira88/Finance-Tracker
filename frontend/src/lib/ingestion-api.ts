@@ -1,3 +1,4 @@
+import { ui } from '@/lib/i18n'
 import { z } from 'zod'
 import { request } from './api'
 
@@ -128,11 +129,12 @@ export async function fileContent(file: File): Promise<string> {
     !file.size ||
     file.size > 2 * 1024 * 1024
   )
-    throw new Error('Choose a nonempty CSV/OFX file of at most 2 MiB.')
+    throw new Error(ui('Choose a nonempty CSV/OFX file of at most 2 MiB.'))
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(String(reader.result).split(',')[1])
-    reader.onerror = () => reject(new Error('Unable to read the local file.'))
+    reader.onerror = () =>
+      reject(new Error(ui('Unable to read the local file.')))
     reader.readAsDataURL(file)
   })
 }

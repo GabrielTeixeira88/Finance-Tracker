@@ -126,6 +126,22 @@ def summary(
             {"category_id": str(k) if k else None, "spent": spending.money(v)}
             for k, v in data["categories"].items()
         ],
+        "payees": [
+            {"payee_id": str(k) if k else None, "spent": spending.money(v)}
+            for k, v in data["payees"].items()
+        ],
+        "daily": [
+            {"date": day, "amount": spending.money(amount)}
+            for day, amount in sorted(data["daily"].items())
+        ],
+        "monthly": [
+            {
+                "month": day.isoformat()[:7],
+                "income": spending.money(values[0]),
+                "expenses": spending.money(values[1]),
+            }
+            for day, values in sorted(data["monthly"].items())
+        ],
     }
 
 

@@ -140,7 +140,10 @@ const portfolio = {
   positions: [{ ...holding, account_id: account.id }],
 }
 
-function setup(mode: 'normal' | 'error' | 'pending' = 'normal') {
+function setup(
+  mode: 'normal' | 'error' | 'pending' = 'normal',
+  view = 'Holdings',
+) {
   const fetch = vi.fn(async (path: string, init?: RequestInit) => {
     if (mode === 'pending') return new Promise<Response>(() => {})
     if (mode === 'error')
@@ -172,6 +175,7 @@ function setup(mode: 'normal' | 'error' | 'pending' = 'normal') {
       mutations: { retry: false },
     },
   })
+  window.history.replaceState(null, '', `/#/investments?view=${view}`)
   render(
     <QueryClientProvider client={client}>
       <InvestmentWorkspace
@@ -192,10 +196,14 @@ it('renders exact holdings, cash and missing-price state without invented market
   expect(within(table).getByText('R$603.00')).toBeInTheDocument()
   expect(within(table).getByText('R$100.50')).toBeInTheDocument()
   expect(within(table).getByText('R$73.00')).toBeInTheDocument()
+  expect(within(table).getAllByText('Unavailable')).toHaveLength(3)
+  await userEvent.click(screen.getByRole('button', { name: 'Overview' }))
+  await userEvent.click(
+    screen.getByText(/Total investment value/, { selector: 'summary' }),
+  )
   expect(
     screen.getByText(/position\(s\) have no eligible price/),
   ).toBeInTheDocument()
-  expect(within(table).getAllByText('Unavailable')).toHaveLength(3)
 })
 
 it('opens security positions and scopes the portfolio to an investment account', async () => {
@@ -328,9 +336,9 @@ it('adds a dated manual price from security detail', async () => {
 })
 
 it('opens the brokerage mapping and saved-profile workflow', async () => {
-  setup()
-  await screen.findByRole('table', { name: 'Investment holdings' })
-  await userEvent.click(screen.getByRole('button', { name: 'Imports' }))
+  setup('normal', 'Activity')
+  await screen.findByLabelText('Tools')
+  await userEvent.selectOptions(screen.getByLabelText('Tools'), 'imports')
   expect(await screen.findByLabelText('Brokerage CSV file')).toBeInTheDocument()
   expect(
     screen.getByRole('button', { name: 'Preview brokerage CSV' }),
@@ -351,4 +359,21 @@ it('shows a compact loading state', () => {
   expect(screen.getByRole('status')).toHaveTextContent(
     'Reconstructing investment positions',
   )
+})
+
+it('keeps investment account, valuation date and security in bookmark state', async () => {
+  setup()
+  await screen.findByRole('table', { name: 'Investment holdings' })
+  await userEvent.selectOptions(
+    screen.getByLabelText('Portfolio account'),
+    account.id,
+  )
+  expect(window.location.hash).toContain(`account=${account.id}`)
+  const input = screen.getByLabelText('Valuation as of')
+  const { fireEvent } = await import('@testing-library/react')
+  fireEvent.change(input, { target: { value: '2026-08-31' } })
+  expect(window.location.hash).toContain('end=2026-08-31')
+  await userEvent.click(await screen.findByRole('button', { name: 'FAKE11' }))
+  expect(window.location.hash).toContain(`asset=${asset.id}`)
+  expect(screen.getByLabelText('Valuation as of')).toHaveValue('2026-08-31')
 })

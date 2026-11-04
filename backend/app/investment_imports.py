@@ -75,7 +75,7 @@ class Decision(Input):
 
 def require_batch(session, id):
     batch = ledger.require(session, ImportBatch, id)
-    if batch.source_type != "BROKERAGE_CSV":
+    if batch.source_type not in {"BROKERAGE_CSV", "PLUGGY_INVESTMENT"}:
         raise HTTPException(422, "Choose a brokerage import")
     return batch
 
@@ -127,6 +127,14 @@ def create_batch(session, data):
 
 
 def candidate(session, batch, source):
+    if batch.source_type == "PLUGGY_INVESTMENT":
+        from app.pluggy_service import stale_error
+
+        if problem := stale_error(session, source):
+            raise ValueError(problem)
+        if source.validation_errors:
+            raise ValueError("; ".join(source.validation_errors))
+        return ActivityInput.model_validate(source.raw_data["activity"])
     raw, config = source.raw_data, Mapping.model_validate(batch.configuration)
     security = None
     if raw.get("symbol"):
@@ -222,8 +230,13 @@ def preview(session, batch):
             try:
                 data = candidate(session, batch, source)
                 item["candidate"] = data.model_dump(mode="json")
+                if data.asset_id:
+                    asset = ledger.require(session, Asset, data.asset_id)
+                    item["candidate"].update(symbol=asset.symbol, exchange=asset.exchange)
                 item["candidate"]["cash_amount"] = str(data.cash_amount)
-                item["candidate"]["symbol"] = source.raw_data.get("symbol", "")
+                item["candidate"]["symbol"] = source.raw_data.get("symbol") or item[
+                    "candidate"
+                ].get("symbol", "")
                 claims = [InvestmentSourceLink.file_claim == source.source_fingerprint]
                 if source.external_fingerprint:
                     claims.append(

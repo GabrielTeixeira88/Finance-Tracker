@@ -1,3 +1,4 @@
+import { t as tr, ui } from '@/lib/i18n'
 import { Suspense } from 'react'
 import { useHistory } from '@/lib/use-history'
 import {
@@ -34,23 +35,31 @@ export default function Preview({
   return (
     <>
       <PageHeader
-        title={page}
+        title={ui(page)}
         description={
           illustrative
-            ? 'Synthetic design preview. No financial engine or editing tools.'
-            : 'Read-only layout preview using your actual ledger history.'
+            ? tr(
+                'dynamic:synthetic_design_preview_no_financial_engine_or__601f2f',
+              )
+            : tr(
+                'dynamic:read_only_layout_preview_using_your_actual_ledge_4d34a8',
+              )
         }
       >
-        <Badge>Preview</Badge>
+        <Badge>{tr('previews:preview_f1fbb2')}</Badge>
       </PageHeader>
       <p className="demo-notice">
         {illustrative
-          ? 'Fictional illustration only. Budget targets and portfolio examples are separate from your ledger and never affect account balances.'
-          : 'Ledger balances only. This is not a net-worth valuation or a full reporting engine.'}
+          ? tr(
+              'dynamic:fictional_illustration_only_budget_targets_and_p_723fc4',
+            )
+          : tr(
+              'dynamic:ledger_balances_only_this_is_not_a_net_worth_val_5196a8',
+            )}
       </p>
       {demo.isError || result.isError ? (
         <ErrorState
-          text="Unable to load preview."
+          text={tr('previews:unable_to_load_preview__779028')}
           retry={() => {
             void demo.refetch()
             void result.refetch()
@@ -60,8 +69,10 @@ export default function Preview({
         <LoadingState />
       ) : illustrative && !fixture ? (
         <EmptyState
-          title="Demo workspace required"
-          detail="Use the documented historical demo command with a separate empty database to explore these fictional layouts."
+          title={tr('previews:demo_workspace_required_227025')}
+          detail={tr(
+            'previews:use_the_documented_historical_demo_command_with__20306a',
+          )}
         />
       ) : (
         <>
@@ -70,7 +81,8 @@ export default function Preview({
               <DateRangeTabs value={period} onChange={setPeriod} />
               {series && result.data.series.length > 1 && (
                 <label className="field">
-                  Currency
+                  {' '}
+                  {tr('previews:currency_e070de')}{' '}
                   <select
                     value={series.currency}
                     onChange={(e) => setCurrency(e.target.value)}
@@ -86,14 +98,15 @@ export default function Preview({
           {page === 'Performance' && fixture && (
             <>
               <section className="primary-value">
-                <h2>Illustrative balance path</h2>
+                <h2>{tr('previews:illustrative_balance_path_40f730')}</h2>
                 <Money
                   value={fixture.performance.at(-1)?.balance ?? '0'}
                   currency={fixture.currency}
                 />
                 <p className="metadata">
-                  Static synthetic scenario · No live prices, returns, or
-                  benchmark calculations
+                  {tr(
+                    'previews:static_synthetic_scenario_no_live_prices_returns_a731f3',
+                  )}
                 </p>
               </section>
               {page === 'Performance' && (
@@ -106,9 +119,9 @@ export default function Preview({
                     />
                   </Suspense>
                   <p className="metadata">
-                    These fixture points illustrate chart composition only.
-                    Contributions and market movements are not separated; do not
-                    interpret this path as investment performance.
+                    {tr(
+                      'previews:these_fixture_points_illustrate_chart_compositio_891a97',
+                    )}
                   </p>
                 </>
               )}
@@ -116,18 +129,18 @@ export default function Preview({
           )}
           {(page === 'Net Worth' || page === 'Reports') &&
             (!series ? (
-              <EmptyState title="No ledger history yet" />
+              <EmptyState title={tr('previews:no_ledger_history_yet_b93bd7')} />
             ) : (
               <>
                 <section className="primary-value">
-                  <h2>Total balance</h2>
+                  <h2>{tr('previews:total_balance_891433')}</h2>
                   <Money
                     value={series.total_balance}
                     currency={series.currency}
                   />
                   <p className="metadata">
                     {result.data.date_from} – {result.data.date_to} ·{' '}
-                    {series.currency} only
+                    {series.currency} {tr('previews:only_f8969a')}{' '}
                   </p>
                 </section>
                 {page === 'Net Worth' && (
@@ -140,8 +153,10 @@ export default function Preview({
                 )}
                 <div className="dashboard-grid">
                   <Panel
-                    title="Account breakdown"
-                    detail="Includes credit-card ledger debt and investment cash"
+                    title={tr('previews:account_breakdown_4149b3')}
+                    detail={tr(
+                      'previews:includes_credit_card_ledger_debt_and_investment__aa5921',
+                    )}
                   >
                     <AccountRows
                       accounts={result.data.accounts.filter(
@@ -151,44 +166,45 @@ export default function Preview({
                     />
                   </Panel>
                   {page === 'Reports' ? (
-                    <Panel title="Spending by category">
+                    <Panel title={tr('previews:spending_by_category_d4aadf')}>
                       <SpendingList series={series} />
                     </Panel>
                   ) : (
-                    <Panel title="What this includes">
+                    <Panel title={tr('previews:what_this_includes_3ab7d7')}>
                       <p className="metadata">
-                        Account balances reconstructed from opening balances and
-                        all non-deleted transactions through the selected date.
-                        No external assets, market valuations, or net-worth
-                        snapshots are added.
+                        {tr(
+                          'previews:account_balances_reconstructed_from_opening_bala_4eb5ed',
+                        )}
                       </p>
                     </Panel>
                   )}
                   {page === 'Reports' && (
                     <Panel
-                      title="Income vs expenses"
-                      detail="Transfers and opening balances excluded"
+                      title={tr('previews:income_vs_expenses_8fc62b')}
+                      detail={tr(
+                        'previews:transfers_and_opening_balances_excluded_edc272',
+                      )}
                     >
                       <div className="cash-flow-metrics">
                         <SummaryMetric
-                          title="Income"
+                          title={tr('previews:income_1c89b1')}
                           value={series.income}
                           currency={series.currency}
-                          detail="Selected period"
+                          detail={tr('previews:selected_period_043cb5')}
                           tone="positive"
                         />
                         <SummaryMetric
-                          title="Expenses"
+                          title={tr('previews:expenses_8d437d')}
                           value={series.expenses}
                           currency={series.currency}
-                          detail="Selected period"
+                          detail={tr('previews:selected_period_043cb5')}
                           tone="negative"
                         />
                         <SummaryMetric
-                          title="Net cash flow"
+                          title={tr('previews:net_cash_flow_d649f1')}
                           value={series.net_flow}
                           currency={series.currency}
-                          detail="Selected period"
+                          detail={tr('previews:selected_period_043cb5')}
                         />
                       </div>
                     </Panel>

@@ -1,3 +1,4 @@
+import { t as tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -38,16 +39,23 @@ export function TransactionSources({
         .parse(await request(`/transactions/${row.id}/sources`)),
   })
   return (
-    <section className="editor-surface mb-4" aria-label="Transaction evidence">
+    <section
+      className="editor-surface mb-4"
+      aria-label={tr('transaction_sources:transaction_evidence_fb8d54')}
+    >
       <div className="section-header">
-        <h2>{row.description} · Bank evidence</h2>
+        <h2>
+          {row.description}{' '}
+          {tr('transaction_sources:_bank_evidence_7dc0ed')}{' '}
+        </h2>
         <Button variant="outline" onClick={onClose}>
-          Close evidence
+          {tr('transaction_sources:close_evidence_c2fd16')}
         </Button>
       </div>
       <p className="metadata">
-        Review and clearing are independent. Gmail notifications alone do not
-        verify bank posting.
+        {tr(
+          'transaction_sources:review_and_clearing_are_independent_gmail_notifi_3ce5ed',
+        )}
       </p>
       {data.isPending && <LoadingState />}
       {data.error && <ErrorState text={data.error.message} />}
@@ -55,7 +63,7 @@ export function TransactionSources({
         <>
           <p>{data.data.clearing_status}</p>
           <div className="filter-bar">
-            <Field label="Bank posting date">
+            <Field label={tr('transaction_sources:bank_posting_date_8c129a')}>
               <input
                 type="date"
                 value={bankDate}
@@ -63,12 +71,16 @@ export function TransactionSources({
                 disabled={!!sourceId}
               />
             </Field>
-            <Field label="Clearing evidence">
+            <Field label={tr('transaction_sources:clearing_evidence_f08ff5')}>
               <select
                 value={sourceId}
                 onChange={(e) => setSourceId(e.target.value)}
               >
-                <option value="">Manual statement verification</option>
+                <option value="">
+                  {tr(
+                    'transaction_sources:manual_statement_verification_625c0c',
+                  )}
+                </option>
                 {data.data.sources
                   .filter((s) => !s.detached && s.source_type !== 'GMAIL')
                   .map((s) => (
@@ -95,25 +107,32 @@ export function TransactionSources({
               }
             >
               {data.data.clearing_status === 'UNCLEARED'
-                ? 'Mark cleared'
-                : 'Mark uncleared'}
+                ? tr('dynamic:mark_cleared_6461b2')
+                : tr('dynamic:mark_uncleared_ed52fb')}
             </Button>
           </div>
           {data.data.statement_ids.length > 0 && (
             <p className="metadata">
-              Reopen the completed statement in Reconcile → Statements before
-              editing.
+              {tr(
+                'transaction_sources:reopen_the_completed_statement_in_reconcile_stat_b86651',
+              )}
             </p>
           )}
           {!data.data.sources.length && (
-            <p className="metadata">Manual entry · no imported sources.</p>
+            <p className="metadata">
+              {tr(
+                'transaction_sources:manual_entry_no_imported_sources__4390f2',
+              )}
+            </p>
           )}
           {data.data.sources.map((source) => (
             <details className="py-2" key={source.id}>
               <summary>
                 {source.source_type} ·{' '}
                 {String(source.candidate.transaction_date ?? '')} ·{' '}
-                {source.detached ? 'Detached (history retained)' : 'Linked'}
+                {source.detached
+                  ? tr('dynamic:detached_history_retained__814331')
+                  : tr('dynamic:linked_a089f6')}
               </summary>
               <pre className="overflow-auto text-xs">
                 {JSON.stringify(source.raw, null, 2)}

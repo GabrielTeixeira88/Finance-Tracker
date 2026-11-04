@@ -268,6 +268,8 @@ def monthly(session, month, currency, as_of=None):
             "change_percent": ratio(expenses - previous, previous),
         }
         days = (end - selected).days
+        from app.spending_insights import facts
+
         return {
             "month": month,
             "currency": currency,
@@ -280,6 +282,7 @@ def monthly(session, month, currency, as_of=None):
             "groups": groups,
             "trend": trend,
             "pace": spending.pace(selected, as_of, expenses),
+            "narrative": facts(session, selected, as_of, currency, rows, summary, daily),
             "daily": [
                 {
                     "date": (selected + timedelta(days=i)).isoformat(),

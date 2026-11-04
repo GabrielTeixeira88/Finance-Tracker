@@ -7,34 +7,10 @@
 @import '@fontsource/jetbrains-mono/700.css';
 
 .reference-shell {
-  --background: hsl(48 100% 97%);
-  --foreground: hsl(0 3% 6%);
-  --card: hsl(51 59% 95%);
-  --sidebar: var(--background);
-  --muted: hsl(51 21% 88%);
-  --muted-foreground: hsl(50 3% 42%);
-  --border: hsl(51 21% 88%);
-  --input: hsl(50 14% 83%);
-  --nav-active: hsl(50 14% 83%);
-  --positive: hsl(73 84% 27%);
-  --negative: hsl(3 62% 42%);
-  --chart-line: var(--positive);
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  font-family: 'JetBrains Mono', monospace;
-}
-:root[data-theme='dark'] .reference-shell {
-  --background: hsl(0 3% 6%);
-  --foreground: hsl(55 10% 79%);
-  --card: hsl(30 4% 11%);
-  --muted: hsl(30 3% 15%);
-  --muted-foreground: hsl(43 3% 52%);
-  --border: hsl(30 3% 15%);
-  --input: hsl(40 3% 20%);
-  --nav-active: hsl(40 3% 20%);
-  --positive: hsl(72 46% 41%);
-  --negative: hsl(5 61% 54%);
+  font-family: var(--app-font);
 }
 .reference-shell .desktop-sidebar {
   width: 220px;
@@ -54,7 +30,7 @@
   white-space: nowrap;
 }
 .reference-shell .brand-label .metadata {
-  font-size: 9px;
+  font-size: var(--text-2xs);
 }
 .reference-shell .project-mark {
   width: 40px;
@@ -130,7 +106,7 @@
   border: 2px solid var(--muted-foreground);
   border-radius: 50%;
   margin: 12px auto 10px;
-  font-size: 10px;
+  font-size: var(--text-2xs);
 }
 .reference-shell .main-content {
   margin-left: 220px;
@@ -403,7 +379,7 @@
   font-size: 12px;
 }
 .overview-reference .activity-list .metadata {
-  font-size: 10px;
+  font-size: var(--text-2xs);
 }
 .overview-reference .activity-list .money {
   font-size: 12px;
@@ -615,7 +591,7 @@
 }
 
 .reference-shell .destructive-action {
-  color: var(--negative);
+  color: var(--destructive);
 }
 
 /* Demo-only controls use the existing restrained surfaces. */
@@ -639,4 +615,124 @@
     align-items: flex-start;
     flex-direction: column;
   }
+}
+.goal-plan {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-block: 20px;
+}
+.goal-plan > * {
+  min-width: 0;
+}
+.goal-plan aside {
+  padding: 16px;
+  background: var(--muted);
+  border-radius: 8px;
+}
+@media (max-width: 700px) {
+  .goal-plan {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Approved shell, with Accounts as an intentional extra primary destination. */
+.reference-shell .main-content {
+  padding: 16px;
+}
+.reference-shell .primary-nav {
+  min-height: 0;
+  flex: 1;
+}
+.reference-shell .primary-nav > :last-child {
+  margin-top: auto;
+}
+.reference-shell .main-content > .section-navigation {
+  margin: 0 64px 24px 0;
+  width: fit-content;
+}
+.reference-shell .demo-experience {
+  position: relative;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  background: transparent;
+}
+.demo-menu {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 30;
+}
+.demo-menu > summary {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 7px 10px;
+  border-radius: 20px;
+  background: var(--card);
+}
+.demo-menu-content {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  width: min(420px, calc(100vw - 48px));
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.demo-tour,
+.demo-scenarios {
+  margin: 48px 0 16px;
+}
+.reference-shell .nav-item:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+@media (max-width: 1023px) {
+  .reference-shell .main-content {
+    padding: 16px;
+  }
+}
+
+.reference-shell .main-content > .section-navigation {
+  display: flex;
+  gap: 0;
+  border: 0;
+  border-radius: 24px;
+  background: var(--card);
+  padding: 4px;
+  height: 40px;
+  margin-bottom: 24px;
+}
+.reference-shell .main-content > .section-navigation button {
+  border: 0;
+  border-radius: 20px;
+  font-size: 14px;
+  padding: 6px 14px;
+}
+.reference-shell
+  .main-content
+  > .section-navigation
+  button[aria-current='page'] {
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: none;
+}
+.spending-overview .spending-periods {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 65px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.spending-overview .spending-periods button {
+  border-radius: 20px;
+  background: transparent;
+}
+.spending-overview .spending-periods button[aria-pressed='true'] {
+  background: var(--card);
 }

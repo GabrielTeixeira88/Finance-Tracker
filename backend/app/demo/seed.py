@@ -1,4 +1,4 @@
-"""One fictional household, fixed October 2024–September 2026 history."""
+"""Legacy regression household; not offered by the current demo entry point."""
 
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -282,7 +282,7 @@ def seed(session):
             rules.save_rule(
                 session,
                 RuleInput(
-                    name="Synthetic / " + name,
+                    name=name,
                     priority=priority,
                     conditions=conditions,
                     actions={
@@ -377,6 +377,29 @@ def seed(session):
         from app.demo.scenarios import seed_scenarios
 
         seed_scenarios(session, accounts, categories)
+        from app.demo.fixed_income import seed_fixed_income
+
+        seed_fixed_income(session, accounts, identity, START, END, STAMP)
+        from app.demo.life_events import seed_life_events
+
+        seed_life_events(session)
+        from app.analytics_models import AssetClassification
+
+        for asset in session.scalars(select(Asset).order_by(Asset.symbol)):
+            sector, geography = {
+                "DEMOUP": ("Fictional technology", "Brazil"),
+                "DEMOLOSS": ("Fictional retail", "Brazil"),
+                "DEMOUS": ("Fictional diversified fund", "United States"),
+                "DEMOEU": ("Fictional diversified fund", "Europe"),
+            }.get(
+                asset.symbol,
+                ("Fixed income", "Brazil") if asset.asset_type == "BOND" else (None, None),
+            )
+            if sector:
+                session.add(
+                    AssetClassification(asset_id=asset.id, sector=sector, geography=geography)
+                )
+        session.flush()
         session.add(
             DemoFixture(
                 id=VERSION,
@@ -544,7 +567,7 @@ def seed_wealth(session, accounts):
         ("Home studio", "15000", "2000", "PAUSED", "MANUAL"),
     ]:
         goal = Goal(
-            name="Synthetic / " + name,
+            name=name,
             currency="BRL",
             mode=mode,
             target=Decimal(target),

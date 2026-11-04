@@ -1,3 +1,5 @@
+import { getLocale } from './preferences'
+import { t } from './i18n'
 // Intl accepts decimal strings without converting them to binary floating point.
 // The cast bridges TypeScript's older Intl signature, not the runtime value.
 export function formatMoney(
@@ -16,21 +18,27 @@ export function formatMoneyParts(
   options: {
     locale?: string
     compact?: boolean
+    minorUnits?: boolean
     currencyDisplay?: 'symbol' | 'code'
+    fractionDigits?: number
   } = {},
 ) {
-  const formatter = new Intl.NumberFormat(
-    options.locale ?? navigator.language,
-    {
-      style: 'currency',
-      currency,
-      currencyDisplay: options.currencyDisplay ?? 'symbol',
-      notation: options.compact ? 'compact' : 'standard',
-      ...(options.compact
-        ? { minimumFractionDigits: 0, maximumFractionDigits: 1 }
-        : { maximumFractionDigits: 6 }),
-    },
-  )
+  const formatter = new Intl.NumberFormat(options.locale ?? getLocale(), {
+    style: 'currency',
+    currency,
+    currencyDisplay: options.currencyDisplay ?? 'symbol',
+    notation: options.compact ? 'compact' : 'standard',
+    ...(options.compact
+      ? { minimumFractionDigits: 0, maximumFractionDigits: 1 }
+      : options.fractionDigits !== undefined
+        ? {
+            minimumFractionDigits: options.fractionDigits,
+            maximumFractionDigits: options.fractionDigits,
+          }
+        : options.minorUnits
+          ? {}
+          : { maximumFractionDigits: 6 }),
+  })
   const parts = formatter.formatToParts as unknown as (
     decimal: string,
   ) => Intl.NumberFormatPart[]
@@ -58,10 +66,54 @@ export function unitsToMoney(units: bigint): string {
 }
 
 /** Exact label for a decimal ratio; chart coordinates may be rounded separately. */
-export function formatRatioPercent(value: string | null): string {
+export function formatRatioPercent(
+  value: string | null,
+  digits = 6,
+  fixed = false,
+): string {
   return value === null
-    ? 'Unavailable'
-    : `${unitsToMoney(decimalUnits(value) * 100n).replace(/\.?0+$/, '')}%`
+    ? t('common:unavailable')
+    : formatExactPercent(
+        unitsToMoney(decimalUnits(value) * 100n),
+        digits,
+        fixed,
+      )
+}
+
+/** Input is already percent units, not a ratio. No monetary/ratio Number coercion. */
+export function formatExactPercent(
+  value: string,
+  digits = 6,
+  fixed = false,
+): string {
+  const formatted = new Intl.NumberFormat(getLocale(), {
+    maximumFractionDigits: digits,
+    minimumFractionDigits: fixed ? digits : 0,
+  }).format as unknown as (value: string) => string
+  const parts = new Intl.NumberFormat(getLocale(), {
+    style: 'percent',
+  }).formatToParts(1)
+  return parts
+    .map((part) =>
+      part.type === 'integer'
+        ? formatted(value)
+        : part.type === 'group'
+          ? ''
+          : part.value,
+    )
+    .join('')
+}
+
+export function formatDate(value: string): string {
+  const date = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00Z` : value,
+  )
+  return Number.isFinite(date.getTime())
+    ? new Intl.DateTimeFormat(getLocale(), {
+        dateStyle: 'medium',
+        timeZone: 'UTC',
+      }).format(date)
+    : value
 }
 
 export function sumMoney(values: string[]) {

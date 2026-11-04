@@ -1,53 +1,34 @@
 @import 'tailwindcss';
 
 :root {
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    sans-serif;
-  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --background: #fcfcfc;
-  --foreground: #282828;
-  --card: #ffffff;
-  --sidebar: #f4f4f3;
-  --primary: #303030;
-  --primary-foreground: #ffffff;
-  --muted: #ededeb;
-  --muted-foreground: #656561;
-  --border: #e6e6e3;
-  --input: #d3d3ce;
-  --ring: #77776c;
-  --positive: #176748;
-  --negative: #ad3544;
-  --chart-line: #6b6b80;
   --radius: 0.5rem;
-}
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --background: #121314;
-  --foreground: #e7e7e2;
-  --card: #1b1c1e;
-  --sidebar: #18191b;
-  --primary: #deded6;
-  --primary-foreground: #252522;
-  --muted: #27282b;
-  --muted-foreground: #a0a1a5;
-  --border: #ffffff0f;
-  --input: #474740;
-  --ring: #b8b8a9;
-  --positive: #81ceab;
-  --negative: #f39a9f;
-  --chart-line: #b3b4cb;
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
 }
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-muted: var(--muted);
@@ -65,7 +46,8 @@ body {
   min-width: 320px;
   background: var(--background);
   color: var(--foreground);
-  font-size: 13px;
+  font-size: var(--text-sm);
+  line-height: 1.5;
 }
 button,
 a {
@@ -84,7 +66,7 @@ button:disabled {
 button,
 input,
 select {
-  font: inherit;
+  font-family: inherit;
 }
 .metadata {
   color: var(--muted-foreground);
@@ -94,8 +76,7 @@ select {
 .positive {
   color: var(--positive);
 }
-.negative,
-.error {
+.negative {
   color: var(--negative);
 }
 .money {
@@ -120,7 +101,7 @@ select {
   align-items: center;
   padding: 0 10px 27px;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 .brand .metadata {
@@ -208,8 +189,8 @@ select {
   margin-bottom: 24px;
 }
 .page-header h1 {
-  font-size: 23px;
-  font-weight: 650;
+  font-size: var(--text-xl);
+  font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1.3;
   margin-bottom: 4px;
@@ -252,8 +233,8 @@ select {
   margin-bottom: 6px;
 }
 .primary-value .money {
-  font-size: clamp(28px, 3vw, 42px);
-  font-weight: 550;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 500;
   letter-spacing: -0.045em;
   display: block;
   overflow-wrap: anywhere;
@@ -281,7 +262,7 @@ select {
   font-weight: 500;
 }
 .summary-metric .metadata {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   margin-top: 3px;
 }
 .dashboard-grid {
@@ -310,10 +291,13 @@ select {
   margin-bottom: 16px;
 }
 .section-header h2 {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.5;
   margin-bottom: 2px;
 }
 .section-eyebrow {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--muted-foreground);
@@ -373,7 +357,7 @@ select {
 .account-summary small {
   display: block;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   text-transform: capitalize;
 }
 .account-summary .money {
@@ -390,7 +374,7 @@ select {
   border-bottom: 1px solid var(--border);
 }
 .account-detail-strip .money {
-  font-size: 32px;
+  font-size: var(--text-3xl);
 }
 .filter-bar {
   display: grid;
@@ -441,7 +425,7 @@ table {
 thead th {
   color: var(--muted-foreground);
   font-weight: 500;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -485,7 +469,7 @@ tbody tr:hover {
 .description-cell small,
 .transfer-link {
   display: block;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 400;
   color: var(--muted-foreground);
   margin-top: 3px;
@@ -495,7 +479,7 @@ tbody tr:hover {
   align-items: center;
   gap: 4px;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   text-transform: capitalize;
   padding: 2px 5px;
   border-radius: 3px;
@@ -566,7 +550,7 @@ tbody tr:hover {
   min-width: 0;
 }
 .account-identity strong {
-  font-weight: 550;
+  font-weight: 500;
   display: block;
   overflow-wrap: anywhere;
 }
@@ -731,7 +715,7 @@ tbody tr:hover {
 
 .nav-preview {
   margin-left: auto;
-  font-size: 9px;
+  font-size: var(--text-2xs);
   color: var(--muted-foreground);
 }
 .primary-nav > :nth-child(5),
@@ -788,7 +772,7 @@ tbody tr:hover {
   margin-top: 14px;
 }
 .balance-chart figcaption {
-  font-size: 10px;
+  font-size: var(--text-2xs);
 }
 .chart-tooltip {
   padding: 10px 14px;
@@ -799,7 +783,7 @@ tbody tr:hover {
 .chart-data {
   margin-top: 4px;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: var(--text-2xs);
 }
 .chart-data summary {
   cursor: pointer;
@@ -905,7 +889,7 @@ tbody tr:hover {
   }
 }
 .activity-list p {
-  font-size: 10px;
+  font-size: var(--text-2xs);
 }
 .activity-list .money {
   font-size: 12px;
@@ -922,5 +906,21 @@ tbody tr:hover {
     max-width: 45%;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+}
+
+.page-header .metadata {
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+.reference-shell small {
+  font-size: var(--text-2xs);
+}
+@media (max-width: 767px) {
+  .page-header h1 {
+    font-size: var(--text-lg);
+  }
+  .page-header .metadata {
+    font-size: var(--text-sm);
   }
 }

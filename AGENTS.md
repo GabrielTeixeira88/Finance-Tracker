@@ -124,22 +124,42 @@ Before implementing functionality present in Wealthfolio, Actual Budget or Secur
   same-currency savings, validate atomically and expose later cash shortfalls.
   Keep hypothetical savings scenarios separate from actual progress and returns.
 
-- v0.11 consolidation and v0.12 isolated interactive demo/showcase are implemented.
-  Next: v0.13 product refinement/stability/security/release validation, scoped after
-  populated-demo review; v1.0 only after demonstrated
-  readiness. Creating a future branch never implements its scope or increments the version.
+- v0.13 refinements are recorded in docs/RELEASE_0_13_0.md. The next branch is
+  feature/v0.14.0-frontend-refinement; branch creation does not implement its scope
+  or increment the version. v1.0 requires demonstrated readiness.
 
 - Product navigation uses local hash routes; preserve section bookmarks and browser
   history. Filter typing replaces the current history entry, rather than adding one
   entry per keystroke. Store only appearance preferences in localStorage.
+- v0.13 appearance uses shared semantic tokens and self-hosted licensed fonts.
+  Keep normal/demo appearance preferences separate; demo financial reset preserves
+  demo appearance/language. Localize application labels with namespace keys, never
+  user/source text. Preserve canonical enum/route/API values and exact localized
+  decimal input. Do not reinterpret imports when UI language changes. Charts may
+  normalize dimensionless BigInt ratios only; missing/negative composition is not
+  a complete positive allocation. Keep original data available in exact text/tables.
 - Use shared section navigation, financial formatting and query state primitives.
   Progressive disclosure must preserve advanced rule/target values and financial
   guards. A transaction-to-rule action creates only a draft, never a ledger posting.
 
-- v0.12 local demo uses only its owned `data/demo-v012` workspace and production
-  financial services. Never start normal integration workers or access a token vault
+- Public demo startup uses only the Brazil historical portfolio in owned,
+  snapshot-fingerprinted `data/demo-v012-real-market-br-*` workspaces.
+  The retired `data/demo-v012` household is an explicit regression fixture only;
+  preserve its archived files rather than modifying normal financial data.
+  For historical scenario changes or snapshot preparation, read `docs/REAL_MARKET_DEMO.md`.
+  Keep restricted ETF exports local; separate fictional holdings from verified observations.
+  Never start normal integration workers or access a token vault
   in demo mode. Reset is an explicit demo-only operation: validate a backup generation,
   publish atomically, reject stale generation writes and clear browser state. Never
   accept client database paths or reset a normal/legacy workspace. Browser tests must
   create their own isolated demo root. Public session isolation is not implemented;
   do not expose the local demo as a shared public writable service.
+
+- v0.13 fixed-income terms are immutable. Use dedicated subscription and
+  redemption services with one activity cash posting; never classify accrued CDB
+  interest or redeemed principal as paid investment/personal income. Missing dated
+  indices/prices stay unavailable; fictional indices must not value real contracts.
+- Life Events are metadata associations, never extra spending. One purchase belongs
+  to at most one event; linked refunds inherit it. Use shared spending and dated FX,
+  and preserve all ledger records on unlink/delete. Goal trajectories are scenarios,
+  not guaranteed returns or scheduled postings. No AI, rebalancing or tax-aware funding.

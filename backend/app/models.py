@@ -485,7 +485,9 @@ class PriceObservation(Record, Base):
         ForeignKeyConstraint(["asset_id", "currency"], ["assets.id", "assets.currency"]),
         UniqueConstraint("asset_id", "price_date", "source", "price_type"),
         CheckConstraint("source IN ('MANUAL','BRAPI','ALPHA','SYNTHETIC')", name="source"),
-        CheckConstraint("price_type IN ('RAW_CLOSE','LATEST','ADJUSTED')", name="price_type"),
+        CheckConstraint(
+            "price_type IN ('RAW_CLOSE','LATEST','ADJUSTED','OFFICIAL_PU')", name="price_type"
+        ),
         CheckConstraint(
             "typeof(price)='text' AND length(price)=24 AND price NOT GLOB '*[^0-9]*' "
             "AND price>'000000000000000000000000'",

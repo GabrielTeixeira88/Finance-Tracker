@@ -1,3 +1,4 @@
+import { t as tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
@@ -23,8 +24,10 @@ export function PayeeSettings() {
   return (
     <>
       <PageHeader
-        title="Settings"
-        description="Payees · normalized names, original descriptions preserved"
+        title={tr('payees:settings_c7f73b')}
+        description={tr(
+          'payees:payees_normalized_names_original_descriptions_pr_477788',
+        )}
       >
         <Button
           onClick={() => {
@@ -32,10 +35,10 @@ export function PayeeSettings() {
             setName('')
           }}
         >
-          Add payee
+          {tr('payees:add_payee_11d40f')}
         </Button>
       </PageHeader>
-      <Field label="Search payees">
+      <Field label={tr('payees:search_payees_1e877e')}>
         <input
           type="search"
           value={search}
@@ -58,7 +61,7 @@ export function PayeeSettings() {
           }}
         >
           <fieldset disabled={write.isPending}>
-            <Field label="Payee name">
+            <Field label={tr('payees:payee_name_3759c5')}>
               <input
                 required
                 maxLength={120}
@@ -67,17 +70,18 @@ export function PayeeSettings() {
               />
             </Field>
             <p className="metadata">
-              Renaming updates the display name of linked transactions. Amounts
-              and raw descriptions stay unchanged.
+              {tr(
+                'payees:renaming_updates_the_display_name_of_linked_tran_db8856',
+              )}
             </p>
             <div className="form-actions">
-              <Button type="submit">Save payee</Button>
+              <Button type="submit">{tr('payees:save_payee_3869a9')}</Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setEditing(undefined)}
               >
-                Cancel
+                {tr('payees:cancel_77dfd2')}
               </Button>
             </div>
           </fieldset>
@@ -85,18 +89,20 @@ export function PayeeSettings() {
         </form>
       )}
       {query.isPending ? (
-        <LoadingState text="Loading payees…" />
+        <LoadingState text={tr('payees:loading_payees__f905a4')} />
       ) : query.isError ? (
         <ErrorState
-          text="Unable to load payees"
+          text={tr('payees:unable_to_load_payees_0abdf7')}
           retry={() => void query.refetch()}
         />
       ) : (
-        <section aria-label="Payees">
+        <section aria-label={tr('payees:payees_42ca15')}>
           {!query.data.length && (
             <EmptyState
-              title="No matching payees"
-              detail="Add a normalized name or change your search."
+              title={tr('payees:no_matching_payees_ad1e21')}
+              detail={tr(
+                'payees:add_a_normalized_name_or_change_your_search__a33083',
+              )}
             />
           )}
           {query.data.map((payee) => (
@@ -105,20 +111,23 @@ export function PayeeSettings() {
               <Button
                 variant="outline"
                 size="sm"
-                aria-label={`Rename ${payee.name}`}
+                aria-label={tr('messages:message_f2daca3f4eb7', {
+                  value0: payee.name,
+                })}
                 onClick={() => {
                   setEditing(payee)
                   setName(payee.name)
                 }}
               >
-                Rename
+                {tr('payees:rename_d3f4cb')}
               </Button>
             </div>
           ))}
           {query.data.length === 50 && (
             <p className="metadata">
-              Showing the first 50 matches. Refine the search to find another
-              payee.
+              {tr(
+                'payees:showing_the_first_50_matches_refine_the_search_t_25964f',
+              )}
             </p>
           )}
         </section>

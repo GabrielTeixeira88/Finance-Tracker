@@ -1,5 +1,13 @@
 # Market data and valuation
 
+The current [Real Market Portfolio — Brazil](REAL_MARKET_DEMO.md) is an offline
+historical replay, separate from provider refresh. It bundles official public
+SGS/Treasury observations with attribution and uses explicit manual/imported cache
+provenance. `OFFICIAL_PU` preserves Treasury morning-mark semantics. Licensed ETF
+history is prepared privately, never redistributed or replaced by synthetic
+quotes. Historical portfolio responses add dated `purchase_markers` derived from
+actual investment activities; monetary labels remain exact strings.
+
 ## Implementation approach recorded before coding
 
 The reference implements provider capabilities and symbol resolution separately from

@@ -1,3 +1,6 @@
+import { useChartMotion } from '@/lib/motion'
+import { t as tr } from '@/lib/i18n'
+import { getLocale } from '@/lib/preferences'
 // Adapted frontend source; provenance and license: THIRD_PARTY_NOTICES.md.
 // SPDX-License-Identifier: AGPL-3.0-only
 import { useId } from 'react'
@@ -20,16 +23,17 @@ export function OverviewChart({
   points: { date: string; balance: string }[]
   currency: string
 }) {
+  const chartMotion = useChartMotion()
   const id = `overview-${useId().replaceAll(':', '')}`
   const data = chartCoordinates(dailyClosingPoints(points))
   return (
     <figure
       className="overview-chart"
-      aria-label={`${currency} closing ledger balance history`}
+      aria-label={tr('messages:message_230287b72eb8', { value0: currency })}
     >
       <ResponsiveContainer
         width="100%"
-        height={280}
+        height="100%"
         initialDimension={{ width: 1370, height: 280 }}
       >
         <AreaChart
@@ -38,13 +42,21 @@ export function OverviewChart({
         >
           <defs>
             <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="var(--positive)" stopOpacity={0.2} />
+              <stop
+                offset="5%"
+                stopColor="var(--net-worth-chart)"
+                stopOpacity={0.2}
+              />
               <stop
                 offset="70%"
-                stopColor="var(--positive)"
+                stopColor="var(--net-worth-chart)"
                 stopOpacity={0.12}
               />
-              <stop offset="100%" stopColor="var(--positive)" stopOpacity={0} />
+              <stop
+                offset="100%"
+                stopColor="var(--net-worth-chart)"
+                stopOpacity={0}
+              />
             </linearGradient>
           </defs>
           <XAxis
@@ -56,10 +68,10 @@ export function OverviewChart({
           />
           <YAxis hide domain={[-15, 104]} />
           <Tooltip
-            isAnimationActive={false}
+            {...chartMotion}
             position={{ y: -20 }}
             cursor={{
-              stroke: 'var(--border)',
+              stroke: 'var(--chart-grid)',
               strokeWidth: 1,
             }}
             content={({ active, payload }) => {
@@ -68,7 +80,7 @@ export function OverviewChart({
               return active && point ? (
                 <div className="overview-tooltip">
                   <p>
-                    {new Intl.DateTimeFormat(navigator.language, {
+                    {new Intl.DateTimeFormat(getLocale(), {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric',
@@ -76,8 +88,8 @@ export function OverviewChart({
                     }).format(new Date(point.time))}
                   </p>
                   <div>
-                    <span className="chart-key" />
-                    Total balance
+                    <span className="chart-key" />{' '}
+                    {tr('overview_chart:total_balance_891433')}{' '}
                     <Money value={point.balance} currency={currency} />
                   </div>
                 </div>
@@ -88,17 +100,20 @@ export function OverviewChart({
             type="monotone"
             dataKey="coordinate"
             name="Closing balance"
-            stroke="var(--positive)"
+            stroke="var(--net-worth-chart)"
             strokeWidth={1}
             fill={`url(#${id})`}
-            isAnimationActive={false}
+            {...chartMotion}
             activeDot={{ r: 3, strokeWidth: 1 }}
           />
         </AreaChart>
       </ResponsiveContainer>
       <figcaption className="sr-only">
-        Closing ledger balances. Use View exact chart data for the accessible
-        table. Currency: {currency}.
+        {' '}
+        {tr(
+          'overview_chart:closing_ledger_balances_use_view_exact_chart_dat_a574a5',
+        )}{' '}
+        {currency}.
       </figcaption>
     </figure>
   )

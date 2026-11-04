@@ -14,11 +14,15 @@ from app.analytics_routes import router as analytics_router
 from app.automation_routes import router as automation_router
 from app.budget_routes import router as budget_router
 from app.database import get_engine, get_session
+from app.error_codes import install_error_codes
+from app.fixed_income_routes import router as fixed_income_router
 from app.gmail_routes import router as gmail_router
 from app.ingestion_routes import router as ingestion_router
 from app.investment_import_routes import router as investment_import_router
 from app.investment_routes import router as investment_router
+from app.life_event_routes import router as life_event_router
 from app.market_routes import router as market_router
+from app.pluggy_routes import router as pluggy_router
 from app.reconciliation_routes import router as reconciliation_router
 from app.routes import router
 from app.wealth_routes import router as wealth_router
@@ -43,6 +47,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         get_service.cache_clear()
     stop.set()
     thread.join(timeout=20)
+    from app.pluggy_routes import cached_service
+
+    if cached_service.cache_info().currsize:
+        cached_service().provider.clear()
+        cached_service.cache_clear()
     if get_engine.cache_info().currsize:
         get_engine().dispose()
         get_engine.cache_clear()
@@ -60,6 +69,8 @@ app = FastAPI(
         "auto_configure": False,
     },
 )
+install_error_codes(app)
+app.include_router(fixed_income_router)
 app.include_router(investment_router)
 app.include_router(analytics_router)
 app.include_router(market_router)
@@ -71,6 +82,8 @@ app.include_router(budget_router)
 app.include_router(gmail_router)
 app.include_router(reconciliation_router)
 app.include_router(wealth_router)
+app.include_router(life_event_router)
+app.include_router(pluggy_router)
 
 
 @app.get("/api/runtime")

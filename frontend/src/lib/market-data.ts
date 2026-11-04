@@ -71,6 +71,17 @@ export const marketHistorySchema = z.object({
   currency: z.string(),
   warning: z.string(),
   fx_provider: z.string(),
+  purchase_markers: z
+    .array(
+      z.object({
+        date: z.string(),
+        asset_id: z.string(),
+        symbol: z.string(),
+        quantity: money,
+        currency: z.string(),
+      }),
+    )
+    .optional(),
   points: z.array(
     z.object({
       date: z.string(),

@@ -1,3 +1,12 @@
+import { ArrowLeft, Plus } from 'lucide-react'
+import { t as tr, ui } from '@/lib/i18n'
+import { useDemoRuntime } from '@/lib/demo-runtime'
+import { goalTitle, goalPercent } from '@/lib/goal-display'
+import './goals.css'
+import { GoalProgress } from '@/components/goal-progress'
+import { TrajectoryChart } from '@/components/trajectory-chart'
+import { DetailDrawer } from '@/components/detail-drawer'
+import { useRoute, navigateTo } from '@/lib/navigation'
 import { useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
@@ -6,7 +15,7 @@ import {
   EmptyState,
   ErrorState,
   LoadingState,
-  Money,
+  Money as SharedMoney,
   PageHeader,
   SectionHeader,
 } from '@/components/primitives'
@@ -21,9 +30,26 @@ import {
   activityPercent,
   decimalUnits,
   sumMoney,
-  formatRatioPercent,
+  formatExactPercent,
 } from '@/lib/money'
-import { NullableMoney, WealthChart, WealthForm } from './wealth'
+import { WealthChart, WealthForm } from './wealth'
+
+function Money(props: { value: string; currency: string }) {
+  return <SharedMoney {...props} fractionDigits={2} />
+}
+function NullableMoney({
+  value,
+  currency,
+}: {
+  value: string | null
+  currency: string
+}) {
+  return value === null ? (
+    <span className="metadata">{tr('common:unavailable')}</span>
+  ) : (
+    <Money value={value} currency={currency} />
+  )
+}
 
 export default function Goals({ accounts }: { accounts: Account[] }) {
   const goals = useQuery({ queryKey: ['goals'], queryFn: getGoals })
@@ -32,23 +58,43 @@ export default function Goals({ accounts }: { accounts: Account[] }) {
     queryFn: getAllocations,
   })
   const [create, setCreate] = useState(false)
-  const [selected, setSelected] = useState<string | null>(null)
+  const route = useRoute()
+  const selected = route.params.get('goal')
+  const setSelected = (goal: string | null) =>
+    navigateTo('Goals', undefined, {
+      ...Object.fromEntries(route.params),
+      goal: goal ?? '',
+    })
+  if (selected)
+    return (
+      <div className="goal-detail-page">
+        <Button
+          className="entity-back"
+          variant="ghost"
+          aria-label={tr('goals:goals_48d8c6')}
+          onClick={() => setSelected(null)}
+        >
+          <ArrowLeft size={18} aria-hidden="true" />
+        </Button>
+        <GoalView key={selected} id={selected} accounts={accounts} />
+      </div>
+    )
   return (
-    <>
+    <div className="goals-overview">
       <PageHeader
-        title="Goals"
-        description="Plan savings without creating additional assets or moving money."
+        title={tr('goals:goals_48d8c6')}
+        description={tr('goals:overview_subtitle')}
       >
         <Button
           disabled={goals.isPending || goals.isError}
           onClick={() => setCreate(!create)}
         >
-          Add goal
+          <Plus size={14} aria-hidden="true" /> {tr('goals:add_goal_df1f45')}
         </Button>
       </PageHeader>
       {create && <GoalEditor onDone={() => setCreate(false)} />}
       {goals.isPending ? (
-        <LoadingState text="Loading goals…" />
+        <LoadingState text={tr('goals:loading_goals__4a1b81')} />
       ) : goals.isError ? (
         <ErrorState
           text={goals.error.message}
@@ -65,14 +111,16 @@ export default function Goals({ accounts }: { accounts: Account[] }) {
               return (
                 <div className="wealth-metrics" key={currency}>
                   <span>
-                    Active targets{' '}
+                    {' '}
+                    {tr('goals:active_targets_496094')}{' '}
                     <Money
                       value={sumMoney(active.map((d) => d.goal.target))}
                       currency={currency}
                     />
                   </span>
                   <span>
-                    Saved{' '}
+                    {' '}
+                    {tr('goals:saved_c0ae8f')}{' '}
                     <NullableMoney
                       value={
                         active.some((d) => d.saved === null)
@@ -83,7 +131,8 @@ export default function Goals({ accounts }: { accounts: Account[] }) {
                     />
                   </span>
                   <span>
-                    Remaining{' '}
+                    {' '}
+                    {tr('goals:remaining_cc632b')}{' '}
                     <NullableMoney
                       value={
                         active.some((d) => d.remaining === null)
@@ -99,158 +148,75 @@ export default function Goals({ accounts }: { accounts: Account[] }) {
           )}
           {!goals.data.length && (
             <EmptyState
-              title="No goals yet"
-              detail="Track an explicit account allocation or record manual progress."
+              title={tr('goals:no_goals_yet_6bd524')}
+              detail={tr(
+                'goals:track_an_explicit_account_allocation_or_record_m_526f59',
+              )}
             />
           )}
-          <div className="table-scroll">
-            <table className="finance-wealth-table">
-              <thead>
-                <tr>
-                  <th scope="col">Goal</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Deadline</th>
-                  <th scope="col" className="amount-cell">
-                    Saved
-                  </th>
-                  <th scope="col" className="amount-cell">
-                    Target
-                  </th>
-                  <th scope="col" className="amount-cell">
-                    Remaining
-                  </th>
-                  <th scope="col">Progress</th>
-                </tr>
-              </thead>
-              <tbody>
-                {goals.data.map((d) => (
-                  <tr key={d.goal.id}>
-                    <td>
-                      <button onClick={() => setSelected(d.goal.id)}>
-                        {d.goal.name}
-                      </button>
-                      <p className="metadata">
-                        {d.goal.mode === 'ACCOUNT'
-                          ? 'Account allocation'
-                          : 'Manual progress'}
-                      </p>
-                    </td>
-                    <td>
-                      {d.goal.status}
-                      {d.overdue
-                        ? ' · Overdue'
-                        : d.near_deadline
-                          ? ' · Due within 30 days'
-                          : ''}
-                    </td>
-                    <td>{d.goal.deadline ?? 'No deadline'}</td>
-                    <td className="amount-cell">
-                      <NullableMoney
-                        value={d.saved}
-                        currency={d.goal.currency}
-                      />
-                    </td>
-                    <td className="amount-cell">
-                      <Money value={d.goal.target} currency={d.goal.currency} />
-                    </td>
-                    <td className="amount-cell">
-                      <NullableMoney
-                        value={d.remaining}
-                        currency={d.goal.currency}
-                      />
-                    </td>
-                    <td>
-                      {d.progress !== null && (
-                        <progress
-                          aria-label={`${d.goal.name} progress`}
-                          aria-valuetext={formatRatioPercent(d.progress)}
-                          max={100}
-                          value={
-                            d.saved === null
-                              ? 0
-                              : decimalUnits(d.goal.target) === 0n
-                                ? 100
-                                : Math.min(
-                                    100,
-                                    activityPercent(
-                                      d.saved,
-                                      d.goal.target,
-                                      '0',
-                                    ),
-                                  )
-                          }
-                        />
-                      )}
-                      <p className="metadata">
-                        {d.progress === null
-                          ? 'Progress unavailable'
-                          : `${formatRatioPercent(d.progress)} saved`}
-                      </p>
-                      {d.milestones.length > 0 && (
-                        <p className="metadata">
-                          Milestones reached:{' '}
-                          {d.milestones.map((m) => `${m}%`).join(' · ')}
-                        </p>
-                      )}
-                      <p className="metadata">{d.warnings.join('; ')}</p>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="goal-visual-grid">
+            {goals.data.map((data) => (
+              <GoalProgress
+                key={data.goal.id}
+                data={data}
+                onOpen={() => setSelected(data.goal.id)}
+              />
+            ))}
           </div>
-          {selected && (
-            <GoalView key={selected} id={selected} accounts={accounts} />
-          )}
-          <SectionHeader
-            title="Shared savings"
-            detail="Allocations reserve existing savings for planning only. They never add to net worth."
-          />
-          {allocations.isPending ? (
-            <LoadingState />
-          ) : allocations.isError ? (
-            <ErrorState
-              text={allocations.error.message}
-              retry={() => void allocations.refetch()}
-            />
-          ) : (
-            <div className="table-scroll">
-              <table className="finance-wealth-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Account</th>
-                    <th scope="col" className="amount-cell">
-                      Balance
-                    </th>
-                    <th scope="col" className="amount-cell">
-                      Allocated
-                    </th>
-                    <th scope="col" className="amount-cell">
-                      Unallocated
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allocations.data.map((a) => (
-                    <tr key={a.account_id}>
-                      <td>
-                        {a.name}
-                        {a.overallocated ? ' — Overallocated' : ''}
-                      </td>
-                      {[a.balance, a.allocated, a.unallocated].map((v, i) => (
-                        <td key={i} className="amount-cell">
-                          <Money value={v} currency={a.currency} />
-                        </td>
-                      ))}
+          <details className="financial-disclosure goal-funding-overview">
+            <summary>{tr('goals:funding_overview')}</summary>
+            <p className="metadata">{tr('goals:funding_description')}</p>
+            {allocations.isPending ? (
+              <LoadingState />
+            ) : allocations.isError ? (
+              <ErrorState
+                text={allocations.error.message}
+                retry={() => void allocations.refetch()}
+              />
+            ) : (
+              <div className="table-scroll">
+                <table className="finance-wealth-table">
+                  <caption className="sr-only">
+                    {tr('goals:funding_overview')}
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">{tr('goals:account_85dfa3')}</th>
+                      <th scope="col" className="amount-cell">
+                        {tr('goals:balance_90eef6')}
+                      </th>
+                      <th scope="col" className="amount-cell">
+                        {tr('goals:allocated_c249df')}
+                      </th>
+                      <th scope="col" className="amount-cell">
+                        {tr('goals:unallocated_bf44dd')}
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {allocations.data.map((a) => (
+                      <tr key={a.account_id}>
+                        <td>
+                          {a.name}
+                          {a.overallocated
+                            ? tr('dynamic:_overallocated_22479a')
+                            : ''}
+                        </td>
+                        {[a.balance, a.allocated, a.unallocated].map((v, i) => (
+                          <td key={i} className="amount-cell">
+                            <NullableMoney value={v} currency={a.currency} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </details>
         </>
       )}
-    </>
+    </div>
   )
 }
 
@@ -264,30 +230,30 @@ function GoalEditor({
   const g = detail?.goal
   return (
     <WealthForm
-      title={g ? 'Edit goal' : 'New goal'}
+      title={g ? tr('dynamic:edit_goal_2a9e72') : tr('dynamic:new_goal_22dcb4')}
       path={`/goals${g ? `/${g.id}` : ''}`}
       method={g ? 'PATCH' : 'POST'}
       onDone={onDone}
       transform={(d) => ({ ...d, deadline: d.deadline || null })}
     >
-      <Field label="Goal name">
+      <Field label={tr('goals:goal_name_3b4027')}>
         <input name="name" required maxLength={120} defaultValue={g?.name} />
       </Field>
-      <Field label="Tracking mode">
+      <Field label={tr('goals:tracking_mode_b9fcd9')}>
         <select name="mode" defaultValue={g?.mode ?? 'ACCOUNT'}>
           {(g ? [g.mode] : ['ACCOUNT', 'MANUAL']).map((m) => (
             <option key={m} value={m}>
-              {m === 'ACCOUNT' ? 'Account allocations' : 'Manual contributions'}
+              {m === 'ACCOUNT'
+                ? tr('dynamic:account_allocations_ab4965')
+                : tr('dynamic:manual_contributions_fa9467')}
             </option>
           ))}
         </select>
       </Field>
       <p className="metadata">
-        Account allocations reserve a share of existing savings for this goal.
-        Manual contributions track progress only. Neither mode moves money or
-        adds an asset.
+        {tr('goals:account_allocations_reserve_a_share_of_existing__43d009')}
       </p>
-      <Field label="Currency">
+      <Field label={tr('goals:currency_e070de')}>
         <input
           name="currency"
           pattern="[A-Z]{3}"
@@ -296,7 +262,7 @@ function GoalEditor({
           defaultValue={g?.currency ?? 'BRL'}
         />
       </Field>
-      <Field label="Target">
+      <Field label={tr('goals:target_61ad50')}>
         <input
           name="target"
           required
@@ -304,7 +270,7 @@ function GoalEditor({
           defaultValue={g?.target}
         />
       </Field>
-      <Field label="Start date">
+      <Field label={tr('goals:start_date_ff99f5')}>
         <input
           name="start_date"
           type="date"
@@ -313,10 +279,10 @@ function GoalEditor({
           defaultValue={g?.start_date ?? localDate()}
         />
       </Field>
-      <Field label="Deadline (optional)">
+      <Field label={tr('goals:deadline_optional__46588e')}>
         <input name="deadline" type="date" defaultValue={g?.deadline ?? ''} />
       </Field>
-      <Field label="Notes">
+      <Field label={tr('goals:notes_704400')}>
         <textarea name="notes" defaultValue={g?.notes} />
       </Field>
     </WealthForm>
@@ -324,9 +290,11 @@ function GoalEditor({
 }
 
 function GoalView({ id, accounts }: { id: string; accounts: Account[] }) {
+  const { runtime } = useDemoRuntime()
   const [monthly, setMonthly] = useState('0')
   const validMonthly = /^\d{1,18}(\.\d{1,6})?$/.test(monthly)
   const [edit, setEdit] = useState(false)
+  const [posting, setPosting] = useState(false)
   const detail = useQuery({
     queryKey: ['goal', id, validMonthly ? monthly : '0'],
     queryFn: () => getGoal(id, validMonthly ? monthly : '0'),
@@ -344,135 +312,252 @@ function GoalView({ id, accounts }: { id: string; accounts: Account[] }) {
     g = d.goal
   return (
     <section>
-      <SectionHeader title={g.name} detail={g.notes}>
+      <SectionHeader title={goalTitle(g.name, !!runtime)} detail={g.notes}>
         <Button variant="ghost" onClick={() => setEdit(!edit)}>
-          Edit goal
+          {tr('goals:edit_goal_2a9e72')}
         </Button>
       </SectionHeader>
-      {edit && <GoalEditor detail={d} onDone={() => setEdit(false)} />}
+      {edit && (
+        <DetailDrawer
+          title={tr('goals:edit_goal_2a9e72')}
+          onClose={() => setEdit(false)}
+        >
+          <GoalEditor detail={d} onDone={() => setEdit(false)} />
+        </DetailDrawer>
+      )}
       {d.warnings.map((w) => (
         <ErrorState key={w} text={w} />
       ))}
-      <div className="wealth-metrics">
-        <div>
-          Saved <NullableMoney value={d.saved} currency={g.currency} />
-        </div>
-        <div>
-          Remaining <NullableMoney value={d.remaining} currency={g.currency} />
-        </div>
-        <div>
-          Required monthly{' '}
-          <NullableMoney value={d.required_monthly} currency={g.currency} />
-        </div>
-      </div>
-      <WealthChart
-        points={d.history}
-        currency={g.currency}
-        label="Goal progress"
-      />
-      <SectionHeader
-        title="Savings projection"
-        detail="Hypothetical scenario, not a forecast or ledger posting."
-      />
-      <Field label="Assumed monthly contribution">
-        <input
-          inputMode="decimal"
-          value={monthly}
-          onChange={(e) => setMonthly(e.target.value)}
-        />
-      </Field>
-      <p>
-        Projected completion:{' '}
-        {d.projected_completion ??
-          'Unavailable — set a positive contribution or resolve coverage'}
-      </p>
-      {!validMonthly && (
-        <ErrorState text="Enter a nonnegative decimal contribution, with at most six decimal places." />
+      {d.funding_account_id && (
+        <p className="metadata">{tr('real_market:goal_funding')}</p>
       )}
-      <p className="metadata">
-        {d.projection_method} Required monthly saving is unavailable without a
-        future deadline.
-      </p>
-      {!['ARCHIVED', 'COMPLETED'].includes(g.status) && (
-        <WealthForm
-          title={
-            g.mode === 'ACCOUNT'
-              ? 'Set dated account allocation'
-              : 'Record progress'
-          }
-          path={`/goals/${id}/entries`}
-          transform={(data) => ({
-            ...data,
-            account_id: data.account_id || null,
-            direction: data.direction || 'IN',
-          })}
-        >
-          {g.mode === 'ACCOUNT' ? (
-            <Field label="Savings account">
-              <select name="account_id" required>
-                <option value="">Choose account</option>
-                {accounts
-                  .filter(
-                    (a) =>
-                      a.active &&
-                      a.currency === g.currency &&
-                      ['CHECKING', 'SAVINGS', 'CASH'].includes(a.type),
-                  )
-                  .map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
-              </select>
-            </Field>
-          ) : (
-            <Field label="Adjustment">
-              <select name="direction">
-                <option value="IN">Contribution</option>
-                <option value="OUT">Withdrawal / negative adjustment</option>
-              </select>
-            </Field>
-          )}
-          <Field label="Effective date">
+      <div className="goal-plan">
+        <div className="goal-plan-main">
+          <section className="goal-progress-panel">
+            <SectionHeader
+              title={tr('goals:goal_progress_5fef78')}
+              detail={tr('parity:actual_progress')}
+            />
+            <p className="metadata">
+              {ui(g.status)}
+              {d.overdue ? tr('dynamic:_overdue_ad0efe') : ''} {g.deadline}
+            </p>
+            {!!d.milestones.length && (
+              <p className="metadata">
+                {tr('goals:milestones_reached__c564b2')}{' '}
+                {d.milestones
+                  .map((m) => formatExactPercent(String(m), 1, true))
+                  .join(' / ')}
+              </p>
+            )}
+            <div className="wealth-metrics">
+              <div>
+                {' '}
+                {tr('goals:saved_c0ae8f')}{' '}
+                <NullableMoney value={d.saved} currency={g.currency} />
+              </div>
+              <div>
+                {' '}
+                {tr('goals:remaining_cc632b')}{' '}
+                <NullableMoney value={d.remaining} currency={g.currency} />
+              </div>
+              <div>
+                {' '}
+                {tr('goals:target_61ad50')}{' '}
+                <NullableMoney value={g.target} currency={g.currency} />
+              </div>
+              <div>
+                {tr('goals:deadline_2b12f3')}{' '}
+                <span className="goal-deadline-value">
+                  {g.deadline ?? tr('dynamic:no_deadline_c4a597')}
+                </span>
+              </div>
+            </div>
+            {d.progress !== null && (
+              <div className="goal-actual-progress">
+                <progress
+                  aria-label={g.name}
+                  aria-valuetext={goalPercent(d.progress)}
+                  max={100}
+                  value={
+                    decimalUnits(g.target) === 0n
+                      ? 100
+                      : Math.min(
+                          100,
+                          Math.max(
+                            0,
+                            activityPercent(d.saved ?? '0', g.target, '0'),
+                          ),
+                        )
+                  }
+                />
+                <p>
+                  {goalPercent(d.progress)} -{' '}
+                  <Money value={g.target} currency={g.currency} /> {g.deadline}
+                </p>
+              </div>
+            )}
+          </section>
+          <section className="goal-monthly-plan">
+            <span>{tr('goals:required_monthly_7d3d5c')}</span>
+            <NullableMoney value={d.required_monthly} currency={g.currency} />
+            <span>{tr('goals:projected_completion__8a0ad0')}</span>
+            <span>{d.projected_completion ?? tr('common:unavailable')}</span>
+          </section>
+          <section className="goal-trajectory-panel">
+            {d.trajectory ? (
+              <TrajectoryChart data={d.trajectory} currency={g.currency} />
+            ) : (
+              <WealthChart
+                points={d.history}
+                currency={g.currency}
+                label={tr('goals:goal_progress_5fef78')}
+              />
+            )}
+          </section>
+        </div>
+        <aside>
+          <SectionHeader
+            title={tr('goals:savings_projection_3b5f4a')}
+            detail={tr(
+              'goals:hypothetical_scenario_not_a_forecast_or_ledger_p_568b3e',
+            )}
+          />
+          <Field label={tr('goals:assumed_monthly_contribution_4cbced')}>
             <input
-              type="date"
-              name="effective_date"
-              required
-              min={g.start_date}
-              max={localDate()}
-              defaultValue={localDate()}
+              inputMode="decimal"
+              value={monthly}
+              onChange={(e) => setMonthly(e.target.value)}
             />
           </Field>
-          <Field
-            label={
+          <p>
+            {' '}
+            {tr('goals:projected_completion__8a0ad0')}{' '}
+            {d.projected_completion ??
+              tr(
+                'dynamic:unavailable_set_a_positive_contribution_or_resol_af0471',
+              )}
+          </p>
+          {!validMonthly && (
+            <ErrorState
+              text={tr(
+                'goals:enter_a_nonnegative_decimal_contribution_with_at_868b7b',
+              )}
+            />
+          )}
+          <p className="metadata">
+            {d.projection_method}{' '}
+            {tr(
+              'goals:required_monthly_saving_is_unavailable_without_a_736049',
+            )}{' '}
+          </p>
+          {!d.funding_account_id &&
+            !['ARCHIVED', 'COMPLETED'].includes(g.status) && (
+              <Button onClick={() => setPosting(true)}>
+                {g.mode === 'ACCOUNT'
+                  ? tr('dynamic:set_dated_account_allocation_18ed76')
+                  : tr('dynamic:record_progress_08b34b')}
+              </Button>
+            )}
+        </aside>
+      </div>
+      {posting && (
+        <DetailDrawer
+          title={
+            g.mode === 'ACCOUNT'
+              ? tr('dynamic:set_dated_account_allocation_18ed76')
+              : tr('dynamic:record_progress_08b34b')
+          }
+          onClose={() => setPosting(false)}
+        >
+          <WealthForm
+            title={
               g.mode === 'ACCOUNT'
-                ? 'Total allocation (replaces previous amount)'
-                : 'Amount'
+                ? tr('dynamic:set_dated_account_allocation_18ed76')
+                : tr('dynamic:record_progress_08b34b')
             }
+            path={`/goals/${id}/entries`}
+            transform={(data) => ({
+              ...data,
+              account_id: data.account_id || null,
+              direction: data.direction || 'IN',
+            })}
           >
-            <input name="amount" required inputMode="decimal" />
-          </Field>
-          <Field label="Entry notes">
-            <input name="notes" />
-          </Field>
-        </WealthForm>
+            {g.mode === 'ACCOUNT' ? (
+              <Field label={tr('goals:savings_account_80fc8b')}>
+                <select name="account_id" required>
+                  <option value="">{tr('goals:choose_account_9ccef0')}</option>
+                  {accounts
+                    .filter(
+                      (a) =>
+                        a.active &&
+                        a.currency === g.currency &&
+                        ['CHECKING', 'SAVINGS', 'CASH'].includes(a.type),
+                    )
+                    .map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                </select>
+              </Field>
+            ) : (
+              <Field label={tr('goals:adjustment_7f0496')}>
+                <select name="direction">
+                  <option value="IN">{tr('goals:contribution_982d5a')}</option>
+                  <option value="OUT">
+                    {tr('goals:withdrawal_negative_adjustment_d2245d')}
+                  </option>
+                </select>
+              </Field>
+            )}
+            <Field label={tr('goals:effective_date_153c9b')}>
+              <input
+                type="date"
+                name="effective_date"
+                required
+                min={g.start_date}
+                max={localDate()}
+                defaultValue={localDate()}
+              />
+            </Field>
+            <Field
+              label={
+                g.mode === 'ACCOUNT'
+                  ? tr(
+                      'dynamic:total_allocation_replaces_previous_amount__100a97',
+                    )
+                  : tr('dynamic:amount_43dc85')
+              }
+            >
+              <input name="amount" required inputMode="decimal" />
+            </Field>
+            <Field label={tr('goals:entry_notes_485bb6')}>
+              <input name="notes" />
+            </Field>
+          </WealthForm>
+        </DetailDrawer>
       )}
       <SectionHeader
         title={
-          g.mode === 'ACCOUNT' ? 'Allocation history' : 'Contribution history'
+          g.mode === 'ACCOUNT'
+            ? tr('dynamic:allocation_history_44a8d8')
+            : tr('dynamic:contribution_history_dc48e3')
         }
-        detail="Corrections preserve the original record. Shared allocations cannot exceed available savings."
+        detail={tr(
+          'goals:corrections_preserve_the_original_record_shared__53dcb6',
+        )}
       />
       <div className="table-scroll">
         <table className="finance-wealth-table">
           <thead>
             <tr>
-              <th scope="col">Date</th>
-              <th scope="col">Account / direction</th>
+              <th scope="col">{tr('goals:date_eb9a4b')}</th>
+              <th scope="col">{tr('goals:account_direction_f3e58b')}</th>
               <th scope="col" className="amount-cell">
-                Amount
+                {tr('goals:amount_43dc85')}
               </th>
-              <th scope="col">Audit</th>
+              <th scope="col">{tr('goals:audit_fa1703')}</th>
             </tr>
           </thead>
           <tbody>
@@ -491,12 +576,12 @@ function GoalView({ id, accounts }: { id: string; accounts: Account[] }) {
                     `Voided: ${e.void_reason}`
                   ) : (
                     <details>
-                      <summary>Correct entry</summary>
+                      <summary>{tr('goals:correct_entry_0d0102')}</summary>
                       <WealthForm
-                        title="Void entry before replacement"
+                        title={tr('goals:void_entry_before_replacement_ccd337')}
                         path={`/goal-entries/${e.id}/void`}
                       >
-                        <Field label="Reason">
+                        <Field label={tr('goals:reason_f219cc')}>
                           <input name="reason" required />
                         </Field>
                       </WealthForm>
@@ -509,17 +594,23 @@ function GoalView({ id, accounts }: { id: string; accounts: Account[] }) {
         </table>
       </div>
       {g.status !== 'ARCHIVED' && (
-        <WealthForm title="Goal lifecycle" path={`/goals/${id}/status`}>
-          <Field label="Status">
+        <WealthForm
+          title={tr('goals:goal_lifecycle_72d8e7')}
+          path={`/goals/${id}/status`}
+        >
+          <Field label={tr('goals:status_bae7d5')}>
             <select name="status" defaultValue={g.status}>
               {['ACTIVE', 'PAUSED', 'COMPLETED', 'ARCHIVED'].map((s) => (
-                <option key={s}>{s}</option>
+                <option key={s} value={s}>
+                  {ui(s)}
+                </option>
               ))}
             </select>
           </Field>
           <p className="metadata">
-            Archiving releases account allocations from today. Historical
-            allocations remain visible.
+            {tr(
+              'goals:archiving_releases_account_allocations_from_toda_490411',
+            )}
           </p>
         </WealthForm>
       )}

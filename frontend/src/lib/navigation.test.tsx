@@ -55,8 +55,8 @@ it('round trips account scope and exact filter strings without numeric conversio
   expect(route.params.get('view')).toBe('activity')
 })
 
-it('uses Overview for an unknown route and validates section values', () => {
-  expect(readRoute('#/not-a-page').page).toBe('Overview')
+it('uses Spending for an unknown route and validates section values', () => {
+  expect(readRoute('#/not-a-page').page).toBe('Budget')
   window.history.replaceState(null, '', '#/settings?view=unknown')
   render(<Destination />)
   expect(screen.getByText('Settings: categories')).toBeInTheDocument()

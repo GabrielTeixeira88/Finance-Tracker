@@ -1,5 +1,20 @@
 # Finance Tracker data model
 
+Unreleased historical-demo additions (`sqlite_0017`): fixed-income type `RDB_CDI`,
+price convention `OFFICIAL_PU`, and `goal_account_funding`. That association has
+unique goal/account foreign keys and an effective date: one same-currency
+investment account is reserved exclusively for an account goal. Progress derives
+from gross dated ledger valuation; it stores no balance and creates no financial
+asset or posting. Recorded goal entries cannot be mixed into this reservation.
+Missing coverage remains unavailable. The scenario stores public-source evidence
+in its existing demo fixture payload; authorized ETF exports stay outside Git.
+See [historical sources, calculations and limitations](REAL_MARKET_DEMO.md).
+
+Goal read projections additionally expose `as_of` and `schedule_pace` (status,
+exact required-to-date amount and basis). Pace compares actual savings with the
+existing straight-line goal trajectory; it is independent of temporary monthly
+scenarios. These fields are derived, never stored balances or automatic postings.
+
 Current release scope: **v0.12.0 - Interactive Demo & Portfolio Showcase**. Next: **v0.13.0 - Final Product Refinement, Stability, Security & Release Validation**. See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_12_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 All financial records stay in local SQLite. The ledger is authoritative; there
@@ -427,3 +442,34 @@ The separate demo root contains a validated baseline, UUID-named active/previous
 databases, an ownership marker and an atomic generation pointer. These are local runtime
 files, never Git artifacts or a new financial source of truth. Normal SQLite data is
 never copied into the demo. See [dataset and reset contracts](DEMO.md).
+
+## Unreleased v0.13 additions
+
+- `sqlite_0014`: FixedIncomeContract links one asset/account to immutable BRL product
+  terms; FixedIncomeIndex stores exact dated CDI/SELIC_OVER factors by source.
+  BUY/SELL investment activities remain the only financial postings.
+- `sqlite_0015`: LifeEvent stores dates/type/currency/context and optional exact budget;
+  LifeEventLink has event/transaction foreign keys and a unique purchase ID.
+  Costs, refund attribution, FX totals and goal trajectories are projections, not balances.
+- Existing transactions, activity source identities and audit histories are preserved.
+  Both migrations refuse destructive downgrade as a routine operation.
+
+See [calculation rules](FIXED_INCOME.md) and [association/planning rules](LIFE_EVENTS.md).
+
+## Unreleased Pluggy evidence (sqlite_0016)
+
+- PluggyItem identifies a provider connection/institution and retrieval state. It
+  contains no bank login, client secret, API key or Connect token.
+- PluggyResource is keyed by Item/kind/provider ID, with an exact-string provider
+  envelope and optional local account/asset foreign keys. Balances/positions in it
+  are observations and never feed ledger cash, holdings or net worth directly.
+- PluggyObservation preserves each distinct payload revision immutably. Changed
+  evidence invalidates stale reviews; it never silently edits posted history.
+- PLUGGY bank batches reuse SourceRecord and the shared claim/link/confirmation
+  contract. PLUGGY_INVESTMENT batches reuse InvestmentSourceLink and the single
+  activity cash-posting service. The database guard enforces matching source/batch
+  kinds, matching activity account and absence of an ordinary-transaction twin.
+
+Provider transaction IDs may change; institution/account/provider identities are
+scoped and weak matches require explicit review. Snapshot totals are never added
+to existing balances. See [Pluggy integration](PLUGGY.md).

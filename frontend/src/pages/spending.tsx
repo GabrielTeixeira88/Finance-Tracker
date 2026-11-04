@@ -1,7 +1,24 @@
-import { useSection } from '@/lib/navigation'
+import { BudgetProgress as Progress } from '@/components/budget-progress'
+import { SpendingPosition } from './spending-position'
+import { DetailDrawer } from '@/components/detail-drawer'
+import {
+  InsightRange,
+  PeriodSpendingInsights,
+} from './period-spending-insights'
+import { t as tr, ui } from '@/lib/i18n'
+import { SectionNavigation } from '@/components/section-navigation'
+import { BudgetPaceChart } from '@/components/budget-pace-chart'
+import { SpendingOverview } from './spending-overview'
+import { useSection, useRoute, navigateTo } from '@/lib/navigation'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Plus, Settings2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Settings2,
+} from 'lucide-react'
 import { Field } from '@/components/forms'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,11 +36,11 @@ import {
   type BudgetReport,
   type BudgetRow,
 } from '@/lib/budget-api'
-import { decimalUnits, formatMoney } from '@/lib/money'
+import { decimalUnits } from '@/lib/money'
 import { useWrite } from '@/lib/use-write'
-import { RecentActivity } from '@/components/financial'
-import { getTransactions } from '@/lib/api'
 import Refunds from './spending-refunds'
+import LifeEvents from './life-events'
+import { SpendingStory } from '@/components/spending-story'
 import './spending.css'
 
 type Props = {
@@ -41,7 +58,10 @@ export default function Spending(props: Props) {
     queryKey: ['demo'],
     queryFn: ({ signal }) => getDemo(signal),
   })
-  if (demo.isPending) return <LoadingState text="Loading spending workspace…" />
+  if (demo.isPending)
+    return (
+      <LoadingState text={tr('spending:loading_spending_workspace__7ffd37')} />
+    )
   if (demo.isError)
     return (
       <ErrorState text={demo.error.message} retry={() => void demo.refetch()} />
@@ -62,10 +82,21 @@ export function SpendingWorkspace({
   onTransactions,
   initialMonth,
 }: Props & { initialMonth: string }) {
-  const [month, setMonth] = useState(initialMonth)
-  const [currency, setCurrency] = useState(accounts[0]?.currency ?? 'BRL')
+  const route = useRoute()
+  const month = route.params
+    .get('month')
+    ?.match(/^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/)
+    ? route.params.get('month')!
+    : initialMonth
+  const currency =
+    route.params.get('currency') ?? accounts[0]?.currency ?? 'BRL'
+  const setContext = (values: Record<string, string>) =>
+    navigateTo('Budget', undefined, {
+      ...Object.fromEntries(route.params),
+      ...values,
+    })
   const [tab, setTab] = useSection(
-    ['Overview', 'Budgets', 'Insights'] as const,
+    ['Overview', 'Budgets', 'Insights', 'Life Events'] as const,
     'Overview',
   )
   const [editing, setEditing] = useState<BudgetRow | 'new' | null>(null)
@@ -100,50 +131,83 @@ export function SpendingWorkspace({
     )
   const setPeriod = (value: string) => {
     if (/^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/.test(value)) {
-      setMonth(value)
+      setContext({
+        month: value,
+        ...(tab === 'Insights'
+          ? { start: '', end: '', insight_range: '' }
+          : {}),
+      })
       setEditing(null)
       setNotice('')
     }
   }
-  return (
-    <div className="spending-workspace">
-      <PageHeader
-        title="Spending & Budgets"
-        description="Monthly targets, actual spending, and what changed."
+  const monthControl = (
+    <div className="spending-month">
+      <Button
+        size="sm"
+        variant="ghost"
+        aria-label={tr('spending:previous_month_46a299')}
+        disabled={month === '1900-01'}
+        onClick={() => setPeriod(shiftMonth(month, -1))}
       >
-        <div className="spending-month">
+        <ChevronLeft size={15} />
+      </Button>
+      <input
+        aria-label={tr('spending:budget_month_8d6861')}
+        type="month"
+        value={month}
+        min="1900-01"
+        max="2199-12"
+        onChange={(e) => setPeriod(e.target.value)}
+      />
+      <Button
+        size="sm"
+        variant="ghost"
+        aria-label={tr('spending:next_month_8abf7c')}
+        disabled={month === '2199-12'}
+        onClick={() => setPeriod(shiftMonth(month, 1))}
+      >
+        <ChevronRight size={15} />
+      </Button>
+    </div>
+  )
+  return (
+    <div
+      className={`spending-workspace ${tab === 'Overview' ? 'spending-dashboard' : tab === 'Budgets' ? '' : 'spending-insights-page'}`}
+    >
+      <PageHeader
+        title={
+          tab === 'Insights' || tab === 'Life Events'
+            ? tr('parity:spending_insights')
+            : tr('spending:spending_budgets_a513e0')
+        }
+        description={
+          tab === 'Insights' || tab === 'Life Events'
+            ? undefined
+            : tr(
+                'spending:monthly_targets_actual_spending_and_what_changed_d0532a',
+              )
+        }
+      >
+        {(tab === 'Insights' || tab === 'Life Events') && (
           <Button
-            size="sm"
+            className="insights-back"
+            aria-label={ui('Back to Spending')}
             variant="ghost"
-            aria-label="Previous month"
-            disabled={month === '1900-01'}
-            onClick={() => setPeriod(shiftMonth(month, -1))}
+            onClick={() => setTab('Overview')}
           >
-            <ChevronLeft size={15} />
+            <ArrowLeft size={18} aria-hidden="true" />
           </Button>
-          <input
-            aria-label="Budget month"
-            type="month"
-            value={month}
-            min="1900-01"
-            max="2199-12"
-            onChange={(e) => setPeriod(e.target.value)}
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            aria-label="Next month"
-            disabled={month === '2199-12'}
-            onClick={() => setPeriod(shiftMonth(month, 1))}
-          >
-            <ChevronRight size={15} />
-          </Button>
-        </div>
+        )}
+        {tab !== 'Overview' && tab !== 'Insights' && monthControl}
+        {tab === 'Insights' && data && (
+          <InsightRange asOf={data.as_of}>{monthControl}</InsightRange>
+        )}
         <select
-          aria-label="Budget currency"
+          aria-label={tr('spending:budget_currency_672794')}
           value={currency}
           onChange={(e) => {
-            setCurrency(e.target.value)
+            setContext({ currency: e.target.value })
             setEditing(null)
           }}
         >
@@ -152,53 +216,49 @@ export function SpendingWorkspace({
           ))}
         </select>
       </PageHeader>
-      <div className="spending-toolbar">
-        <nav className="range-tabs mb-4" aria-label="Spending views">
-          {(['Overview', 'Budgets', 'Insights'] as const).map((view) => (
-            <button
-              key={view}
-              aria-pressed={tab === view}
-              onClick={() => setTab(view)}
-            >
-              {view}
-            </button>
-          ))}
-        </nav>
-        <div className="spending-actions">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setEditing('new')
-              setTab('Budgets')
-            }}
-          >
-            <Plus size={14} /> Add target
+      {tab === 'Budgets' && (
+        <div className="spending-toolbar">
+          <Button variant="ghost" onClick={() => setTab('Overview')}>
+            {ui('Back to Spending')}
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setGroupsOpen(!groupsOpen)}
-          >
-            <Settings2 size={14} /> Groups
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setRefundsOpen(!refundsOpen)}
-          >
-            Refunds
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={!data || data.pace.status === 'future'}
-            onClick={() => drill()}
-          >
-            View transactions →
-          </Button>
+          {tab === 'Budgets' && (
+            <div className="spending-actions">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setEditing('new')
+                  setTab('Budgets')
+                }}
+              >
+                <Plus size={14} /> {tr('spending:add_target_00c6a7')}{' '}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setGroupsOpen(!groupsOpen)}
+              >
+                <Settings2 size={14} /> {tr('spending:groups_ae9629')}{' '}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setRefundsOpen(!refundsOpen)}
+              >
+                {tr('spending:refunds_be32ad')}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={!data || data.pace.status === 'future'}
+                onClick={() => drill()}
+              >
+                {tr('spending:view_transactions__b8bb89')}
+              </Button>
+            </div>
+          )}
         </div>
-      </div>
+      )}
       {write.isError && <ErrorState text={write.error.message} />}
       {notice && (
         <p role="status" className="metadata">
@@ -206,7 +266,7 @@ export function SpendingWorkspace({
         </p>
       )}
       {report.isPending ? (
-        <LoadingState text="Calculating spending…" />
+        <LoadingState text={tr('spending:calculating_spending__06a346')} />
       ) : report.isError ? (
         <ErrorState
           text={report.error.message}
@@ -217,14 +277,22 @@ export function SpendingWorkspace({
           <>
             {data.other_currencies.length > 0 && (
               <p className="spending-currency-note">
-                Showing {currency} only. {data.other_currencies.join(', ')}{' '}
-                activity is excluded; no exchange rates are applied.
+                {' '}
+                {tr('spending:showing_163d81')} {currency}{' '}
+                {tr('spending:only__512f7c')} {data.other_currencies.join(', ')}{' '}
+                {tr(
+                  'spending:activity_is_excluded_no_exchange_rates_are_appli_b2dfaf',
+                )}{' '}
               </p>
             )}
             {data.pace.status === 'future' && (
               <p className="spending-currency-note">
-                Future month: actuals stop at {data.as_of}. Future rollover is
-                not yet available.
+                {' '}
+                {tr('spending:future_month_actuals_stop_at_25b469')}{' '}
+                {data.as_of}{' '}
+                {tr(
+                  'spending:_future_rollover_is_not_yet_available__8610c1',
+                )}{' '}
               </p>
             )}
             {groupsOpen && <GroupEditor data={data} />}
@@ -232,95 +300,60 @@ export function SpendingWorkspace({
               <Refunds accounts={accounts} currency={currency} month={month} />
             )}
             {editing && (
-              <TargetEditor
-                key={`${month}-${currency}-${editing === 'new' ? 'new' : editing.category_id}`}
-                row={editing === 'new' ? undefined : editing}
-                data={data}
-                categories={categories}
+              <DetailDrawer
+                title={
+                  editing === 'new'
+                    ? tr('dynamic:new_category_target_17b3fd')
+                    : editing.name
+                }
                 onClose={() => setEditing(null)}
-              />
+              >
+                <TargetEditor
+                  key={`${month}-${currency}-${editing === 'new' ? 'new' : editing.category_id}`}
+                  row={editing === 'new' ? undefined : editing}
+                  data={data}
+                  categories={categories}
+                  onClose={() => setEditing(null)}
+                />
+              </DetailDrawer>
             )}
             {tab === 'Overview' && (
-              <>
-                <div className="spending-headline">
-                  <div>
-                    <span className="eyebrow">Spent · {month}</span>
-                    <h2>
-                      <Money
-                        value={data.summary.expenses}
-                        currency={currency}
-                      />
-                    </h2>
-                    <p className="metadata">
-                      <Money value={data.summary.change} currency={currency} />{' '}
-                      versus previous month
-                      {data.summary.change_percent !== null
-                        ? ` (${data.summary.change_percent}%)`
-                        : ' · no positive comparison baseline'}
-                    </p>
-                  </div>
-                  <div className="spending-kpis">
-                    <Metric
-                      title="Income"
-                      value={data.summary.income}
-                      currency={currency}
-                    />
-                    <Metric
-                      title="Monthly target"
-                      value={data.summary.target}
-                      currency={currency}
-                    />
-                    <Metric
-                      title="Net cash flow"
-                      value={data.summary.net_flow}
-                      currency={currency}
-                    />
-                  </div>
-                </div>
-                <DailyChart
-                  data={data}
-                  onDay={(day) => drill({ date_from: day, date_to: day })}
-                />
-                <div className="spending-columns">
-                  <section>
-                    <SectionHeader
-                      title="Where it went"
-                      detail="Net expenses, after explicitly linked refunds."
-                    />
-                    <CategoryList
-                      rows={data.categories}
-                      currency={currency}
-                      onClick={categoryDrill}
-                    />
-                    <SectionHeader title="Recent spending" />
-                    <RecentSpending
+              <SpendingOverview
+                budgetReport={data}
+                asOf={data.as_of}
+                currency={currency}
+                accounts={accounts}
+                categories={categories}
+                onTransactions={onTransactions}
+                budget={
+                  <div className="budget-widget">
+                    {monthControl}
+                    <BudgetPace
                       data={data}
-                      accounts={accounts}
-                      categories={categories}
+                      onManage={() => setTab('Budgets')}
                     />
-                    <Button variant="ghost" onClick={() => drill()}>
-                      Open the month's transaction ledger →
-                    </Button>
-                  </section>
-                  <BudgetPace data={data} onManage={() => setTab('Budgets')} />
-                </div>
-              </>
+                  </div>
+                }
+              />
             )}
             {tab === 'Budgets' && (
               <div className="spending-columns budget-layout">
                 <div>
                   <div className="budget-plan">
-                    <span className="eyebrow">Monthly plan</span>
+                    <span className="eyebrow">
+                      {tr('spending:monthly_plan_b01264')}
+                    </span>
                     <h2>
                       <Money value={data.summary.target} currency={currency} />
                     </h2>
                     <p className="metadata">
-                      Carryover{' '}
+                      {' '}
+                      {tr('spending:carryover_509c59')}{' '}
                       <Money
                         value={data.summary.carryover}
                         currency={currency}
                       />{' '}
-                      · Available target{' '}
+                      {tr('spending:_available_target_0b286e')}{' '}
                       <Money
                         value={data.summary.available}
                         currency={currency}
@@ -332,15 +365,20 @@ export function SpendingWorkspace({
                     />
                     <p className="metadata">
                       {data.summary.percent === null
-                        ? 'No positive target'
-                        : `${data.summary.percent}% used`}{' '}
-                      · {data.summary.over_count} categories over target
+                        ? tr('dynamic:no_positive_target_d65416')
+                        : tr('messages:message_f752d5f7a23b', {
+                            value0: data.summary.percent,
+                          })}{' '}
+                      · {data.summary.over_count}{' '}
+                      {tr('spending:categories_over_target_0c5a90')}{' '}
                     </p>
                   </div>
                   {!data.categories.some((r) => r.active) && (
                     <EmptyState
-                      title="No monthly targets yet"
-                      detail="Set a category target independently of your bank balance."
+                      title={tr('spending:no_monthly_targets_yet_5858f2')}
+                      detail={tr(
+                        'spending:set_a_category_target_independently_of_your_bank_20bac8',
+                      )}
                     />
                   )}
                   {data.groups.map((g) => {
@@ -363,21 +401,24 @@ export function SpendingWorkspace({
                             {g.name}
                             <small className="metadata block">
                               <Money value={g.spent} currency={currency} />{' '}
-                              spent ·{' '}
+                              {tr('spending:spent__8f60a7')}{' '}
                               {g.percent === null
-                                ? 'No positive target'
-                                : `${g.percent}% used`}
+                                ? tr('dynamic:no_positive_target_d65416')
+                                : tr('messages:message_f752d5f7a23b', {
+                                    value0: g.percent,
+                                  })}
                             </small>
                           </span>
                           <span className="budget-group-total">
                             <Money value={g.available} currency={currency} />
                             <small className="metadata block">
-                              available target
+                              {tr('spending:available_target_54b6b6')}
                             </small>
                             <small className="metadata block">
-                              Base{' '}
-                              <Money value={g.target} currency={currency} /> ·
-                              Left{' '}
+                              {' '}
+                              {tr('spending:base_077fe9')}{' '}
+                              <Money value={g.target} currency={currency} />{' '}
+                              {tr('spending:_left_5260a7')}{' '}
                               <Money value={g.remaining} currency={currency} />
                             </small>
                           </span>
@@ -396,11 +437,16 @@ export function SpendingWorkspace({
                 <aside>
                   <BudgetPace data={data} />
                   <section className="budget-copy">
-                    <h2>Copy previous month's targets</h2>
+                    <h2>
+                      {tr('spending:copy_previous_month_s_targets_67ed9a')}
+                    </h2>
                     <p className="metadata">
-                      Copy {shiftMonth(month, -1)} → {month}. Copies target
-                      amounts and group assignments, never spending or
-                      carryover.
+                      {' '}
+                      {tr('spending:copy_af74f7')} {shiftMonth(month, -1)} →{' '}
+                      {month}{' '}
+                      {tr(
+                        'spending:_copies_target_amounts_and_group_assignments_nev_1a25ca',
+                      )}{' '}
                     </p>
                     <label className="check-line">
                       <input
@@ -408,7 +454,9 @@ export function SpendingWorkspace({
                         checked={replace}
                         onChange={(e) => setReplace(e.target.checked)}
                       />{' '}
-                      Replace existing month overrides
+                      {tr(
+                        'spending:replace_existing_month_overrides_9181a2',
+                      )}{' '}
                     </label>
                     <Button
                       size="sm"
@@ -432,28 +480,71 @@ export function SpendingWorkspace({
                             {
                               onSuccess: () =>
                                 setNotice(
-                                  'Previous month targets copied. Actual spending was unchanged.',
+                                  tr(
+                                    'dynamic:previous_month_targets_copied_actual_spending_wa_8e2a7f',
+                                  ),
                                 ),
                             },
                           )
                       }}
                     >
-                      Copy targets
+                      {tr('spending:copy_targets_165a26')}
                     </Button>
                   </section>
                 </aside>
               </div>
             )}
-            {tab === 'Insights' && (
-              <Insights
-                data={data}
-                onCategory={categoryDrill}
-                onPayee={(id) =>
-                  drill(id ? { payee_id: id } : { no_payee: 'true' })
+            {(tab === 'Insights' || tab === 'Life Events') && (
+              <SectionNavigation
+                label={tr('parity:spending_narrative')}
+                items={
+                  [
+                    ['where', tr('parity:where_i_am')],
+                    ['changed', tr('spending:what_changed_7e4b91')],
+                    ['when', tr('parity:when_where')],
+                  ] as const
                 }
-                onMonth={setPeriod}
+                value={
+                  tab === 'Life Events'
+                    ? 'when'
+                    : route.params.get('stage') === 'changed'
+                      ? 'changed'
+                      : 'where'
+                }
+                onChange={(stage) =>
+                  setContext({
+                    view: stage === 'when' ? 'Life Events' : 'Insights',
+                    stage,
+                  })
+                }
               />
             )}
+            {tab === 'Life Events' && <LifeEvents context={data} />}
+            {tab === 'Insights' &&
+              ((route.params.get('insight_range') === 'period' ||
+                (route.params.get('start') &&
+                  route.params.get('start')?.slice(0, 7) !== data.month)) &&
+              !(
+                route.params.get('start') === data.date_from &&
+                route.params.get('end') ===
+                  (data.date_to < data.as_of ? data.date_to : data.as_of)
+              ) ? (
+                <PeriodSpendingInsights
+                  asOf={data.as_of}
+                  currency={currency}
+                  categories={categories}
+                  onTransactions={onTransactions}
+                />
+              ) : (
+                <Insights
+                  data={data}
+                  onCategory={categoryDrill}
+                  onPayee={(id) =>
+                    drill(id ? { payee_id: id } : { no_payee: 'true' })
+                  }
+                  onMonth={setPeriod}
+                />
+              ))}
           </>
         )
       )}
@@ -479,25 +570,6 @@ function Metric({
     </div>
   )
 }
-function width(spent: string, total: string) {
-  const s = decimalUnits(spent),
-    t = decimalUnits(total)
-  if (t <= 0n) return s > 0n ? 100 : 0
-  const p = (s * 10000n) / t
-  return Number(p < 0n ? 0n : p > 10000n ? 10000n : p) / 100
-}
-function Progress({ spent, available }: { spent: string; available: string }) {
-  const over = decimalUnits(spent) > decimalUnits(available)
-  return (
-    <div
-      className={`spending-progress ${over ? 'over' : ''}`}
-      role="img"
-      aria-label={over ? 'Spending over target' : 'Spending progress'}
-    >
-      <span style={{ width: `${width(spent, available)}%` }} />
-    </div>
-  )
-}
 function BudgetPace({
   data,
   onManage,
@@ -508,145 +580,78 @@ function BudgetPace({
   const s = data.summary
   return (
     <section className="budget-pace">
-      <SectionHeader title="Monthly budget">
+      <SectionHeader title={tr('spending:monthly_budget_f260dd')}>
         {onManage && (
           <Button size="sm" variant="ghost" onClick={onManage}>
-            Manage →
+            {tr('spending:manage__bfa0df')}
           </Button>
         )}
       </SectionHeader>
-      <p className="metadata">
-        {data.pace.status === 'closed'
-          ? 'Period closed'
-          : `Day ${data.pace.elapsed_days} / ${data.pace.days_in_month}`}{' '}
-        · {data.pace.elapsed_percent}% elapsed
-      </p>
-      <h2>
-        <Money value={s.remaining} currency={data.currency} />{' '}
-        <small>remaining</small>
-      </h2>
-      <p className="metadata">
-        Includes unbudgeted expenses and signed carryover.
-      </p>
-      <Progress spent={s.expenses} available={s.available} />
-      <div className="spending-kpis">
-        <Metric
-          title="Budgeted spending"
-          value={s.budgeted_spending}
-          currency={data.currency}
-        />
-        <Metric
-          title="Unbudgeted spending"
-          value={s.unbudgeted_spending}
-          currency={data.currency}
-        />
-      </div>
-      <div className="spending-projection">
-        <span className="metadata">Estimated month-end spending</span>
-        {data.pace.projection === null ? (
-          <p className="metadata">
-            Available for the current month after three elapsed days with
-            positive net spending.
-          </p>
-        ) : (
-          <>
+      <div className="budget-pace-body">
+        <p className="metadata">
+          {data.pace.status === 'closed'
+            ? tr('dynamic:period_closed_919fb4')
+            : tr('messages:message_3907582aaf8a', {
+                value0: data.pace.elapsed_days,
+                value1: data.pace.days_in_month,
+              })}{' '}
+          · {data.pace.elapsed_percent} {tr('spending:_elapsed_adf526')}{' '}
+        </p>
+        <h2>
+          <Money value={s.remaining} currency={data.currency} />{' '}
+          <small>{tr('spending:remaining_398658')}</small>
+        </h2>
+        <p className="metadata">
+          {ui('Available this month')}:{' '}
+          <Money value={s.available} currency={data.currency} />
+        </p>
+        <BudgetPaceChart data={data} />
+        <div className="spending-kpis budget-pace-metrics">
+          <Metric
+            title={ui('Spent so far')}
+            value={s.expenses}
+            currency={data.currency}
+          />
+          <div className="spending-metric">
+            <span className="metadata">{ui('Forecast')}</span>
             <strong>
-              <Money value={data.pace.projection} currency={data.currency} />
+              {data.pace.projection === null ? (
+                ui('Unavailable')
+              ) : (
+                <Money value={data.pace.projection} currency={data.currency} />
+              )}
             </strong>
-            <p className="metadata">
-              Spent ÷ elapsed days × days in month. An estimate; bills need not
-              arrive evenly.
-            </p>
-          </>
-        )}
+          </div>
+        </div>
+        <details className="budget-method">
+          <summary>{ui('Details')}</summary>
+          <p className="metadata">
+            {tr(
+              'spending:includes_unbudgeted_expenses_and_signed_carryove_764dc7',
+            )}
+          </p>
+          <Metric
+            title={tr('spending:budgeted_spending_6bb55c')}
+            value={s.budgeted_spending}
+            currency={data.currency}
+          />
+          <Metric
+            title={tr('spending:unbudgeted_spending_c6ceed')}
+            value={s.unbudgeted_spending}
+            currency={data.currency}
+          />
+          <p className="metadata">
+            {data.pace.projection === null
+              ? tr(
+                  'spending:available_for_the_current_month_after_three_elap_b9d8f3',
+                )
+              : tr(
+                  'spending:spent_elapsed_days_days_in_month_an_estimate_bil_0468cc',
+                )}
+          </p>
+        </details>
       </div>
     </section>
-  )
-}
-function DailyChart({
-  data,
-  onDay,
-}: {
-  data: BudgetReport
-  onDay: (day: string) => void
-}) {
-  const units = data.daily.map((d) => decimalUnits(d.amount))
-  const high = units.reduce((a, v) => (v > a ? v : a), 0n)
-  const low = units.reduce((a, v) => (-v > a ? -v : a), 0n)
-  const span = high + low
-  const zero = span ? Number((low * 10000n) / span) / 100 : 0
-  return (
-    <section aria-label="Daily spending chart" className="daily-spending">
-      <div className="daily-bars">
-        {data.daily.map((d, i) => {
-          const units = decimalUnits(d.amount),
-            abs = units < 0n ? -units : units
-          const height = span ? Number((abs * 10000n) / span) / 100 : 0
-          return (
-            <button
-              disabled={d.date > data.as_of}
-              key={d.date}
-              title={`${d.date}: ${formatMoney(d.amount, data.currency)}`}
-              aria-label={`${d.date}: ${formatMoney(d.amount, data.currency)} — view transactions`}
-              onClick={() => onDay(d.date)}
-            >
-              <span
-                className={units < 0n ? 'refund-bar' : ''}
-                style={{
-                  height: `${height}%`,
-                  bottom: `${units < 0n ? zero - height : zero}%`,
-                }}
-              />
-              <small>{i + 1}</small>
-            </button>
-          )
-        })}
-      </div>
-      <p className="metadata">
-        Daily net spending · hover for exact values, select a day for
-        transactions. Refunds may make a day negative.
-      </p>
-    </section>
-  )
-}
-function CategoryList({
-  rows,
-  currency,
-  onClick,
-}: {
-  rows: BudgetRow[]
-  currency: string
-  onClick: (r: BudgetRow) => void
-}) {
-  const [expanded, setExpanded] = useState(false)
-  const visible = rows
-    .filter((r) => decimalUnits(r.spent) !== 0n)
-    .sort((a, b) => (decimalUnits(a.spent) > decimalUnits(b.spent) ? -1 : 1))
-  if (!visible.length) return <EmptyState title="No spending in this month" />
-  const max = visible[0].spent
-  return (
-    <div className="spending-category-list">
-      {(expanded ? visible : visible.slice(0, 4)).map((r) => (
-        <button key={r.category_id ?? 'none'} onClick={() => onClick(r)}>
-          <span>
-            {r.name}
-            <Progress spent={r.spent} available={max} />
-          </span>
-          <Money value={r.spent} currency={currency} />
-        </button>
-      ))}
-      {visible.length > 4 && (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded
-            ? 'Show fewer categories'
-            : `Show all ${visible.length} categories`}
-        </Button>
-      )}
-    </div>
   )
 }
 function BudgetTable({
@@ -666,15 +671,19 @@ function BudgetTable({
     <div className="table-scroll">
       <table className="budget-table">
         <caption className="sr-only">
-          Category targets and actual spending
+          {tr('spending:category_targets_and_actual_spending_886a3e')}
         </caption>
         <thead>
           <tr>
-            <th>Category</th>
-            <th className="text-right">Target</th>
-            <th className="text-right">Spent</th>
-            <th className="text-right">Remaining</th>
-            <th>Progress</th>
+            <th>{tr('spending:category_a3c686')}</th>
+            <th className="text-right">{tr('spending:target_61ad50')}</th>
+            <th className="text-right">{tr('parity:rollover')}</th>
+            <th className="text-right">
+              {tr('spending:available_target_653677')}
+            </th>
+            <th className="text-right">{tr('spending:spent_c0d3c9')}</th>
+            <th className="text-right">{tr('spending:remaining_cc632b')}</th>
+            <th>{tr('spending:progress_1b9027')}</th>
             <th />
           </tr>
         </thead>
@@ -690,11 +699,12 @@ function BudgetTable({
                   {r.name}
                 </button>
                 <small className="metadata block">
-                  {r.override ? 'Month override' : 'Monthly default'}
+                  {r.override
+                    ? tr('dynamic:month_override_120f44')
+                    : tr('dynamic:monthly_default_f8c020')}
                   {r.rollover_enabled && (
                     <>
-                      {' '}
-                      · Rollover{' '}
+                      {tr('spending:_rollover_a18760')}{' '}
                       <Money value={r.carryover} currency={currency} />
                     </>
                   )}
@@ -702,6 +712,12 @@ function BudgetTable({
               </th>
               <td className="text-right">
                 <Money value={r.target} currency={currency} />
+              </td>
+              <td className="text-right">
+                <Money value={r.carryover} currency={currency} />
+              </td>
+              <td className="text-right">
+                <Money value={r.available} currency={currency} />
               </td>
               <td className="text-right">
                 <Money value={r.spent} currency={currency} />
@@ -716,7 +732,7 @@ function BudgetTable({
               <td>
                 <Progress spent={r.spent} available={r.available} />
                 <small className="metadata">
-                  {r.status}
+                  {ui(r.status)}
                   {r.percent !== null ? ` · ${r.percent}%` : ''}
                 </small>
               </td>
@@ -726,9 +742,11 @@ function BudgetTable({
                     size="sm"
                     variant="ghost"
                     onClick={() => onEdit(r)}
-                    aria-label={`Edit target ${r.name}`}
+                    aria-label={tr('messages:message_204ad7780489', {
+                      value0: r.name,
+                    })}
                   >
-                    Edit
+                    {tr('spending:edit_530164')}
                   </Button>
                 )}
               </td>
@@ -755,7 +773,10 @@ function TargetEditor({
     row?.category_id ?? categories[0]?.id ?? '',
   )
   const [amount, setAmount] = useState(row?.target ?? '')
-  const [scope, setScope] = useState(row?.override ? 'month' : 'default')
+  const route = useRoute()
+  const [scope, setScope] = useState(
+    !row && route.params.get('setup') === 'true' ? 'default' : 'month',
+  )
   const [rollover, setRollover] = useState(row?.rollover_enabled ?? false)
   const [active, setActive] = useState(row?.target_id ? row.active : true)
   const [group, setGroup] = useState(row?.group_id ?? '')
@@ -765,11 +786,15 @@ function TargetEditor({
   return (
     <form
       className="editor-surface budget-editor"
-      aria-label="Target editor"
+      aria-label={tr('spending:target_editor_bb7533')}
       onSubmit={(e) => {
         e.preventDefault()
         if (!openingInput.safeParse(amount).success) {
-          setError('Enter zero or a positive exact amount, up to six decimals.')
+          setError(
+            tr(
+              'dynamic:enter_zero_or_a_positive_exact_amount_up_to_six__fbd94e',
+            ),
+          )
           return
         }
         setError('')
@@ -793,21 +818,25 @@ function TargetEditor({
       }}
     >
       <SectionHeader
-        title={row ? `Edit ${row.name}` : 'New category target'}
-        detail={`Applies from ${data.month}. Earlier months keep their target configuration.`}
+        title={
+          row
+            ? tr('messages:message_f8d9f06aa37b', { value0: row.name })
+            : tr('dynamic:new_category_target_17b3fd')
+        }
+        detail={tr('messages:message_c774169a2e95', { value0: data.month })}
       />
       {(error || write.isError) && (
         <ErrorState text={error || write.error!.message} />
       )}
       <fieldset disabled={write.isPending} className="filter-bar">
-        <Field label="Target category">
+        <Field label={tr('spending:target_category_779727')}>
           <select
             required
             value={categoryId}
             disabled={!!row}
             onChange={(e) => setCategory(e.target.value)}
           >
-            <option value="">Choose category</option>
+            <option value="">{tr('spending:choose_category_a23eff')}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -815,7 +844,9 @@ function TargetEditor({
             ))}
           </select>
         </Field>
-        <Field label={`Target amount (${data.currency})`}>
+        <Field
+          label={tr('messages:message_4fc0d46e4b71', { value0: data.currency })}
+        >
           <input
             required
             inputMode="decimal"
@@ -823,15 +854,19 @@ function TargetEditor({
             onChange={(e) => setAmount(e.target.value)}
           />
         </Field>
-        <Field label="Target applies to">
+        <Field label={tr('spending:target_applies_to_4c7124')}>
           <select value={scope} onChange={(e) => setScope(e.target.value)}>
-            <option value="default">This month onward (default)</option>
-            <option value="month">This month only (override)</option>
+            <option value="default">
+              {tr('spending:this_month_onward_default__5015ab')}
+            </option>
+            <option value="month">
+              {tr('spending:this_month_only_override__6f2364')}
+            </option>
           </select>
         </Field>
-        <Field label="Budget group">
+        <Field label={tr('spending:budget_group_2fabb9')}>
           <select value={group} onChange={(e) => setGroup(e.target.value)}>
-            <option value="">Ungrouped</option>
+            <option value="">{tr('spending:ungrouped_a7746f')}</option>
             {data.groups
               .filter((g) => g.id)
               .map((g) => (
@@ -842,12 +877,13 @@ function TargetEditor({
           </select>
         </Field>
         <details className="advanced-fields" open={!!row?.rollover_enabled}>
-          <summary>Advanced target settings</summary>
+          <summary>{tr('spending:advanced_target_settings_d8a30d')}</summary>
           <p className="metadata">
-            Rollover carries both unused and overspent amounts. Disabling it
-            starts a new chain; earlier months remain unchanged.
+            {tr(
+              'spending:rollover_carries_both_unused_and_overspent_amoun_ef2543',
+            )}
           </p>
-          <Field label="Category sort order">
+          <Field label={tr('spending:category_sort_order_d9a41b')}>
             <input
               type="number"
               min="0"
@@ -862,7 +898,9 @@ function TargetEditor({
               checked={rollover}
               onChange={(e) => setRollover(e.target.checked)}
             />{' '}
-            Carry unused and overspent amounts forward
+            {tr(
+              'spending:carry_unused_and_overspent_amounts_forward_a1122d',
+            )}{' '}
           </label>
           <label className="check-line">
             <input
@@ -870,12 +908,12 @@ function TargetEditor({
               checked={active}
               onChange={(e) => setActive(e.target.checked)}
             />{' '}
-            Target active
+            {tr('spending:target_active_eb0cf9')}{' '}
           </label>
         </details>
-        <Button type="submit">Save target</Button>
+        <Button type="submit">{tr('spending:save_target_fa5df1')}</Button>
         <Button type="button" variant="ghost" onClick={onClose}>
-          Cancel
+          {tr('spending:cancel_77dfd2')}
         </Button>
         {row?.target_id && (
           <Button
@@ -896,7 +934,7 @@ function TargetEditor({
                 )
             }}
           >
-            Disable target
+            {tr('spending:disable_target_00e44b')}
           </Button>
         )}
         {row?.override && (
@@ -913,14 +951,12 @@ function TargetEditor({
               )
             }
           >
-            Restore monthly default
+            {tr('spending:restore_monthly_default_8756e9')}
           </Button>
         )}
       </fieldset>
       <p className="metadata">
-        A default change runs until the next saved default version. Existing
-        month overrides take precedence. Grouping and rollover follow the
-        selected scope.
+        {tr('spending:a_default_change_runs_until_the_next_saved_defau_90de50')}
       </p>
     </form>
   )
@@ -933,7 +969,7 @@ function GroupEditor({ data }: { data: BudgetReport }) {
   return (
     <form
       className="editor-surface"
-      aria-label="Group editor"
+      aria-label={tr('spending:group_editor_44607a')}
       onSubmit={(e) => {
         e.preventDefault()
         write.mutate(
@@ -952,10 +988,10 @@ function GroupEditor({ data }: { data: BudgetReport }) {
         )
       }}
     >
-      <h2>Category groups</h2>
+      <h2>{tr('spending:category_groups_03c493')}</h2>
       {write.isError && <ErrorState text={write.error.message} />}
       <fieldset disabled={write.isPending} className="filter-bar">
-        <Field label="Edit group">
+        <Field label={tr('spending:edit_group_edb57d')}>
           <select
             value={id}
             onChange={(e) => {
@@ -965,7 +1001,7 @@ function GroupEditor({ data }: { data: BudgetReport }) {
               setOrder(g?.sort_order ?? 0)
             }}
           >
-            <option value="">New group</option>
+            <option value="">{tr('spending:new_group_f9850c')}</option>
             {data.groups
               .filter((g) => g.id)
               .map((g) => (
@@ -975,7 +1011,7 @@ function GroupEditor({ data }: { data: BudgetReport }) {
               ))}
           </select>
         </Field>
-        <Field label="Group name">
+        <Field label={tr('spending:group_name_ebb7e1')}>
           <input
             required
             maxLength={120}
@@ -983,7 +1019,7 @@ function GroupEditor({ data }: { data: BudgetReport }) {
             onChange={(e) => setName(e.target.value)}
           />
         </Field>
-        <Field label="Group sort order">
+        <Field label={tr('spending:group_sort_order_42d5e2')}>
           <input
             type="number"
             min="0"
@@ -992,7 +1028,7 @@ function GroupEditor({ data }: { data: BudgetReport }) {
             onChange={(e) => setOrder(Number(e.target.value))}
           />
         </Field>
-        <Button type="submit">Save group</Button>
+        <Button type="submit">{tr('spending:save_group_36ca68')}</Button>
         {id && (
           <Button
             type="button"
@@ -1000,7 +1036,9 @@ function GroupEditor({ data }: { data: BudgetReport }) {
             onClick={() => {
               if (
                 window.confirm(
-                  'Delete this unreferenced group? Referenced history is protected.',
+                  tr(
+                    'dynamic:delete_this_unreferenced_group_referenced_histor_0372c8',
+                  ),
                 )
               )
                 write.mutate(
@@ -1014,13 +1052,12 @@ function GroupEditor({ data }: { data: BudgetReport }) {
                 )
             }}
           >
-            Delete group
+            {tr('spending:delete_group_b6f15b')}
           </Button>
         )}
       </fieldset>
       <p className="metadata">
-        Names and group order are presentation settings. Assign a category
-        through its target editor, effective from the selected month.
+        {tr('spending:names_and_group_order_are_presentation_settings__79a5e6')}
       </p>
     </form>
   )
@@ -1036,7 +1073,17 @@ function Insights({
   onPayee: (id: string | null) => void
   onMonth: (month: string) => void
 }) {
+  const route = useRoute()
+  const changed = route.params.get('stage') === 'changed'
   const movers = data.categories
+    .map((row) => {
+      const comparison = data.narrative?.comparisons?.find(
+        (item) => item.category_id === row.category_id,
+      )
+      return comparison
+        ? { ...row, previous: comparison.previous, change: comparison.change }
+        : row
+    })
     .filter((r) => decimalUnits(r.change) !== 0n)
     .sort((a, b) => {
       const x = decimalUnits(a.change),
@@ -1046,127 +1093,98 @@ function Insights({
     .slice(0, 8)
   return (
     <>
-      <div className="spending-insight-summary">
-        <div>
-          <Metric
-            title="Remaining target"
-            value={data.summary.remaining}
-            currency={data.currency}
-          />
-          <p className="metadata">
-            {data.summary.over_count} categories over target ·{' '}
-            {data.summary.percent === null
-              ? 'No positive target'
-              : `${data.summary.percent}% used`}
-          </p>
-          <Progress
-            spent={data.summary.expenses}
-            available={data.summary.available}
-          />
-          <p className="metadata">
-            Available target{' '}
-            <Money value={data.summary.available} currency={data.currency} /> ·
-            includes signed carryover.
-          </p>
-        </div>
-        <div>
-          <Metric
-            title="Spending change from previous month"
-            value={data.summary.change}
-            currency={data.currency}
-          />
-          <p className="metadata">
-            {data.summary.change_percent === null
-              ? 'No positive prior-month baseline for a percentage comparison.'
-              : `${data.summary.change_percent}% compared with the full previous month. Current-month comparisons may be partial.`}
-          </p>
-        </div>
-        <div>
-          <Metric
-            title="Net cash flow"
-            value={data.summary.net_flow}
-            currency={data.currency}
-          />
-          <Metric
-            title="Uncategorized spending"
-            value={data.categories.find((r) => !r.category_id)?.spent ?? '0'}
-            currency={data.currency}
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() =>
-              onCategory(
-                data.categories.find((r) => !r.category_id) ??
-                  ({ category_id: null } as BudgetRow),
-              )
+      {changed && <SpendingStory data={data} onCategory={onCategory} />}
+      {!changed && (
+        <>
+          <SpendingPosition
+            data={data}
+            onCategory={onCategory}
+            onManage={() =>
+              navigateTo('Budget', undefined, {
+                ...Object.fromEntries(route.params),
+                view: 'Budgets',
+              })
             }
-          >
-            Review uncategorized →
-          </Button>
+          />
+        </>
+      )}
+      {changed && (
+        <div className="spending-columns">
+          <section>
+            <SectionHeader
+              title={tr('spending:what_changed_7e4b91')}
+              detail={tr(
+                'spending:largest_category_increases_and_decreases_includi_7d0388',
+              )}
+            />
+            {!movers.length ? (
+              <EmptyState
+                title={tr('spending:no_category_spending_changes_e9d1af')}
+              />
+            ) : (
+              movers.map((r) => (
+                <button
+                  className="insight-row"
+                  key={r.category_id ?? 'none'}
+                  onClick={() => onCategory(r)}
+                >
+                  <span>
+                    {r.name}
+                    <small className="metadata block">
+                      {' '}
+                      {tr('spending:previous_50f942')}{' '}
+                      <Money value={r.previous} currency={data.currency} />{' '}
+                      {tr('spending:_selected_dc9943')}{' '}
+                      <Money value={r.spent} currency={data.currency} />
+                    </small>
+                  </span>
+                  <Money value={r.change} currency={data.currency} />
+                </button>
+              ))
+            )}
+          </section>
+          <section>
+            <SectionHeader
+              title={tr('spending:top_payees_965a4a')}
+              detail={tr(
+                'spending:net_spending_select_a_payee_to_inspect_the_ledge_919b6d',
+              )}
+            />
+            {!data.payees.length ? (
+              <EmptyState title={tr('spending:no_payee_spending_yet_1564ab')} />
+            ) : (
+              data.payees.map((p) => (
+                <button
+                  className="insight-row"
+                  key={p.id ?? 'none'}
+                  onClick={() => onPayee(p.id)}
+                >
+                  <span>{p.name}</span>
+                  <Money value={p.spent} currency={data.currency} />
+                </button>
+              ))
+            )}
+          </section>
         </div>
-      </div>
-      <div className="spending-columns">
-        <section>
-          <SectionHeader
-            title="What changed"
-            detail="Largest category increases and decreases, including refunds."
-          />
-          {!movers.length ? (
-            <EmptyState title="No category spending changes" />
-          ) : (
-            movers.map((r) => (
-              <button
-                className="insight-row"
-                key={r.category_id ?? 'none'}
-                onClick={() => onCategory(r)}
-              >
-                <span>
-                  {r.name}
-                  <small className="metadata block">
-                    Previous{' '}
-                    <Money value={r.previous} currency={data.currency} /> ·
-                    Selected <Money value={r.spent} currency={data.currency} />
-                  </small>
-                </span>
-                <Money value={r.change} currency={data.currency} />
-              </button>
-            ))
-          )}
-        </section>
-        <section>
-          <SectionHeader
-            title="Top payees"
-            detail="Net spending; select a payee to inspect the ledger."
-          />
-          {!data.payees.length ? (
-            <EmptyState title="No payee spending yet" />
-          ) : (
-            data.payees.map((p) => (
-              <button
-                className="insight-row"
-                key={p.id ?? 'none'}
-                onClick={() => onPayee(p.id)}
-              >
-                <span>{p.name}</span>
-                <Money value={p.spent} currency={data.currency} />
-              </button>
-            ))
-          )}
-        </section>
-      </div>
+      )}
       <SectionHeader
-        title="Monthly cash flow"
-        detail="Actual ledger movements only. Transfers, openings, and unposted schedules are excluded."
+        title={tr('spending:monthly_cash_flow_c4b18e')}
+        detail={tr(
+          'spending:actual_ledger_movements_only_transfers_openings__c955f7',
+        )}
       />
       <div className="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>Month</th>
-              <th className="text-right">Income</th>
-              <th className="text-right">Net expenses</th>
-              <th className="text-right">Net cash flow</th>
+              <th>{tr('spending:month_082bc3')}</th>
+              <th className="text-right">{tr('spending:income_1c89b1')}</th>
+              <th className="text-right">
+                {tr('spending:net_expenses_409a07')}
+              </th>
+              <th className="text-right">
+                {tr('spending:net_cash_flow_d649f1')}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -1195,39 +1213,5 @@ function Insights({
         </table>
       </div>
     </>
-  )
-}
-
-function RecentSpending({
-  data,
-  accounts,
-  categories,
-}: {
-  data: BudgetReport
-  accounts: Account[]
-  categories: Category[]
-}) {
-  const params = new URLSearchParams({
-    currency: data.currency,
-    spending_only: 'true',
-    date_from: data.date_from,
-    date_to: data.date_to < data.as_of ? data.date_to : data.as_of,
-    limit: '4',
-  })
-  const rows = useQuery({
-    queryKey: ['transactions', 'spending-recent', params.toString()],
-    queryFn: ({ signal }) => getTransactions(params, signal),
-    enabled: data.pace.status !== 'future',
-  })
-  if (data.pace.status === 'future')
-    return <EmptyState title="No actual spending in a future month" />
-  if (rows.isPending) return <LoadingState text="Loading recent spending..." />
-  if (rows.isError) return <ErrorState text={rows.error.message} />
-  return (
-    <RecentActivity
-      rows={rows.data}
-      accounts={accounts}
-      categories={categories}
-    />
   )
 }

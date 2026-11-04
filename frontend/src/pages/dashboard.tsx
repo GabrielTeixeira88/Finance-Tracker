@@ -1,3 +1,5 @@
+import { t as tr, ui } from '@/lib/i18n'
+import { getLocale } from '@/lib/preferences'
 // Adapted frontend source; provenance and license: THIRD_PARTY_NOTICES.md.
 // SPDX-License-Identifier: AGPL-3.0-only
 import { lazy, Suspense, useState } from 'react'
@@ -76,30 +78,33 @@ export default function Dashboard({
   return (
     <div className="overview-reference">
       <h1 id="page-title" tabIndex={-1} className="sr-only">
-        Overview
+        {tr('dashboard:overview_0efc2e')}
       </h1>
       <header className="overview-toolbar">
-        <nav className="overview-tabs" aria-label="Overview views">
+        <nav
+          className="overview-tabs"
+          aria-label={tr('dashboard:overview_views_c14944')}
+        >
           <button
             aria-current={!spending ? 'page' : undefined}
             onClick={() => setSpending(false)}
           >
-            <ChartNoAxesCombined size={14} />
-            Overview
+            <ChartNoAxesCombined size={14} />{' '}
+            {tr('dashboard:overview_0efc2e')}{' '}
           </button>
           <button
             onClick={() => navigate('Net Worth')}
-            title="Assets, liabilities and historical coverage"
+            title={tr(
+              'dashboard:assets_liabilities_and_historical_coverage_0ff42f',
+            )}
           >
-            <Wallet size={14} />
-            Net Worth
+            <Wallet size={14} /> {tr('dashboard:net_worth_329352')}{' '}
           </button>
           <button
             aria-current={spending ? 'page' : undefined}
             onClick={() => setSpending(true)}
           >
-            <HandCoins size={14} />
-            Spending
+            <HandCoins size={14} /> {tr('dashboard:spending_456145')}{' '}
           </button>
         </nav>
         <div className="overview-actions">
@@ -108,18 +113,20 @@ export default function Dashboard({
             tabIndex={0}
             aria-label={
               demo.data?.enabled
-                ? `Synthetic demo data through ${end}`
-                : 'Local ledger data'
+                ? tr('messages:message_f401107d71db', { value0: end })
+                : tr('dynamic:local_ledger_data_1adc29')
             }
             title={
-              demo.data?.enabled ? `Synthetic demo · ${end}` : 'Local ledger'
+              demo.data?.enabled
+                ? tr('messages:message_204f6127ecb9', { value0: end })
+                : tr('dynamic:local_ledger_db536e')
             }
           >
             <Info size={18} />
           </span>
           <button
             className="overview-round"
-            aria-label="View exact chart data"
+            aria-label={tr('dashboard:view_exact_chart_data_8a5bcd')}
             aria-pressed={chartData}
             onClick={() => setChartData(!chartData)}
           >
@@ -127,7 +134,7 @@ export default function Dashboard({
           </button>
           <button
             className="overview-round"
-            aria-label="Overview options"
+            aria-label={tr('dashboard:overview_options_7b2c2f')}
             aria-expanded={options}
             onClick={() => setOptions(!options)}
           >
@@ -136,25 +143,25 @@ export default function Dashboard({
         </div>
         {options && (
           <div className="overview-options">
-            <p className="metadata">Period ending</p>
+            <p className="metadata">{tr('dashboard:period_ending_215798')}</p>
             <div className="month-picker">
               <button
                 className="icon-button"
-                aria-label="Previous month"
+                aria-label={tr('dashboard:previous_month_46a299')}
                 disabled={end <= '0002-12-31'}
                 onClick={() => moveMonth(-1)}
               >
                 <ChevronLeft size={16} />
               </button>
               <span>
-                {new Intl.DateTimeFormat(navigator.language, {
+                {new Intl.DateTimeFormat(getLocale(), {
                   month: 'long',
                   year: 'numeric',
                 }).format(new Date(`${end}T12:00:00`))}
               </span>
               <button
                 className="icon-button"
-                aria-label="Next month"
+                aria-label={tr('dashboard:next_month_8abf7c')}
                 disabled={end >= '9999-11-01'}
                 onClick={() => moveMonth(1)}
               >
@@ -162,11 +169,15 @@ export default function Dashboard({
               </button>
             </div>
             <p className="metadata">
-              {demo.data?.enabled ? 'Synthetic demo' : 'Local ledger'} · {end}
+              {demo.data?.enabled
+                ? tr('dynamic:synthetic_demo_b890c0')
+                : tr('dynamic:local_ledger_db536e')}{' '}
+              · {end}
             </p>
             {!!series && (result.data?.series.length ?? 0) > 1 && (
               <label className="field">
-                Currency
+                {' '}
+                {tr('dashboard:currency_e070de')}{' '}
                 <select
                   value={series.currency}
                   onChange={(e) => setCurrency(e.target.value)}
@@ -182,33 +193,41 @@ export default function Dashboard({
       </header>
       {result.isError || demo.isError ? (
         <ErrorState
-          text="Unable to load dashboard."
+          text={tr('dashboard:unable_to_load_dashboard__c0b343')}
           retry={() => {
             void demo.refetch()
             void result.refetch()
           }}
         />
       ) : result.isPending ? (
-        <LoadingState text="Loading summary…" />
+        <LoadingState text={tr('dashboard:loading_summary__9deab6')} />
       ) : !series ? (
         <EmptyState
-          title="No accounts yet"
-          detail="Create an account to start your financial overview."
+          title={tr('dashboard:no_accounts_yet_5c5d52')}
+          detail={tr(
+            'dashboard:create_an_account_to_start_your_financial_overvi_fc8165',
+          )}
         />
       ) : (
         <>
           <section
             className="overview-headline"
-            aria-label={`${series.currency} summary`}
+            aria-label={tr('messages:message_1abe63df38e1', {
+              value0: series.currency,
+            })}
           >
-            <h2 className="sr-only">Total balance</h2>
+            <h2 className="sr-only">{tr('dashboard:total_balance_891433')}</h2>
             <p className="metadata">
-              Cash balances · Securities valued separately in Investments
+              {tr(
+                'dashboard:cash_balances_securities_valued_separately_in_in_ac917a',
+              )}
             </p>
             <div
               className="overview-balance"
               data-testid="Total balance"
-              title="Total ledger balance; not investment valuation"
+              title={tr(
+                'dashboard:total_ledger_balance_not_investment_valuation_154c60',
+              )}
             >
               {formatMoneyParts(series.total_balance, series.currency).map(
                 (part, index) => (
@@ -231,12 +250,16 @@ export default function Dashboard({
                 percentage={series.change_percent}
                 currency={series.currency}
               />
-              <span className="metadata">{periodLabel}</span>
+              <span className="metadata">{ui(periodLabel)}</span>
             </div>
           </section>
           <div className="overview-landscape">
             <Suspense
-              fallback={<LoadingState text="Loading balance history…" />}
+              fallback={
+                <LoadingState
+                  text={tr('dashboard:loading_balance_history__745f30')}
+                />
+              }
             >
               <OverviewChart
                 points={series.points}
@@ -248,12 +271,14 @@ export default function Dashboard({
               <div className="overview-data table-scroll">
                 <table>
                   <caption>
-                    Exact closing ledger balances · {series.currency}
+                    {' '}
+                    {tr('dashboard:exact_closing_ledger_balances__a828cb')}{' '}
+                    {series.currency}
                   </caption>
                   <thead>
                     <tr>
-                      <th scope="col">Date</th>
-                      <th scope="col">Balance</th>
+                      <th scope="col">{tr('dashboard:date_eb9a4b')}</th>
+                      <th scope="col">{tr('dashboard:balance_90eef6')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -275,11 +300,17 @@ export default function Dashboard({
             <div className="overview-columns">
               <section className="overview-accounts">
                 <div className="overview-section-heading">
-                  <h2>{spending ? 'Spending by category' : 'Accounts'}</h2>
+                  <h2>
+                    {spending
+                      ? tr('dynamic:spending_by_category_d4aadf')
+                      : tr('dynamic:accounts_36bae3')}
+                  </h2>
                   <button
                     className="icon-button"
                     aria-label={
-                      spending ? 'Open transactions' : 'Manage accounts'
+                      spending
+                        ? tr('dynamic:open_transactions_f39200')
+                        : tr('dynamic:manage_accounts_c49407')
                     }
                     onClick={() =>
                       navigate(spending ? 'Transactions' : 'Accounts')
@@ -309,29 +340,29 @@ export default function Dashboard({
               <div className="overview-secondary">
                 <section>
                   <div className="overview-section-heading">
-                    <h2>Cash flow</h2>
-                    <span className="metadata">{periodLabel}</span>
+                    <h2>{tr('dashboard:cash_flow_a94d50')}</h2>
+                    <span className="metadata">{ui(periodLabel)}</span>
                   </div>
                   <div className="overview-flow">
                     <SummaryMetric
-                      title="Income"
+                      title={tr('dashboard:income_1c89b1')}
                       value={series.income}
                       currency={series.currency}
-                      detail="Money earned"
+                      detail={tr('dashboard:money_earned_c75520')}
                       tone="positive"
                     />
                     <SummaryMetric
-                      title="Expenses"
+                      title={tr('dashboard:expenses_8d437d')}
                       value={series.expenses}
                       currency={series.currency}
-                      detail="Money spent"
+                      detail={tr('dashboard:money_spent_431827')}
                       tone="negative"
                     />
                     <SummaryMetric
-                      title="Net cash flow"
+                      title={tr('dashboard:net_cash_flow_d649f1')}
                       value={series.net_flow}
                       currency={series.currency}
-                      detail="Income minus expenses"
+                      detail={tr('dashboard:income_minus_expenses_a5e384')}
                       tone={
                         series.net_flow.startsWith('-')
                           ? 'negative'
@@ -340,18 +371,21 @@ export default function Dashboard({
                     />
                   </div>
                   <p className="sr-only">
-                    Transfers and opening balances are excluded from income and
-                    expenses.
+                    {tr(
+                      'dashboard:transfers_and_opening_balances_are_excluded_from_e7655f',
+                    )}
                   </p>
                 </section>
                 <section>
                   <div className="overview-section-heading">
-                    <h2>Recent activity</h2>
+                    <h2>{tr('dashboard:recent_activity_72d561')}</h2>
                     <button
                       className="overview-view-all"
                       onClick={() => navigate('Transactions')}
                     >
-                      View all <ChevronRight size={12} />
+                      {' '}
+                      {tr('dashboard:view_all_931e1a')}{' '}
+                      <ChevronRight size={12} />
                     </button>
                   </div>
                   <RecentActivity
@@ -368,13 +402,13 @@ export default function Dashboard({
                         })
                       }
                     >
-                      Review transactions
+                      {tr('dashboard:review_transactions_787089')}
                     </button>
                     <button
                       className="text-action"
                       onClick={() => navigate('Budget')}
                     >
-                      Spending &amp; budgets
+                      {tr('dashboard:spending_budgets_e964a3')}
                     </button>
                   </div>
                 </section>

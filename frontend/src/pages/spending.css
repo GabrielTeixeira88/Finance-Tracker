@@ -47,7 +47,7 @@
   gap: 24px;
 }
 .spending-headline h2 {
-  font-size: clamp(26px, 3vw, 38px);
+  font-size: clamp(24px, 3vw, 30px);
   font-weight: 500;
   letter-spacing: -0.045em;
   margin: 8px 0;
@@ -233,7 +233,7 @@
   bottom: -22px;
   width: 100%;
   text-align: center;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   color: var(--muted-foreground);
 }
 .spending-category-list > button,
@@ -304,9 +304,355 @@ button.insight-row:hover {
     height: 180px;
   }
   .daily-bars small {
-    font-size: 8px;
+    font-size: var(--text-2xs);
   }
   .spending-month input {
     width: 140px;
   }
+}
+.spending-story {
+  margin-block: 20px 32px;
+  padding: 20px;
+  background: var(--muted);
+  border-radius: 10px;
+}
+.story-lead {
+  font-size: 20px;
+  line-height: 1.5;
+  max-width: 70ch;
+}
+.story-context {
+  display: flex;
+  gap: 24px;
+  padding-block: 12px;
+}
+.spending-story-changes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+  margin-block: 20px;
+}
+.spending-story-changes button {
+  text-align: left;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.weekday-bars > div {
+  display: grid;
+  grid-template-columns: 50px minmax(60px, 1fr) auto;
+  gap: 16px;
+  padding-block: 8px;
+}
+@media (max-width: 700px) {
+  .spending-story-changes {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Spending screenshot baseline, with approved three-metric cash-flow semantics. */
+.spending-dashboard {
+  max-width: none;
+  position: relative;
+}
+.spending-dashboard > .page-header {
+  position: absolute;
+  right: 0;
+  top: -58px;
+  margin: 0;
+}
+.spending-dashboard > .page-header > div:first-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.spending-dashboard > .page-header select {
+  font-size: 11px;
+  padding: 4px;
+  min-height: 28px;
+}
+.spending-overview {
+  padding-top: 4px;
+}
+.spending-overview .spending-headline {
+  padding: 0 16px;
+  min-height: 84px;
+  align-items: center;
+}
+.spending-overview .spending-value {
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+.spending-overview .eyebrow {
+  font-size: var(--text-2xs);
+}
+.spending-overview .spending-metric strong {
+  font-size: 14px;
+  margin-top: 3px;
+}
+.spending-overview .spending-kpis {
+  gap: 28px;
+}
+.spending-hero {
+  height: 280px;
+  padding: 24px 8px 34px;
+}
+.spending-hero .daily-bars {
+  height: 100%;
+  margin: 0;
+  gap: 6px;
+}
+.spending-hero .daily-bars button > span {
+  min-height: 0;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--spending-bar), var(--foreground) 15%),
+    var(--spending-bar)
+  );
+  opacity: 0.85;
+}
+.spending-hero .daily-bars button > .refund-bar {
+  background: var(--muted-foreground);
+}
+.spending-periods {
+  justify-content: center;
+  gap: 4px;
+  margin: 6px 0 52px;
+  flex-wrap: wrap;
+}
+.spending-periods button {
+  font-size: 12px;
+  padding: 6px 14px;
+}
+.spending-overview .spending-columns {
+  gap: 80px;
+  grid-template-columns: minmax(0, 2.22fr) minmax(260px, 1fr);
+  margin: 0 24px;
+}
+.spending-overview .spending-category-list,
+.spending-overview .activity-list {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 22px;
+}
+.spending-overview .spending-category-list > button {
+  padding: 9px 0;
+  border: 0;
+}
+.spending-overview .budget-pace {
+  background: var(--card);
+  border-radius: 14px;
+}
+.spending-overview .spending-month {
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.spending-overview > details {
+  margin: 24px;
+  font-size: 12px;
+}
+.spending-custom {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: -24px 24px 28px;
+  align-items: end;
+}
+.spending-custom label {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+@media (max-width: 1023px) {
+  .spending-overview .spending-columns {
+    gap: 24px;
+    margin: 0;
+  }
+}
+@media (max-width: 699px) {
+  .spending-overview .spending-headline {
+    flex-direction: column;
+    align-items: start;
+    gap: 16px;
+    padding: 0;
+  }
+  .spending-overview .spending-kpis {
+    gap: 18px;
+  }
+  .spending-overview .spending-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .spending-hero {
+    height: 240px;
+    padding-inline: 0;
+  }
+  .spending-hero .daily-bars {
+    gap: 2px;
+  }
+  .spending-hero .daily-bars small {
+    font-size: var(--text-2xs);
+  }
+  .spending-periods {
+    margin-bottom: 28px;
+  }
+  .spending-dashboard > .page-header {
+    position: static;
+    justify-content: flex-end;
+    margin: 0 0 12px;
+  }
+}
+
+.spending-dashboard > .page-header {
+  right: 76px;
+}
+.spending-overview .spending-value {
+  margin: 4px 0;
+}
+.spending-overview .spending-category-list > button {
+  padding: 7px 0;
+}
+.spending-composition {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 4px 0 16px;
+}
+.budget-widget {
+  position: relative;
+}
+.spending-overview .budget-widget > .spending-month {
+  position: absolute;
+  top: -4px;
+  right: 72px;
+}
+.budget-widget .spending-month input {
+  width: 126px;
+  font-size: var(--text-2xs);
+  padding: 4px;
+}
+.spending-overview .budget-pace {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.budget-widget .section-header h2 {
+  font-size: 12px;
+  margin: 0;
+}
+.budget-pace-body {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+@media (max-width: 699px) {
+  .spending-dashboard > .page-header {
+    right: auto;
+  }
+}
+
+.spending-hero {
+  position: relative;
+}
+.spending-hero .daily-bars {
+  position: relative;
+}
+.spending-average-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed var(--muted-foreground);
+  opacity: 0.4;
+  pointer-events: none;
+}
+.spending-hero .daily-bars button > span {
+  max-width: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.spending-hero .daily-bars button[data-active] {
+  background: color-mix(in srgb, var(--muted), transparent 75%);
+}
+.spending-chart-tooltip {
+  position: absolute;
+  top: 12px;
+  transform: translateX(-50%);
+  z-index: 5;
+  max-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  pointer-events: none;
+  font-size: 12px;
+}
+.spending-chart-tooltip strong,
+.spending-chart-tooltip small {
+  display: block;
+}
+.spending-chart-tooltip small {
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: var(--text-2xs);
+}
+.budget-curve {
+  margin-top: 24px;
+}
+.budget-curve svg {
+  display: block;
+  width: 100%;
+  height: 110px;
+  overflow: visible;
+}
+.budget-curve path,
+.budget-curve line {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.budget-actual-line {
+  stroke: var(--chart-line);
+  stroke-width: 2;
+}
+.budget-target-line {
+  stroke: var(--muted-foreground);
+  stroke-dasharray: 3 4;
+  opacity: 0.45;
+}
+.budget-forecast-line {
+  stroke: var(--chart-line);
+  stroke-dasharray: 4 4;
+  opacity: 0.6;
+}
+.budget-endpoint {
+  fill: var(--chart-line);
+  stroke: var(--foreground);
+  stroke-width: 1;
+}
+.budget-curve-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-2xs);
+  color: var(--muted-foreground);
+}
+.budget-curve details,
+.budget-method {
+  font-size: var(--text-2xs);
+  color: var(--muted-foreground);
+  margin-top: 10px;
+}
+.budget-curve table {
+  font-size: var(--text-2xs);
+}
+.budget-pace-body .budget-pace-metrics {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 12px;
 }

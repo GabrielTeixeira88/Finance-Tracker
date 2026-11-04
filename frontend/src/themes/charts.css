@@ -1,0 +1,105 @@
+/* Default-series aliases also let a miniature preview reset independently of its parent. */
+:root,
+[data-chart-palette='theme'] {
+  --chart-line: var(--theme-chart-line);
+  --chart-secondary: var(--theme-chart-secondary);
+  --chart-3: var(--theme-chart-3);
+  --chart-4: var(--theme-chart-4);
+  --chart-5: var(--theme-chart-5);
+  --chart-6: var(--theme-chart-6);
+  --chart-7: var(--theme-chart-7);
+  --chart-8: var(--theme-chart-8);
+}
+/* Decorative series, independent of financial signs. */
+[data-chart-palette] {
+  --chart-1: var(--chart-line);
+  --chart-2: var(--chart-secondary);
+}
+[data-chart-palette='balanced'][data-theme='light'] {
+  --chart-line: color-mix(in srgb, #5b8def 82%, #000);
+  --chart-secondary: color-mix(in srgb, #50b8ad 82%, #000);
+  --chart-3: color-mix(in srgb, #d9a65e 82%, #000);
+  --chart-4: color-mix(in srgb, #9b8bd1 82%, #000);
+  --chart-5: color-mix(in srgb, #d28ba3 82%, #000);
+  --chart-6: color-mix(in srgb, #75a06c 82%, #000);
+  --chart-7: color-mix(in srgb, #c87d53 82%, #000);
+  --chart-8: color-mix(in srgb, #829bad 82%, #000);
+  --spending-bar: var(--chart-line);
+}
+[data-chart-palette='balanced'][data-theme='dark'] {
+  --chart-line: color-mix(in srgb, #5b8def 94%, #fff);
+  --chart-secondary: color-mix(in srgb, #50b8ad 94%, #fff);
+  --chart-3: color-mix(in srgb, #d9a65e 94%, #fff);
+  --chart-4: color-mix(in srgb, #9b8bd1 94%, #fff);
+  --chart-5: color-mix(in srgb, #d28ba3 94%, #fff);
+  --chart-6: color-mix(in srgb, #75a06c 94%, #fff);
+  --chart-7: color-mix(in srgb, #c87d53 94%, #fff);
+  --chart-8: color-mix(in srgb, #829bad 94%, #fff);
+  --spending-bar: var(--chart-line);
+}
+[data-chart-palette='cool'][data-theme='light'] {
+  --chart-line: color-mix(in srgb, #4776da 82%, #000);
+  --chart-secondary: color-mix(in srgb, #56b5d3 82%, #000);
+  --chart-3: color-mix(in srgb, #4e9f9b 82%, #000);
+  --chart-4: color-mix(in srgb, #a69bd5 82%, #000);
+  --chart-5: color-mix(in srgb, #7697af 82%, #000);
+  --chart-6: color-mix(in srgb, #9b7ab4 82%, #000);
+  --chart-7: color-mix(in srgb, #528c72 82%, #000);
+  --chart-8: color-mix(in srgb, #a18c61 82%, #000);
+  --spending-bar: var(--chart-line);
+}
+[data-chart-palette='cool'][data-theme='dark'] {
+  --chart-line: color-mix(in srgb, #4776da 94%, #fff);
+  --chart-secondary: color-mix(in srgb, #56b5d3 94%, #fff);
+  --chart-3: color-mix(in srgb, #4e9f9b 94%, #fff);
+  --chart-4: color-mix(in srgb, #a69bd5 94%, #fff);
+  --chart-5: color-mix(in srgb, #7697af 94%, #fff);
+  --chart-6: color-mix(in srgb, #9b7ab4 94%, #fff);
+  --chart-7: color-mix(in srgb, #528c72 94%, #fff);
+  --chart-8: color-mix(in srgb, #a18c61 94%, #fff);
+  --spending-bar: var(--chart-line);
+}
+[data-chart-palette='warm'][data-theme='light'] {
+  --chart-line: color-mix(in srgb, #d6a34d 82%, #000);
+  --chart-secondary: color-mix(in srgb, #c17a54 82%, #000);
+  --chart-3: color-mix(in srgb, #ba685f 82%, #000);
+  --chart-4: color-mix(in srgb, #9a9d65 82%, #000);
+  --chart-5: color-mix(in srgb, #a17a96 82%, #000);
+  --chart-6: color-mix(in srgb, #7797af 82%, #000);
+  --chart-7: color-mix(in srgb, #a18859 82%, #000);
+  --chart-8: color-mix(in srgb, #8f818f 82%, #000);
+  --spending-bar: var(--chart-line);
+}
+[data-chart-palette='warm'][data-theme='dark'] {
+  --chart-line: color-mix(in srgb, #d6a34d 94%, #fff);
+  --chart-secondary: color-mix(in srgb, #c17a54 94%, #fff);
+  --chart-3: color-mix(in srgb, #ba685f 94%, #fff);
+  --chart-4: color-mix(in srgb, #9a9d65 94%, #fff);
+  --chart-5: color-mix(in srgb, #a17a96 94%, #fff);
+  --chart-6: color-mix(in srgb, #7797af 94%, #fff);
+  --chart-7: color-mix(in srgb, #a18859 94%, #fff);
+  --chart-8: color-mix(in srgb, #8f818f 94%, #fff);
+  --spending-bar: var(--chart-line);
+}
+[data-chart-palette='muted'][data-theme='light'] {
+  --chart-line: color-mix(in srgb, #8193a8 82%, #000);
+  --chart-secondary: color-mix(in srgb, #8aa49b 82%, #000);
+  --chart-3: color-mix(in srgb, #b7a68d 82%, #000);
+  --chart-4: color-mix(in srgb, #839ab4 82%, #000);
+  --chart-5: color-mix(in srgb, #aa99ad 82%, #000);
+  --chart-6: color-mix(in srgb, #b18f89 82%, #000);
+  --chart-7: color-mix(in srgb, #86986e 82%, #000);
+  --chart-8: color-mix(in srgb, #8d86a9 82%, #000);
+  --spending-bar: var(--chart-line);
+}
+[data-chart-palette='muted'][data-theme='dark'] {
+  --chart-line: color-mix(in srgb, #8193a8 94%, #fff);
+  --chart-secondary: color-mix(in srgb, #8aa49b 94%, #fff);
+  --chart-3: color-mix(in srgb, #b7a68d 94%, #fff);
+  --chart-4: color-mix(in srgb, #839ab4 94%, #fff);
+  --chart-5: color-mix(in srgb, #aa99ad 94%, #fff);
+  --chart-6: color-mix(in srgb, #b18f89 94%, #fff);
+  --chart-7: color-mix(in srgb, #86986e 94%, #fff);
+  --chart-8: color-mix(in srgb, #8d86a9 94%, #fff);
+  --spending-bar: var(--chart-line);
+}

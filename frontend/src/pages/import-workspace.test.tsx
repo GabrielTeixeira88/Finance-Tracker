@@ -63,6 +63,7 @@ const makeBatch = (): ImportBatch => ({
 })
 
 function setup(failure = false, invalid = false, possible = false) {
+  window.history.replaceState(null, '', '#/activities')
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   const batch = makeBatch()
   if (invalid) {
@@ -143,7 +144,7 @@ function setup(failure = false, invalid = false, possible = false) {
 }
 
 async function chooseFile() {
-  await userEvent.click(screen.getByRole('button', { name: 'Imports' }))
+  await userEvent.selectOptions(screen.getByLabelText('Tools'), 'imports')
   await userEvent.upload(
     screen.getByLabelText('Statement file'),
     new File(

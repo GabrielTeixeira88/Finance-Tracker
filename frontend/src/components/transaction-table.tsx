@@ -1,3 +1,5 @@
+import { t as tr } from '@/lib/i18n'
+import { getLocale } from '@/lib/preferences'
 import { ArrowLeftRight, FileCheck2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge, EmptyState, Money } from '@/components/primitives'
@@ -31,8 +33,10 @@ export function TransactionTable({
   if (!rows.length)
     return (
       <EmptyState
-        title="No transactions match this view."
-        detail="Add a transaction or adjust your filters."
+        title={tr('transaction_table:no_transactions_match_this_view__aa3bbf')}
+        detail={tr(
+          'transaction_table:add_a_transaction_or_adjust_your_filters__77fcec',
+        )}
       />
     )
   return (
@@ -40,7 +44,7 @@ export function TransactionTable({
       className="table-scroll transaction-ledger"
       tabIndex={0}
       role="region"
-      aria-label="Transaction ledger"
+      aria-label={tr('transaction_table:transaction_ledger_a1a871')}
     >
       <table>
         <thead>
@@ -49,23 +53,29 @@ export function TransactionTable({
               <th scope="col">
                 <input
                   type="checkbox"
-                  aria-label="Select current page"
+                  aria-label={tr(
+                    'transaction_table:select_current_page_0e5f18',
+                  )}
                   checked={rows.every((row) => selected?.includes(row.id))}
                   disabled={busy}
                   onChange={onSelectPage}
                 />
               </th>
             )}
-            <th scope="col">Date</th>
-            <th scope="col">Payee / Description</th>
-            <th scope="col">Category</th>
-            <th scope="col">Account</th>
-            <th scope="col">Type</th>
-            <th scope="col">Status</th>
-            <th scope="col" className="amount-cell">
-              Amount
+            <th scope="col">{tr('transaction_table:date_eb9a4b')}</th>
+            <th scope="col">
+              {tr('transaction_table:payee_description_94e3f8')}
             </th>
-            {onEdit && <th scope="col">Actions</th>}
+            <th scope="col">{tr('transaction_table:category_a3c686')}</th>
+            <th scope="col">{tr('transaction_table:account_85dfa3')}</th>
+            <th scope="col">{tr('transaction_table:type_3deb74')}</th>
+            <th scope="col">{tr('transaction_table:status_bae7d5')}</th>
+            <th scope="col" className="amount-cell">
+              {tr('transaction_table:amount_43dc85')}
+            </th>
+            {onEdit && (
+              <th scope="col">{tr('transaction_table:actions_c3cd63')}</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -83,7 +93,9 @@ export function TransactionTable({
                   <td>
                     <input
                       type="checkbox"
-                      aria-label={`Select ${row.payee?.name ?? row.description}`}
+                      aria-label={tr('messages:message_4626e95dd5b8', {
+                        value0: row.payee?.name ?? row.description,
+                      })}
                       checked={selected?.includes(row.id) ?? false}
                       disabled={busy}
                       onChange={() => onSelect(row.id)}
@@ -91,7 +103,7 @@ export function TransactionTable({
                   </td>
                 )}
                 <td className="date-cell">
-                  {new Intl.DateTimeFormat(navigator.language, {
+                  {new Intl.DateTimeFormat(getLocale(), {
                     month: 'short',
                     day: '2-digit',
                     year: 'numeric',
@@ -117,7 +129,7 @@ export function TransactionTable({
                 </td>
                 <td>
                   {accounts.find((a) => a.id === row.account_id)?.name ??
-                    'Unknown account'}
+                    tr('dynamic:unknown_account_a6479b')}
                 </td>
                 <td>
                   <Badge>
@@ -125,16 +137,20 @@ export function TransactionTable({
                       <ArrowLeftRight size={12} aria-hidden="true" />
                     )}
                     {row.refund_purchase_id
-                      ? 'Refund'
+                      ? tr('dynamic:refund_e17c8a')
                       : label(row.transaction_type)}
                   </Badge>
                   {transfer && (
                     <small
                       className="transfer-link"
-                      title={`Transfer ${row.transfer_id}`}
+                      title={tr('messages:message_3c8c23023b21', {
+                        value0: row.transfer_id,
+                      })}
                     >
-                      {row.direction === 'IN' ? 'Received' : 'Sent'} ·{' '}
-                      {row.transfer_id?.slice(0, 8)}
+                      {row.direction === 'IN'
+                        ? tr('dynamic:received_27548c')
+                        : tr('dynamic:sent_35f49d')}{' '}
+                      · {row.transfer_id?.slice(0, 8)}
                     </small>
                   )}
                 </td>
@@ -142,8 +158,12 @@ export function TransactionTable({
                   {onInspect && (
                     <button
                       className="icon-button ledger-evidence"
-                      aria-label="Evidence / clearing"
-                      title="Inspect source evidence and bank clearing"
+                      aria-label={tr(
+                        'transaction_table:evidence_clearing_856b2c',
+                      )}
+                      title={tr(
+                        'transaction_table:inspect_source_evidence_and_bank_clearing_143891',
+                      )}
                       onClick={() => onInspect(row)}
                     >
                       <FileCheck2 size={14} aria-hidden="true" />
@@ -152,13 +172,17 @@ export function TransactionTable({
                   {row.clearing_status && (
                     <small className="metadata block">
                       {label(row.clearing_status)}
-                      {row.source_count ? ` · ${row.source_count} sources` : ''}
+                      {row.source_count
+                        ? tr('messages:message_db2bb5c653ef', {
+                            value0: row.source_count,
+                          })
+                        : ''}
                     </small>
                   )}
                   <Badge>
                     {row.review_status === 'NEEDS_REVIEW'
-                      ? 'Needs review'
-                      : 'Reviewed'}
+                      ? tr('dynamic:needs_review_33a506')
+                      : tr('dynamic:reviewed_31ef85')}
                   </Badge>
                 </td>
                 <td className="amount-cell">
@@ -179,7 +203,7 @@ export function TransactionTable({
                           disabled={busy}
                           onClick={() => onEdit(row)}
                         >
-                          Edit
+                          {tr('transaction_table:edit_530164')}
                         </Button>
                         <Button
                           size="sm"
@@ -187,7 +211,7 @@ export function TransactionTable({
                           disabled={busy}
                           onClick={() => onDelete?.(row)}
                         >
-                          Delete
+                          {tr('transaction_table:delete_f6fdbe')}
                         </Button>
                         {onCreateRule && (
                           <Button
@@ -196,7 +220,7 @@ export function TransactionTable({
                             disabled={busy}
                             onClick={() => onCreateRule(row)}
                           >
-                            Create rule
+                            {tr('transaction_table:create_rule_69c3ac')}
                           </Button>
                         )}
                       </div>
@@ -207,7 +231,7 @@ export function TransactionTable({
                         disabled={busy}
                         onClick={() => onEdit(row)}
                       >
-                        Review
+                        {tr('transaction_table:review_e29a79')}
                       </Button>
                     )}
                   </td>
