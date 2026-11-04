@@ -1,3 +1,4 @@
+import { t as tr } from '@/lib/i18n'
 import type { ReactNode } from 'react'
 import { Button } from './ui/button'
 import { formatMoney } from '@/lib/money'
@@ -93,7 +94,7 @@ export function ErrorState({
       {text}
       {retry && (
         <Button size="sm" variant="outline" onClick={retry}>
-          Retry
+          {tr('primitives:retry_9f5cd8')}
         </Button>
       )}
     </div>
@@ -106,12 +107,16 @@ export function Money({
   value,
   currency,
   compact = false,
+  minorUnits = false,
+  fractionDigits,
   tone = 'neutral',
   prefix = '',
 }: {
   value: string
   currency: string
   compact?: boolean
+  minorUnits?: boolean
+  fractionDigits?: number
   tone?: 'neutral' | 'positive' | 'negative'
   prefix?: string
 }) {
@@ -123,7 +128,7 @@ export function Money({
       aria-label={`${exact} ${currency}`}
     >
       {prefix}
-      {formatMoney(value, currency, { compact })}
+      {formatMoney(value, currency, { compact, minorUnits, fractionDigits })}
     </span>
   )
 }

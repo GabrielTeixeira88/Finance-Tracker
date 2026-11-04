@@ -80,7 +80,7 @@ def candidates(db: DB, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1
         service.candidate_view(db, row)
         for row in db.scalars(
             select(SourceRecord)
-            .where(SourceRecord.source_type.in_(["CSV", "OFX", "GMAIL"]))
+            .where(SourceRecord.source_type.in_(["CSV", "OFX", "GMAIL", "PLUGGY"]))
             .order_by(SourceRecord.created_at.desc(), SourceRecord.id)
             .offset(offset)
             .limit(limit)

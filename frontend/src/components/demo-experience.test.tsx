@@ -9,6 +9,10 @@ import { DemoProvider } from './demo-provider'
 import { GmailQueue } from '@/pages/gmail'
 import { getGoals } from '@/lib/wealth-api'
 
+vi.mock('./real-market-demo', () => ({
+  RealMarketDemo: () => <p>Historical portfolio context</p>,
+}))
+
 const runtime: DemoRuntime = {
   mode: 'local_demo',
   profile: 'Alex Morgan (fictional)',
@@ -38,6 +42,68 @@ it('never exposes reset or demo controls in a normal workspace', () => {
   expect(screen.queryByText('Reset demo')).not.toBeInTheDocument()
 })
 
+it('offers only the Brazil portfolio without legacy scenario or household actions', async () => {
+  render(
+    wrapper(
+      <DemoContext.Provider
+        value={{
+          runtime: {
+            ...runtime,
+            scenario: 'real-market-br',
+            scenarios: [
+              { id: 'real-market-br', name: 'Real Market Portfolio — Brazil' },
+            ],
+          },
+        }}
+      >
+        <DemoExperience />
+        <DemoScenarios settings />
+      </DemoContext.Provider>,
+    ),
+  )
+  await userEvent.click(screen.getByText('Demo', { selector: 'summary' }))
+  expect(screen.queryByLabelText('Demo scenario')).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('button', { name: 'Guided tour' }),
+  ).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('button', { name: 'Simulate Gmail notification' }),
+  ).not.toBeInTheDocument()
+  expect(screen.getByText('Historical portfolio context')).toBeVisible()
+})
+
+it('selects a separate historical scenario through the runtime action', async () => {
+  const user = userEvent.setup()
+  const selectScenario = vi.fn().mockResolvedValue(undefined)
+  render(
+    wrapper(
+      <DemoContext.Provider
+        value={{
+          runtime: {
+            ...runtime,
+            scenario: 'synthetic',
+            scenarios: [
+              { id: 'synthetic', name: 'Synthetic household' },
+              { id: 'real-market-br', name: 'Real Market Portfolio — Brazil' },
+            ],
+          },
+          selectScenario,
+        }}
+      >
+        <DemoExperience />
+      </DemoContext.Provider>,
+    ),
+  )
+  await user.click(screen.getByText('Demo', { selector: 'summary' }))
+  await user.selectOptions(
+    screen.getByLabelText('Demo scenario'),
+    'real-market-br',
+  )
+  await waitFor(() =>
+    expect(selectScenario).toHaveBeenCalledWith('real-market-br'),
+  )
+})
+
 it('shows a skippable tour and navigates real product sections', async () => {
   const user = userEvent.setup()
   render(
@@ -47,12 +113,14 @@ it('shows a skippable tour and navigates real product sections', async () => {
       </DemoContext.Provider>,
     ),
   )
+  await user.click(screen.getByText('Demo', { selector: 'summary' }))
   expect(screen.getByText('Fictional local demo')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Guided tour' }))
   await user.click(screen.getByRole('button', { name: 'Next' }))
-  expect(window.location.hash).toContain('/transactions')
-  expect(screen.getByText('Tour 2 / 9')).toBeInTheDocument()
+  expect(window.location.hash).toContain('/activities')
+  expect(screen.getByText('Tour 2 / 11')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Skip tour' }))
-  expect(screen.queryByText('Tour 2 / 9')).not.toBeInTheDocument()
+  expect(screen.queryByText('Tour 2 / 11')).not.toBeInTheDocument()
   expect(screen.getByText('Fictional local demo')).toBeInTheDocument()
 })
 
@@ -67,6 +135,7 @@ it('requires explicit reset confirmation and renders failures', async () => {
       </DemoContext.Provider>,
     ),
   )
+  await user.click(screen.getByText('Demo', { selector: 'summary' }))
   await user.click(screen.getByRole('button', { name: 'Reset demo' }))
   expect(reset).not.toHaveBeenCalled()
   confirm.mockReturnValue(true)
@@ -83,7 +152,7 @@ it('simulates via the API and routes to review instead of claiming Gmail is conn
   await user.click(
     screen.getByRole('button', { name: 'Simulate Gmail notification' }),
   )
-  await waitFor(() => expect(window.location.hash).toContain('view=gmail'))
+  await waitFor(() => expect(window.location.hash).toContain('tool=gmail'))
   expect(fetch).toHaveBeenCalledWith(
     '/api/demo-control/notification',
     expect.objectContaining({ method: 'POST' }),

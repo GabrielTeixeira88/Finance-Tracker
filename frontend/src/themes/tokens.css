@@ -1,0 +1,305 @@
+/* Semantic extensions; Classic and legacy palette definitions remain in appearance.css. */
+[data-palette='midnight-cobalt'][data-theme='light'] {
+  --background: #f2f6fd;
+  --card: #ffffff;
+  --foreground: #16243b;
+  --muted-foreground: #536580;
+  --border: #d7e1f0;
+  --input: #d7e1f0;
+  --elevated: #ffffff;
+  --sidebar: #f2f6fd;
+  --muted: color-mix(in srgb, #16243b 8%, #f2f6fd);
+  --primary: #315cb0;
+  --primary-foreground: #ffffff;
+  --ring: #315cb0;
+  --spending-bar: var(--spending-chart);
+  --theme-chart-line: #315cb0;
+  --nav-active: color-mix(in srgb, #315cb0 15%, #f2f6fd);
+}
+[data-palette='midnight-cobalt'][data-theme='dark'] {
+  --background: #101b2e;
+  --card: #1b2941;
+  --foreground: #f1f5fc;
+  --muted-foreground: #a2b5d2;
+  --border: #304159;
+  --input: #304159;
+  --elevated: #1b2941;
+  --sidebar: #101b2e;
+  --muted: color-mix(in srgb, #f1f5fc 8%, #101b2e);
+  --primary: #81a8ff;
+  --primary-foreground: #101010;
+  --ring: #81a8ff;
+  --spending-bar: var(--spending-chart);
+  --theme-chart-line: #81a8ff;
+  --nav-active: color-mix(in srgb, #81a8ff 15%, #101b2e);
+}
+[data-palette='carbon-amber'][data-theme='light'] {
+  --background: #f5f4f1;
+  --card: #ffffff;
+  --foreground: #292923;
+  --muted-foreground: #62635f;
+  --border: #deddd7;
+  --input: #deddd7;
+  --elevated: #ffffff;
+  --sidebar: #f5f4f1;
+  --muted: color-mix(in srgb, #292923 8%, #f5f4f1);
+  --primary: #986516;
+  --primary-foreground: #ffffff;
+  --ring: #986516;
+  --spending-bar: var(--spending-chart);
+  --theme-chart-line: #986516;
+  --nav-active: color-mix(in srgb, #986516 15%, #f5f4f1);
+}
+[data-palette='carbon-amber'][data-theme='dark'] {
+  --background: #17191c;
+  --card: #25292e;
+  --foreground: #f2f2ef;
+  --muted-foreground: #a6aab0;
+  --border: #383d44;
+  --input: #383d44;
+  --elevated: #25292e;
+  --sidebar: #17191c;
+  --muted: color-mix(in srgb, #f2f2ef 8%, #17191c);
+  --primary: #f1b861;
+  --primary-foreground: #101010;
+  --ring: #f1b861;
+  --spending-bar: var(--spending-chart);
+  --theme-chart-line: #f1b861;
+  --nav-active: color-mix(in srgb, #f1b861 15%, #17191c);
+}
+[data-palette='amethyst-night'][data-theme='light'] {
+  --background: #f6f3fa;
+  --card: #ffffff;
+  --foreground: #30283c;
+  --muted-foreground: #6c627d;
+  --border: #ddd5e8;
+  --input: #ddd5e8;
+  --elevated: #ffffff;
+  --sidebar: #f6f3fa;
+  --muted: color-mix(in srgb, #30283c 8%, #f6f3fa);
+  --primary: #7150b5;
+  --primary-foreground: #ffffff;
+  --ring: #7150b5;
+  --spending-bar: var(--spending-chart);
+  --theme-chart-line: #7150b5;
+  --nav-active: color-mix(in srgb, #7150b5 15%, #f6f3fa);
+}
+[data-palette='amethyst-night'][data-theme='dark'] {
+  --background: #1b1727;
+  --card: #2b253d;
+  --foreground: #f6f1ff;
+  --muted-foreground: #b9b1cc;
+  --border: #413754;
+  --input: #413754;
+  --elevated: #2b253d;
+  --sidebar: #1b1727;
+  --muted: color-mix(in srgb, #f6f1ff 8%, #1b1727);
+  --primary: #bda3ff;
+  --primary-foreground: #101010;
+  --ring: #bda3ff;
+  --spending-bar: var(--spending-chart);
+  --theme-chart-line: #bda3ff;
+  --nav-active: color-mix(in srgb, #bda3ff 15%, #1b1727);
+}
+[data-palette='porcelain-blue'][data-theme='light'] {
+  --background: #f1f5fb;
+  --card: #ffffff;
+  --foreground: #253249;
+  --muted-foreground: #59677d;
+  --border: #d9e2ef;
+  --input: #d9e2ef;
+  --elevated: #ffffff;
+  --sidebar: #f1f5fb;
+  --muted: color-mix(in srgb, #253249 8%, #f1f5fb);
+  --primary: #3c63cc;
+  --primary-foreground: #ffffff;
+  --ring: #3c63cc;
+  --spending-bar: var(--spending-chart);
+  --theme-chart-line: #3c63cc;
+  --nav-active: color-mix(in srgb, #3c63cc 15%, #f1f5fb);
+}
+[data-palette='porcelain-blue'][data-theme='dark'] {
+  --background: #121b29;
+  --card: #1e2a3b;
+  --foreground: #edf3fd;
+  --muted-foreground: #a0b1c9;
+  --border: #354359;
+  --input: #354359;
+  --elevated: #1e2a3b;
+  --sidebar: #121b29;
+  --muted: color-mix(in srgb, #edf3fd 8%, #121b29);
+  --primary: #83abff;
+  --primary-foreground: #101010;
+  --ring: #83abff;
+  --spending-bar: var(--spending-chart);
+  --theme-chart-line: #83abff;
+  --nav-active: color-mix(in srgb, #83abff 15%, #121b29);
+}
+[data-palette='sandstone-copper'][data-theme='light'] {
+  --background: #f1ece5;
+  --card: #fffbf5;
+  --foreground: #362f2c;
+  --muted-foreground: #6a5f57;
+  --border: #ddd1c5;
+  --input: #ddd1c5;
+  --elevated: #fffbf5;
+  --sidebar: #f1ece5;
+  --muted: color-mix(in srgb, #362f2c 8%, #f1ece5);
+  --primary: #995035;
+  --primary-foreground: #ffffff;
+  --ring: #995035;
+  --spending-bar: var(--spending-chart);
+  --theme-chart-line: #995035;
+  --nav-active: color-mix(in srgb, #995035 15%, #f1ece5);
+}
+[data-palette='sandstone-copper'][data-theme='dark'] {
+  --background: #211d1b;
+  --card: #302924;
+  --foreground: #f3e9dc;
+  --muted-foreground: #bdae9f;
+  --border: #493b33;
+  --input: #493b33;
+  --elevated: #302924;
+  --sidebar: #211d1b;
+  --muted: color-mix(in srgb, #f3e9dc 8%, #211d1b);
+  --primary: #d99373;
+  --primary-foreground: #101010;
+  --ring: #d99373;
+  --spending-bar: var(--spending-chart);
+  --theme-chart-line: #d99373;
+  --nav-active: color-mix(in srgb, #d99373 15%, #211d1b);
+}
+
+:root,
+[data-palette] {
+  --card-foreground: var(--foreground);
+  --popover: var(--elevated);
+  --popover-foreground: var(--foreground);
+  --sidebar-foreground: var(--foreground);
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --accent: var(--nav-active);
+  --accent-foreground: var(--foreground);
+  --success: #28704f;
+  --destructive: #ad3b42;
+  --info: #315cb0;
+  --chart-1: var(--chart-line);
+  --chart-2: var(--chart-secondary);
+  --theme-chart-7: #7465a8;
+  --theme-chart-8: #966343;
+  --chart-grid: var(--border);
+  --chart-axis: var(--muted-foreground);
+  --chart-tooltip: var(--popover);
+  --chart-cursor: var(--muted);
+  --investment-chart: var(--chart-1);
+  --spending-chart: var(--chart-1);
+  --net-worth-chart: var(--chart-1);
+  --income-chart: var(--chart-1);
+  --goal-progress: var(--positive);
+}
+[data-theme='dark'] {
+  --success: #8dc7a2;
+  --destructive: #e89998;
+  --info: #9cbcff;
+}
+:root[data-financial-colors='reversed'] {
+  --positive: var(--destructive);
+  --negative: var(--success);
+}
+:root[data-financial-colors='neutral'] {
+  --positive: var(--foreground);
+  --negative: var(--info);
+}
+.error,
+.destructive-action {
+  color: var(--destructive);
+}
+.chart-tooltip {
+  background: var(--chart-tooltip);
+  color: var(--popover-foreground);
+}
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+.theme-choice {
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.theme-choice[aria-pressed='true'] {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.theme-choice > strong {
+  display: block;
+  padding: 12px;
+  background: var(--card);
+  color: var(--foreground);
+}
+.theme-preview {
+  background: var(--background);
+  color: var(--foreground);
+  display: flex;
+  height: 132px;
+  pointer-events: none;
+  font: 12px var(--app-font);
+}
+.theme-preview aside {
+  width: 32px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  padding: 8px;
+}
+.theme-preview aside i {
+  display: block;
+  height: 6px;
+  margin: 8px 0;
+  background: var(--muted-foreground);
+}
+.theme-preview main {
+  flex: 1;
+  padding: 12px;
+  min-width: 0;
+}
+.theme-preview small {
+  color: var(--muted-foreground);
+}
+.theme-preview b {
+  background: var(--card);
+  display: block;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.theme-preview svg {
+  width: 100%;
+  height: 36px;
+  color: var(--chart-1);
+}
+.chart-swatches {
+  display: flex;
+  gap: 4px;
+}
+.chart-swatches i {
+  height: 12px;
+  flex: 1;
+  border-radius: 2px;
+}
+
+/* Health and validation states are not market gain/loss conventions. */
+.theme-preview {
+  --app-font: inherit;
+}
+.goal-card-completion.is-positive {
+  color: var(--success);
+}
+.goal-card-completion.negative,
+.goal-card-state.negative {
+  color: var(--destructive);
+}
+[data-chart-palette]:not([data-chart-palette='theme']) {
+  --spending-bar: var(--spending-chart);
+}

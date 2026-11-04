@@ -1,22 +1,58 @@
 # Finance Tracker
 
-[![CI (development branch)](https://github.com/GabrielTeixeira88/Finance-Tracker/actions/workflows/ci.yml/badge.svg?branch=feature%2Fv0.13.0-stabilization)](https://github.com/GabrielTeixeira88/Finance-Tracker/actions/workflows/ci.yml?query=branch%3Afeature%2Fv0.13.0-stabilization)
+[![CI (main)](https://github.com/GabrielTeixeira88/Finance-Tracker/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/GabrielTeixeira88/Finance-Tracker/actions/workflows/ci.yml?query=branch%3Amain)
 
 A local-first personal finance and investment application: understand spending,
 manage transactions, reconstruct holdings, and track net worth in one private workspace.
 React and FastAPI share a real SQLite ledger; exact money and auditable history take
 priority over automatic guesses.
 
-**Version: 0.12.0 - Interactive Demo & Portfolio Showcase.**
+**Version: 0.13.0 - Product Refinements & Brazilian Historical Demo.**
 The demo runs locally; no public deployment has been published.
 
-![Finance Tracker fictional Overview](docs/screenshots/v012/overview.jpg)
+Version 0.13 adds Settings → **Appearance & Language**, with ten fonts,
+six complete themes, independent chart palettes and financial gain/loss colors,
+dark/light/system mode and English, pt-BR or es-419. Dashboards add
+ledger-backed composition graphics; existing financial workflows remain intact.
+See [appearance and localization](docs/APPEARANCE_AND_LOCALIZATION.md) and the
+[visual refinement audit](docs/VISUAL_REFINEMENT_v0.13.md). See [v0.13 validation and limitations](docs/RELEASE_0_13_0.md).
+
+This version also adds [Brazilian fixed income](docs/FIXED_INCOME.md),
+[Life Events and planning projections](docs/LIFE_EVENTS.md), portfolio exposure and
+income displays, and shared detail drawers. See the [source/visual parity audit](docs/WEALTHFOLIO_PARITY_v0.13.md).
+The approved UX redesign now spans the Spending-first Dashboard,
+Insights, Activities, Holdings, full-page financial details and grouped Settings.
+See the [implementation and validation record](docs/UX_REDESIGN_IMPLEMENTATION.md)
+and local screenshot comparison gallery (`docs/screenshots/ux-redesign-shell/index.html`, not published).
+The gallery uses synthetic API data; cached reference images are local comparison
+materials, not shipped product assets.
+Functional checks pass; final visual acceptance and the remaining geometry
+differences are recorded separately in the implementation report.
+The shared [motion system](docs/MOTION.md) adds restrained navigation/layout,
+dialog and chart transitions, with live reduced-motion support and exact labels.
+
+Opt-in [Pluggy / MeuPluggy support](docs/PLUGGY.md) adds read-only
+institution connections, banking/cards/bills and investment evidence, consent
+visibility, and reviewed imports. Apply migrations and restart the normal backend
+before opening **Settings > Pluggy**. API credentials stay in the OS vault.
+Pluggy processes connected institution data externally; the app's imported copy
+stays local. No payment initiation or automatic posting is included, and the
+isolated demo blocks this integration.
+
+Run `uv run alembic upgrade head` from `backend` for the additive migrations.
+Existing demo edits are preserved on upgrade; an explicit **Reset demo** loads the
+new fictional baseline. Never reset or reseed the normal database for screenshots.
+
+Visual captures and generated galleries remain local review evidence and are excluded from Git.
 
 ## Try the fictional demo
 
-Explore **Alex Morgan**, a fictional household with two years of history. No account,
-API key, OAuth setup, cloud service or Docker is needed. This runs a separate local
-workspace; it does not change your normal database or its configuration.
+Explore **Real Market Portfolio — Brazil**: household spending and five savings
+goals alongside fictional CDBs, Tesouro Selic and a Caixinha valued using official
+historical observations. The old international and
+European demo portfolios are retired. No account, API key, OAuth setup, cloud service
+or Docker is needed for fixed income. This runs in a separate local workspace;
+it does not change your normal database or its configuration.
 
 Prerequisites: Python 3.12+ (validated with 3.13), uv, Node 22.13+ or 24+, npm.
 From the repository root:
@@ -40,22 +76,28 @@ virtual environment is active, deactivate it before `uv sync` / `uv run`.
 [Demo setup and safety](docs/DEMO.md) | [Five-minute walkthrough](docs/PORTFOLIO_WALKTHROUGH.md)
 | [Hosting design and limitations](docs/DEMO_DEPLOYMENT.md)
 
+The demo opens **Real Market Portfolio — Brazil** directly. Official
+historical CDI and Treasury observations value fictional CDB/RDB/Tesouro holdings.
+ETF history requires an authorized local export and remains explicitly unavailable
+until prepared. The personal database and archived legacy demo files are preserved.
+See [historical scenario sources and setup](docs/REAL_MARKET_DEMO.md).
+
 ## What you can explore
 
-| Area | Implemented behavior |
-|---|---|
-| Transactions | Accounts, openings, exact income/expenses, linked transfers, payees, review, search, pagination and atomic bulk metadata edits |
-| Automation | Classification rules with manual-override protection, approved learning suggestions, expected schedules with explicit posting/matching |
-| Spending & budgets | Monthly category targets, overrides, signed rollover, comparisons and linked refunds |
-| Ingestion | Local CSV/OFX mapping, preview/confirmation, duplicate decisions and retained source evidence |
-| Reconciliation | Identity-first matching, clearing, statements and audited source corrections |
-| Investments | Activity-derived holdings, weighted-average basis, dated prices/FX, TWR, XIRR, labeled benchmark comparisons and coverage |
-| Net worth & goals | Ledger cash/holdings plus dated assets/debts; allocations of existing savings, without double-counting |
-| Demo | 24 months, 772 ledger entries, 7 accounts, fictional prices/FX, safe reset, notification simulation and a guided tour |
+| Area               | Implemented behavior                                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Transactions       | Accounts, openings, exact income/expenses, linked transfers, payees, review, search, pagination and atomic bulk metadata edits                                                                          |
+| Automation         | Classification rules with manual-override protection, approved learning suggestions, expected schedules with explicit posting/matching                                                                  |
+| Spending & budgets | Monthly category targets, overrides, signed rollover, comparisons and linked refunds                                                                                                                    |
+| Ingestion          | Local CSV/OFX mapping, preview/confirmation, duplicate decisions and retained source evidence                                                                                                           |
+| Reconciliation     | Identity-first matching, clearing, statements and audited source corrections                                                                                                                            |
+| Investments        | Activity-derived holdings, weighted-average basis, dated prices/FX, TWR, XIRR, labeled benchmark comparisons and coverage                                                                               |
+| Net worth & goals  | Ledger cash/holdings plus dated assets/debts; allocations of existing savings, without double-counting                                                                                                  |
+| Demo               | Brazil-only replay: 4 BRL accounts, 24 months of household income/spending, five goals, 12 fixed-income applications, official CDI/Treasury observations and safe reset; optional authorized ETF export |
 
 **Reports remains a labeled preview.** Gmail adapters exist, but live Google OAuth
-and real bank templates remain unverified; the demo uses **Gmail Notification
-Simulation**, never a real mailbox. External market requests are opt-in in normal
+and real bank templates remain unverified; the current portfolio demo does not seed
+Gmail/import scenarios or access a real mailbox. External market requests are opt-in in normal
 mode and disabled in the demo. No authentication, cloud sync or telemetry is included.
 
 <details>

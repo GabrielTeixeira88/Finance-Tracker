@@ -1,9 +1,14 @@
+import { t as tr, ui } from '@/lib/i18n'
+import { usePreferences, setPreferences } from '@/lib/preferences'
 // Adapted frontend source; provenance and license: THIRD_PARTY_NOTICES.md.
 // SPDX-License-Identifier: AGPL-3.0-only
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { m, useAnimationControls } from 'motion/react'
+import { SelectionIndicator } from './selection-indicator'
+import { fadeTransition, layoutSpring, useMotionPolicy } from '@/lib/motion'
 import {
   ChartNoAxesCombined,
-  House,
+  Gauge,
   Landmark,
   ListFilter,
   Menu,
@@ -11,18 +16,14 @@ import {
   Sun,
   Settings,
   X,
-  Wallet,
   BriefcaseBusiness,
-  TrendingUp,
-  ChartPie,
-  Files,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
   Target,
 } from 'lucide-react'
 import type { PreviewPage } from '@/pages/previews'
-import { navigateTo } from '@/lib/navigation'
+import { navigateTo, useRoute } from '@/lib/navigation'
 
 export type Page =
   | 'Overview'
@@ -36,21 +37,35 @@ export type Page =
   | PreviewPage
 export type Navigate = (page: Page, accountId?: string) => void
 const primary = [
-  { page: 'Overview', icon: House },
-  { page: 'Accounts', icon: Landmark },
-  { page: 'Transactions', icon: ListFilter },
-  { page: 'Budget', icon: Wallet },
-  { page: 'Investments', icon: BriefcaseBusiness },
-  { page: 'Performance', icon: TrendingUp },
-  { page: 'Net Worth', icon: ChartPie },
-  { page: 'Goals', icon: Target },
-  { page: 'Reports', icon: Files },
-  { page: 'Settings', icon: Settings },
+  { page: 'Budget', label: 'Dashboard', icon: Gauge, view: undefined },
+  { page: 'Accounts', label: 'Accounts', icon: Landmark, view: undefined },
+  {
+    page: 'Transactions',
+    label: 'Activities',
+    icon: ListFilter,
+    view: undefined,
+  },
+  {
+    page: 'Investments',
+    label: 'Holdings',
+    icon: BriefcaseBusiness,
+    view: 'Holdings',
+  },
+  {
+    page: 'Investments',
+    label: 'Insights',
+    icon: ChartNoAxesCombined,
+    view: 'Allocation',
+  },
+  { page: 'Goals', label: 'Goals', icon: Target, view: undefined },
+  { page: 'Settings', label: 'Settings', icon: Settings, view: undefined },
 ] as const
 const destinations = [
+  ['Reports preview', 'Reports', ''],
   ['Rules', 'Settings', 'rules'],
   ['Payees', 'Settings', 'payees'],
   ['Categories', 'Settings', 'categories'],
+  ['Pluggy', 'Settings', 'pluggy'],
   ['Imports', 'Transactions', 'imports'],
   ['Gmail review', 'Transactions', 'gmail'],
   ['Scheduled transactions', 'Transactions', 'scheduled'],
@@ -66,10 +81,58 @@ export function AppShell({
   navigate: Navigate
   children: ReactNode
 }) {
+  const route = useRoute()
+  const activeView = route.params.get('view')
+  const reduced = useMotionPolicy()
+  const indicatorId = useId()
+  const pageMotion = useAnimationControls()
+  const section = `${page}:${activeView ?? ''}`
+  const previousSection = useRef(section)
+  useEffect(() => {
+    if (reduced) {
+      pageMotion.stop()
+      pageMotion.set({ opacity: 1, y: 0 })
+    } else if (previousSection.current !== section) {
+      void pageMotion.start({
+        opacity: [0.85, 1],
+        y: [4, 0],
+        transition: fadeTransition,
+      })
+    }
+    previousSection.current = section
+  }, [section, reduced, pageMotion])
+  const activeLabel =
+    page === 'Budget' || page === 'Overview' || page === 'Net Worth'
+      ? 'Dashboard'
+      : page === 'Account'
+        ? 'Accounts'
+        : page === 'Transactions'
+          ? 'Activities'
+          : page === 'Performance'
+            ? 'Insights'
+            : page === 'Investments'
+              ? ['Holdings', 'Fixed Income'].includes(activeView ?? '')
+                ? 'Holdings'
+                : ['Performance', 'Allocation', 'Income'].includes(
+                      activeView ?? '',
+                    )
+                  ? 'Insights'
+                  : ['Activity', 'Imports'].includes(activeView ?? '')
+                    ? 'Activities'
+                    : 'Dashboard'
+              : page === 'Reports'
+                ? 'Settings'
+                : page
+  const sidebarKey = `finance-tracker-sidebar-${document.documentElement.dataset.workspace ?? 'normal'}`
   const [open, setOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => {
     try {
-      return localStorage.getItem('finance-tracker-sidebar') !== 'expanded'
+      const saved =
+        localStorage.getItem(sidebarKey) ??
+        (sidebarKey.endsWith('-normal')
+          ? localStorage.getItem('finance-tracker-sidebar')
+          : null)
+      return saved !== 'expanded'
     } catch {
       return true
     }
@@ -79,14 +142,11 @@ export function AppShell({
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
     try {
-      localStorage.setItem(
-        'finance-tracker-sidebar',
-        collapsed ? 'collapsed' : 'expanded',
-      )
+      localStorage.setItem(sidebarKey, collapsed ? 'collapsed' : 'expanded')
     } catch {
       /* Appearance storage is optional. */
     }
-  }, [collapsed])
+  }, [collapsed, sidebarKey])
   useEffect(() => {
     const findPage = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
@@ -98,23 +158,9 @@ export function AppShell({
     window.addEventListener('keydown', findPage)
     return () => window.removeEventListener('keydown', findPage)
   }, [])
-  const [theme, setTheme] = useState(() => {
-    try {
-      const stored = localStorage.getItem('finance-tracker-theme')
-      if (stored === 'dark' || stored === 'light') return stored
-    } catch {
-      /* Storage is optional. */
-    }
-    return 'dark'
-  })
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    try {
-      localStorage.setItem('finance-tracker-theme', theme)
-    } catch {
-      /* No data storage dependency. */
-    }
-  }, [theme])
+  const preferences = usePreferences()
+  const theme = document.documentElement.dataset.theme ?? preferences.mode
+  const setTheme = (mode: 'light' | 'dark') => setPreferences({ mode })
   useEffect(() => {
     if (open) dialog.current?.showModal()
     else dialog.current?.close()
@@ -127,13 +173,14 @@ export function AppShell({
     media?.addEventListener('change', closeOnDesktop)
     return () => media?.removeEventListener('change', closeOnDesktop)
   }, [])
-  function go(next: Page, id?: string) {
-    navigate(next, id)
+  function go(next: Page, id?: string, view?: string) {
+    if (view) navigateTo(next, id, { view })
+    else navigate(next, id)
     setOpen(false)
     searchDialog.current?.close()
     requestAnimationFrame(() => document.getElementById('page-title')?.focus())
   }
-  function content() {
+  function content(surface: string) {
     return (
       <>
         <div className="brand">
@@ -141,38 +188,55 @@ export function AppShell({
             <ChartNoAxesCombined aria-hidden="true" size={18} />
           </span>
           <div className="brand-label">
-            Finance Tracker<span className="metadata">Personal workspace</span>
+            Finance Tracker
+            <span className="metadata">
+              {tr('app_shell:personal_workspace_5b8524')}
+            </span>
           </div>
         </div>
         <button
           className="nav-item sidebar-search"
-          aria-label="Find a page"
+          aria-label={tr('app_shell:find_a_page_7504f0')}
           onClick={() => {
             setSearch('')
             searchDialog.current?.showModal()
           }}
         >
           <Search size={20} />
-          <span className="nav-label">Find a page</span>
+          <span className="nav-label">
+            {tr('app_shell:find_a_page_7504f0')}
+          </span>
         </button>
-        <nav aria-label="Main navigation" className="primary-nav">
-          {primary.map(({ page: item, icon: Icon }) => (
+        <nav
+          aria-label={tr('app_shell:main_navigation_efd197')}
+          className="primary-nav"
+        >
+          {primary.map(({ page: item, label, view, icon: Icon }) => (
             <button
-              key={item}
+              key={label}
               className="nav-item"
-              title={['Reports'].includes(item) ? `${item} · Preview` : item}
-              aria-label={['Reports'].includes(item) ? `${item} Preview` : item}
-              aria-current={
-                page === item || (page === 'Account' && item === 'Accounts')
-                  ? 'page'
-                  : undefined
+              title={
+                ['Reports'].includes(item)
+                  ? tr('messages:message_620ebd007aed', { value0: item })
+                  : ui(label)
               }
-              onClick={() => go(item)}
+              aria-label={
+                ['Reports'].includes(item)
+                  ? `${ui(item)} ${tr('app_shell:preview_f1fbb2')}`
+                  : ui(label)
+              }
+              aria-current={activeLabel === label ? 'page' : undefined}
+              onClick={() => go(item, undefined, view)}
             >
+              {activeLabel === label && (
+                <SelectionIndicator id={`sidebar-${indicatorId}-${surface}`} />
+              )}
               <Icon size={20} aria-hidden="true" />
-              <span className="nav-label">{item}</span>
+              <span className="nav-label">{ui(label)}</span>
               {['Reports'].includes(item) && (
-                <span className="nav-preview">Preview</span>
+                <span className="nav-preview">
+                  {tr('app_shell:preview_f1fbb2')}
+                </span>
               )}
             </button>
           ))}
@@ -180,7 +244,9 @@ export function AppShell({
         <div className="sidebar-footer">
           <button
             className="nav-item"
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            aria-label={tr('messages:message_110309e3e301', {
+              value0: ui(theme === 'dark' ? 'light' : 'dark'),
+            })}
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           >
             {theme === 'dark' ? (
@@ -189,12 +255,18 @@ export function AppShell({
               <Moon size={17} aria-hidden="true" />
             )}{' '}
             <span className="nav-label">
-              {theme === 'dark' ? 'Light appearance' : 'Dark appearance'}
+              {theme === 'dark'
+                ? tr('dynamic:light_appearance_b548aa')
+                : tr('dynamic:dark_appearance_f229ed')}
             </span>
           </button>
           <button
             className="nav-item sidebar-toggle"
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={
+              collapsed
+                ? tr('dynamic:expand_sidebar_f462e8')
+                : tr('dynamic:collapse_sidebar_9e6876')
+            }
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? (
@@ -202,15 +274,10 @@ export function AppShell({
             ) : (
               <PanelLeftClose size={20} />
             )}
-            <span className="nav-label">Collapse sidebar</span>
+            <span className="nav-label">
+              {tr('app_shell:collapse_sidebar_9e6876')}
+            </span>
           </button>
-          <span
-            className="workspace-avatar"
-            title="Finance Tracker · Local workspace"
-            aria-label="Local workspace"
-          >
-            FT
-          </span>
         </div>
       </>
     )
@@ -218,6 +285,7 @@ export function AppShell({
   return (
     <div
       className={`application-shell reference-shell ${collapsed ? 'sidebar-collapsed' : ''}`}
+      data-motion={reduced ? 'reduced' : 'full'}
     >
       <a
         className="skip-link"
@@ -227,44 +295,51 @@ export function AppShell({
           document.getElementById('main-content')?.focus()
         }}
       >
-        Skip to content
+        {tr('app_shell:skip_to_content_0a4470')}
       </a>
-      <aside className="desktop-sidebar">{content()}</aside>
+      <aside className="desktop-sidebar">{content('desktop')}</aside>
       <dialog
         ref={searchDialog}
         className="page-finder"
-        aria-label="Find a page"
+        aria-label={tr('app_shell:find_a_page_7504f0')}
       >
         <label className="field">
-          Find a page
+          {' '}
+          {tr('app_shell:find_a_page_7504f0')}{' '}
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Page name"
+            placeholder={tr('app_shell:page_name_c99f51')}
           />
         </label>
-        <nav aria-label="Matching pages">
+        <nav aria-label={tr('app_shell:matching_pages_3752b0')}>
           {primary
             .filter((item) =>
-              item.page.toLowerCase().includes(search.toLowerCase()),
+              ui(item.label).toLocaleLowerCase().includes(search.toLowerCase()),
             )
-            .map(({ page: item, icon: Icon }) => (
-              <button className="nav-item" key={item} onClick={() => go(item)}>
+            .map(({ page: item, label, view, icon: Icon }) => (
+              <button
+                className="nav-item"
+                key={label}
+                onClick={() => go(item, undefined, view)}
+              >
                 <Icon size={18} />
-                {item}
+                {ui(label)}
                 {['Reports'].includes(item) && (
-                  <span className="nav-preview">Preview</span>
+                  <span className="nav-preview">
+                    {tr('app_shell:preview_f1fbb2')}
+                  </span>
                 )}
               </button>
             ))}
           {destinations
             .filter(([title]) =>
-              title.toLowerCase().includes(search.toLowerCase()),
+              ui(title).toLocaleLowerCase().includes(search.toLowerCase()),
             )
             .map(([title, target, view]) => (
               <button
                 className="nav-item"
-                key={title}
+                key={ui(title)}
                 onClick={() => {
                   navigateTo(target, undefined, { view })
                   setOpen(false)
@@ -274,28 +349,32 @@ export function AppShell({
                   )
                 }}
               >
-                {title}
-                <span className="metadata">{target}</span>
+                {ui(title)}
+                <span className="metadata">{ui(target)}</span>
               </button>
             ))}
         </nav>
         {!destinations.some(([title]) =>
-          title.toLowerCase().includes(search.toLowerCase()),
+          ui(title).toLocaleLowerCase().includes(search.toLowerCase()),
         ) &&
           !primary.some((item) =>
-            item.page.toLowerCase().includes(search.toLowerCase()),
-          ) && <p className="metadata">No matching pages</p>}
+            ui(item.label).toLocaleLowerCase().includes(search.toLowerCase()),
+          ) && (
+            <p className="metadata">
+              {tr('app_shell:no_matching_pages_6fc270')}
+            </p>
+          )}
         <button
           className="text-action"
           onClick={() => searchDialog.current?.close()}
         >
-          Close
+          {tr('app_shell:close_bbfa77')}
         </button>
       </dialog>
       <header className="mobile-toolbar">
         <button
           className="icon-button"
-          aria-label="Open navigation"
+          aria-label={tr('app_shell:open_navigation_0f53b3')}
           aria-expanded={open}
           aria-controls="mobile-navigation"
           onClick={() => setOpen(true)}
@@ -303,13 +382,13 @@ export function AppShell({
           <Menu aria-hidden="true" size={20} />
         </button>
         <span>Finance Tracker</span>
-        <span className="metadata">Local</span>
+        <span className="metadata">{tr('app_shell:local_dc99d5')}</span>
       </header>
       <dialog
         id="mobile-navigation"
         ref={dialog}
         className="navigation-drawer"
-        aria-label="Navigation"
+        aria-label={tr('app_shell:navigation_cf03cf')}
         onKeyDown={(event) => {
           if (event.key !== 'Tab') return
           const buttons = Array.from(
@@ -336,21 +415,26 @@ export function AppShell({
         <div className="drawer-content">
           <button
             className="drawer-close icon-button"
-            aria-label="Close navigation"
+            aria-label={tr('app_shell:close_navigation_917c4c')}
             onClick={() => setOpen(false)}
           >
             <X size={20} aria-hidden="true" />
           </button>
-          {content()}
+          {content('mobile')}
         </div>
       </dialog>
-      <main
+      <m.main
+        initial={false}
+        animate={pageMotion}
+        layout={reduced ? false : 'position'}
+        layoutDependency={collapsed}
+        transition={reduced ? { duration: 0 } : layoutSpring}
         id="main-content"
         className={`main-content ${page === 'Overview' ? 'overview-main' : ''}`}
         tabIndex={-1}
       >
         {children}
-      </main>
+      </m.main>
     </div>
   )
 }

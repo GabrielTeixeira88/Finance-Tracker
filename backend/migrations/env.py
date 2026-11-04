@@ -2,9 +2,12 @@ from alembic import context
 
 from app import (  # noqa: F401
     analytics_models,
+    fixed_income_models,
     gmail_models,
+    life_event_models,
     market_models,
     models,
+    pluggy_models,
     reconciliation_models,
     wealth_models,
 )

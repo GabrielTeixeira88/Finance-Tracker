@@ -43,6 +43,7 @@ def demo(tmp_path, monkeypatch):
     monkeypatch.setattr("app.gmail_scheduler.start_worker", forbidden)
     monkeypatch.setattr("app.gmail_routes.get_engine", forbidden)
     monkeypatch.setattr("app.gmail_service.GmailService.__init__", forbidden)
+    monkeypatch.setattr("app.pluggy_service.PluggyService.__init__", forbidden)
     normal = tmp_path / "normal.db"
     with closing(sqlite3.connect(normal)) as db:
         db.execute("PRAGMA journal_mode=WAL")
@@ -51,7 +52,7 @@ def demo(tmp_path, monkeypatch):
         db.commit()
         db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
     normal_bytes, normal_rows = normal.read_bytes(), snapshot(normal)
-    app = create_demo_app(normal, tmp_path / "demo")
+    app = create_demo_app(normal, tmp_path / "demo", scenario="synthetic", legacy_fixture=True)
     with TestClient(app, base_url="http://127.0.0.1:8001") as client:
         client.headers.update(
             {
@@ -65,8 +66,8 @@ def demo(tmp_path, monkeypatch):
 
 
 def test_seed_full_database_determinism_and_repeat_preserves_edits(tmp_path):
-    first = DemoStore(tmp_path / "one", tmp_path / "normal.db").initialize()
-    second = DemoStore(tmp_path / "two", tmp_path / "normal.db").initialize()
+    first = DemoStore(tmp_path / "one", tmp_path / "normal.db", "synthetic").initialize()
+    second = DemoStore(tmp_path / "two", tmp_path / "normal.db", "synthetic").initialize()
     try:
         assert snapshot(first.path) == snapshot(second.path)
         with Session(first.engine) as db, db.begin():
@@ -76,7 +77,7 @@ def test_seed_full_database_determinism_and_repeat_preserves_edits(tmp_path):
             assert seed(db) is False
         before = snapshot(first.path)
         first.close()
-        first = DemoStore(tmp_path / "one", tmp_path / "normal.db").initialize()
+        first = DemoStore(tmp_path / "one", tmp_path / "normal.db", "synthetic").initialize()
         assert snapshot(first.path) == before
     finally:
         first.close()
@@ -92,7 +93,7 @@ def test_seed_refuses_even_category_only_existing_workspace(db_engine):
         assert db.scalar(select(Category.name)) == "Synthetic existing category"
 
 
-def test_populated_v011_copy_upgrade_preserves_all_rows(tmp_path):
+def test_populated_v011_copy_upgrade_preserves_all_rows(tmp_path, monkeypatch):
     # v0.11 and v0.12 share sqlite_0013; exercise upgrade/check on a real backup.
     prior, copied = tmp_path / "prior-v011.db", tmp_path / "upgrade-copy.db"
     config = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
@@ -102,7 +103,11 @@ def test_populated_v011_copy_upgrade_preserves_all_rows(tmp_path):
     engine = make_engine(url)
     try:
         with Session(engine) as db, db.begin():
-            assert seed_wealth_demo(db)
+            # Build the PRE-0017 fixture with its original feature set. Keep all
+            # legacy balance/allocation validation; the new association did not exist.
+            with monkeypatch.context() as old_version:
+                old_version.setattr("app.wealth.investment_goal_funding", lambda _db: [])
+                assert seed_wealth_demo(db)
     finally:
         engine.dispose()
     before = snapshot(prior)
@@ -111,8 +116,64 @@ def test_populated_v011_copy_upgrade_preserves_all_rows(tmp_path):
     config.attributes["database_url"] = URL.create("sqlite+pysqlite", database=str(copied))
     command.upgrade(config, "head")
     command.check(config)
-    assert snapshot(copied) == before
+    after = snapshot(copied)
+    assert {k: after[k] for k in before if k != "alembic_version"} == {
+        k: v for k, v in before.items() if k != "alembic_version"
+    }
+    assert after["fixed_income_contracts"] == after["fixed_income_indices"] == []
     assert snapshot(prior) == before
+
+
+def test_owned_v012_upgrade_preserves_edits_until_explicit_reset(tmp_path, monkeypatch):
+    from uuid import uuid4
+
+    from app.demo.seed import VERSION
+
+    root = tmp_path / "prior-demo"
+    root.mkdir()
+    (root / "owner.json").write_text(
+        json.dumps({"application": "finance-tracker-local-demo", "version": VERSION})
+    )
+    prior = root / "baseline.db"
+    config = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+    url = URL.create("sqlite+pysqlite", database=str(prior))
+    config.attributes["database_url"] = url
+    command.upgrade(config, "sqlite_0013")
+    # Representative populated pre-contract schema with the owned demo marker.
+    from app.models import DemoFixture
+
+    engine = make_engine(url)
+    try:
+        with Session(engine) as db, db.begin():
+            with monkeypatch.context() as old_version:
+                old_version.setattr("app.wealth.investment_goal_funding", lambda _db: [])
+                assert seed_wealth_demo(db)
+            db.scalar(select(DemoFixture)).id = VERSION
+        with engine.connect() as db:
+            db.exec_driver_sql("PRAGMA wal_checkpoint(TRUNCATE)")
+    finally:
+        engine.dispose()
+    name = f"session-{uuid4().hex}.db"
+    with closing(sqlite3.connect(prior)) as src, closing(sqlite3.connect(root / name)) as dst:
+        src.backup(dst)
+        dst.execute("UPDATE categories SET name='Synthetic preserved edit' WHERE rowid=1")
+        dst.commit()
+    (root / "active.json").write_text(json.dumps({"database": name}))
+    before = snapshot(root / name)
+    store = DemoStore(root, tmp_path / "normal.db", "synthetic").initialize()
+    try:
+        after = snapshot(store.path)
+        assert {k: after[k] for k in before if k != "alembic_version"} == {
+            k: v for k, v in before.items() if k != "alembic_version"
+        }
+        assert after["fixed_income_contracts"] == []
+        assert snapshot(root / name) == before
+        assert len(snapshot(root / "baseline.db")["fixed_income_contracts"]) == 5
+        store.reset()
+        assert len(snapshot(store.path)["fixed_income_contracts"]) == 5
+        assert snapshot(store.path) == snapshot(root / "baseline.db")
+    finally:
+        store.close()
 
 
 def test_reset_restores_baseline_and_rejects_stale_writes(demo):
@@ -169,7 +230,9 @@ def test_concurrent_reset_and_writer_are_serialized(demo):
 
 def test_normal_reset_absent_and_normal_routes_untouched(api, tmp_path):
     overrides = dict(normal_app.dependency_overrides)
-    create_demo_app(tmp_path / "normal.db", tmp_path / "demo")
+    create_demo_app(
+        tmp_path / "normal.db", tmp_path / "demo", scenario="synthetic", legacy_fixture=True
+    )
     assert normal_app.dependency_overrides == overrides
     assert api.get("/api/runtime").json() == {"mode": "normal"}
     assert api.post("/api/demo-control/reset", json={}).status_code == 404
@@ -178,18 +241,18 @@ def test_normal_reset_absent_and_normal_routes_untouched(api, tmp_path):
 def test_reject_unknown_root_paths_links_and_process_sharing(tmp_path):
     root, normal = tmp_path / "demo", tmp_path / "normal.db"
     with pytest.raises(ValueError):
-        DemoStore(root, root / "normal.db")
+        DemoStore(root, root / "normal.db", "synthetic")
     root.mkdir()
     (root / "foreign.txt").write_text("must survive")
     with pytest.raises(ValueError):
-        DemoStore(root, normal).initialize()
+        DemoStore(root, normal, "synthetic").initialize()
     assert (root / "foreign.txt").read_text() == "must survive"
-    store = DemoStore(tmp_path / "safe", normal).initialize()
+    store = DemoStore(tmp_path / "safe", normal, "synthetic").initialize()
     try:
         with pytest.raises(ValueError):
             store.owned("../normal.db")
         with pytest.raises(ValueError):
-            DemoStore(tmp_path / "safe", normal).initialize()
+            DemoStore(tmp_path / "safe", normal, "synthetic").initialize()
         normal.write_text("private")
         linked = store.root / "linked.db"
         linked.hardlink_to(normal)
@@ -206,6 +269,9 @@ def test_external_services_and_untrusted_requests_blocked(demo):
         "/api/gmail",
         "/api/gmail/labels",
         "/api/gmail/oauth/start",
+        "/api/pluggy/status",
+        "/api/pluggy/items",
+        "/api/pluggy/connect-token",
         "/api/market-data/status",
         "/api/market-data/sync",
     ]:
@@ -239,7 +305,10 @@ def test_financial_dataset_coverage_and_real_analytics(demo):
     data = snapshot(store.path)
     assert 700 <= len(data["transactions"]) <= 1200
     assert len(data["financial_accounts"]) == 7
-    assert len(data["investment_activities"]) == 28
+    assert len(data["investment_activities"]) == 33
+    assert len(data["fixed_income_contracts"]) == 5
+    assert len(data["life_events"]) == 4
+    assert len(data["life_event_links"]) == 19
     assert len(data["budget_targets"]) == 13
     assert len(data["schedules"]) == 6
     assert len(data["goals"]) == 5

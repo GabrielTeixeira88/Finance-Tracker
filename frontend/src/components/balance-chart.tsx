@@ -1,3 +1,7 @@
+import { useChartMotion } from '@/lib/motion'
+import { formatDate } from '@/lib/money'
+import { t as tr } from '@/lib/i18n'
+import { getLocale } from '@/lib/preferences'
 import { useId } from 'react'
 import {
   Area,
@@ -19,12 +23,13 @@ export function BalanceChart({
   currency: string
   illustrative?: boolean
 }) {
+  const chartMotion = useChartMotion()
   const id = useId().replaceAll(':', '')
   const data = chartCoordinates(points)
   return (
     <figure
       className="balance-chart"
-      aria-label={`${currency} balance history`}
+      aria-label={tr('messages:message_e0fb07b614d0', { value0: currency })}
     >
       <ResponsiveContainer
         width="100%"
@@ -39,12 +44,12 @@ export function BalanceChart({
             <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
               <stop
                 offset="0%"
-                stopColor="var(--chart-line)"
+                stopColor="var(--net-worth-chart)"
                 stopOpacity={0.13}
               />
               <stop
                 offset="100%"
-                stopColor="var(--chart-line)"
+                stopColor="var(--net-worth-chart)"
                 stopOpacity={0}
               />
             </linearGradient>
@@ -57,9 +62,9 @@ export function BalanceChart({
             axisLine={false}
             tickLine={false}
             minTickGap={45}
-            tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
+            tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
             tickFormatter={(time: number) =>
-              new Intl.DateTimeFormat(navigator.language, {
+              new Intl.DateTimeFormat(getLocale(), {
                 month: 'short',
                 day: 'numeric',
                 timeZone: 'UTC',
@@ -73,7 +78,7 @@ export function BalanceChart({
                 (typeof data)[number] | undefined
               return active && point ? (
                 <div className="chart-tooltip">
-                  <p className="metadata">{point.date}</p>
+                  <p className="metadata">{formatDate(point.date)}</p>
                   <Money value={point.balance} currency={currency} />
                 </div>
               ) : null
@@ -82,37 +87,39 @@ export function BalanceChart({
           <Area
             type="stepAfter"
             dataKey="coordinate"
-            stroke="var(--chart-line)"
+            stroke="var(--net-worth-chart)"
             strokeWidth={1.8}
             fill={`url(#${id})`}
-            isAnimationActive={false}
+            {...chartMotion}
             name="Balance"
           />
         </AreaChart>
       </ResponsiveContainer>
       <figcaption className="metadata">
         {illustrative
-          ? 'Synthetic illustration, not ledger history'
-          : 'Daily closing ledger balance'}{' '}
-        · {currency} · Hover for exact values
+          ? tr('dynamic:synthetic_illustration_not_ledger_history_43ebc9')
+          : tr('dynamic:daily_closing_ledger_balance_1a2c2d')}{' '}
+        · {currency} {tr('balance_chart:_hover_for_exact_values_c503c3')}{' '}
       </figcaption>
       <details className="chart-data">
-        <summary>View chart data</summary>
+        <summary>{tr('balance_chart:view_chart_data_6f09d2')}</summary>
         <div className="table-scroll">
           <table>
-            <caption className="sr-only">Exact daily balances</caption>
+            <caption className="sr-only">
+              {tr('balance_chart:exact_daily_balances_7fe7c3')}
+            </caption>
             <thead>
               <tr>
-                <th scope="col">Date</th>
+                <th scope="col">{tr('balance_chart:date_eb9a4b')}</th>
                 <th scope="col" className="amount-cell">
-                  Balance
+                  {tr('balance_chart:balance_90eef6')}
                 </th>
               </tr>
             </thead>
             <tbody>
               {points.map((point) => (
-                <tr key={point.date}>
-                  <td>{point.date}</td>
+                <tr key={formatDate(point.date)}>
+                  <td>{formatDate(point.date)}</td>
                   <td className="amount-cell">
                     {formatMoney(point.balance, currency)}
                   </td>

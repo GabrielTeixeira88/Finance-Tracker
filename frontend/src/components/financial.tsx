@@ -1,3 +1,4 @@
+import { t as tr, ui } from '@/lib/i18n'
 import { ArrowRight, ArrowLeftRight, ChevronRight } from 'lucide-react'
 import {
   periods,
@@ -8,9 +9,11 @@ import {
   type Transaction,
   type HistorySeries,
 } from '@/lib/api'
-import { activityPercent } from '@/lib/money'
+import { activityPercent, formatExactPercent, formatDate } from '@/lib/money'
 import type { Navigate } from './app-shell'
 import { EmptyState, Money } from './primitives'
+import { useId } from 'react'
+import { SelectionIndicator } from './selection-indicator'
 
 export function DateRangeTabs({
   value,
@@ -19,15 +22,23 @@ export function DateRangeTabs({
   value: Period
   onChange: (value: Period) => void
 }) {
+  const indicatorId = useId()
   return (
-    <div className="range-tabs" role="group" aria-label="History period">
+    <div
+      className="range-tabs"
+      role="group"
+      aria-label={tr('financial:history_period_a0b9b7')}
+    >
       {periods.map((period) => (
         <button
-          key={period}
+          key={ui(period)}
           aria-pressed={value === period}
           onClick={() => onChange(period)}
         >
-          {period}
+          {value === period && (
+            <SelectionIndicator id={`range-${indicatorId}`} />
+          )}
+          <span className="motion-choice-label">{ui(period)}</span>
         </button>
       ))}
     </div>
@@ -56,10 +67,12 @@ export function PercentageChange({
         <span className={negative ? 'negative' : 'positive'}>
           {' '}
           · {percentage.startsWith('-') ? '' : '+'}
-          {percentage}%
+          {formatExactPercent(percentage)}
         </span>
       )}
-      <span className="metadata"> over selected period</span>
+      <span className="metadata">
+        {tr('financial:over_selected_period_c1f689')}
+      </span>
     </p>
   )
 }
@@ -75,11 +88,13 @@ export function AccountRows({
 }) {
   return (
     <>
-      {!accounts.length && <EmptyState title="No accounts yet" />}
+      {!accounts.length && (
+        <EmptyState title={tr('financial:no_accounts_yet_5c5d52')} />
+      )}
       {accounts.map((a) => (
         <button
           className="account-summary"
-          aria-label={`Open ${a.name}`}
+          aria-label={tr('messages:message_4c1e7f5e5d70', { value0: a.name })}
           key={a.id}
           onClick={() => navigate('Account', a.id)}
         >
@@ -87,7 +102,7 @@ export function AccountRows({
             <strong>{a.name}</strong>
             <small>
               {label(a.type)} · {a.currency}
-              {!a.active && ' · Inactive'}
+              {!a.active && tr('dynamic:_inactive_fe966d')}
             </small>
           </span>
           <Money
@@ -110,7 +125,7 @@ export function SpendingList({ series }: { series: HistorySeries }) {
   return (
     <>
       {!series.spending.length && (
-        <EmptyState title="No spending in this period" />
+        <EmptyState title={tr('financial:no_spending_in_this_period_ef27ca')} />
       )}
       {series.spending.slice(0, 6).map((row) => (
         <div className="spending-row" key={row.category_id ?? 'uncategorized'}>
@@ -142,7 +157,11 @@ export function RecentActivity({
 }) {
   return (
     <>
-      {!rows.length && <EmptyState title="No transactions in this period" />}
+      {!rows.length && (
+        <EmptyState
+          title={tr('financial:no_transactions_in_this_period_b18c53')}
+        />
+      )}
       <ul className="activity-list">
         {rows.map((row) => {
           const transfer = row.transaction_type === 'TRANSFER'
@@ -157,17 +176,22 @@ export function RecentActivity({
               <div>
                 <strong>
                   {transfer && (
-                    <ArrowLeftRight size={12} aria-label="Transfer" />
+                    <ArrowLeftRight
+                      size={12}
+                      aria-label={tr('financial:transfer_cbb4cc')}
+                    />
                   )}
                   {row.payee?.name ?? row.description}
                 </strong>
                 <p className="metadata">
-                  {row.transaction_date} ·{' '}
+                  {formatDate(row.transaction_date)} ·{' '}
                   {accounts.find((a) => a.id === row.account_id)?.name} ·{' '}
                   {row.refund_purchase_id
-                    ? 'Refund'
+                    ? tr('dynamic:refund_e17c8a')
                     : transfer
-                      ? `Transfer ${row.direction === 'IN' ? 'in' : 'out'}`
+                      ? tr('messages:message_3c8c23023b21', {
+                          value0: ui(row.direction === 'IN' ? 'in' : 'out'),
+                        })
                       : (categories.find((c) => c.id === row.category_id)
                           ?.name ?? label(row.transaction_type))}
                 </p>

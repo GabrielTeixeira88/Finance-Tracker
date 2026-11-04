@@ -1,5 +1,96 @@
 # UI foundation
 
+## Goals presentation refinement (2026-10-31)
+
+Goals use an image-free three-column desktop grid, two columns on smaller screens
+and one on phones. Cards show the title/deadline, one-decimal completion, saved and
+remaining amounts, and a thin segmented progress bar. Do not introduce cover images
+or imply an on-track forecast from percentage alone. Actual lifecycle/overdue states
+remain visible. The compact summary retains the existing active-goal scope and
+separate currencies. The duplicate Goal–Status table is removed. Existing account
+balances and allocations remain below the grid in a collapsed-by-default
+**Funding overview** disclosure. Milestones and allocation/progress editing stay
+in individual goal details; no financial behavior changes.
+
+Cards use the API's `schedule_pace` and `as_of`. Off-track and at-risk goals use
+red percentages, progress bars and explicit badges before the deadline;
+paused/archived/unknown states are neutral, achieved/on-track states positive.
+This is actual savings versus the existing straight-line required-to-date
+trajectory, not the temporary monthly-contribution scenario or a return forecast.
+At least 100% of required-to-date savings is on track; 90–100% is at risk; below
+90% is off track. An unmet deadline is off track. Missing coverage stays unknown.
+Unlike the reference's projected-at-deadline health, this basis needs no invented
+persistent contribution plan. No money, allocation or lifecycle status is changed.
+
+Deadline metadata includes calendar years/months remaining, days when less than
+one full month remains, Due today, or days overdue. Use the API financial date
+(the fixed demo date in demo mode), not the execution host's clock; UTC calendar
+arithmetic avoids DST drift. Completed/paused goals retain their real deadline.
+
+Goal monetary displays use two decimals and percentage displays one decimal;
+format exact strings without converting money to Number. Original exact monetary
+values remain available through shared Money accessibility labels/tooltips and in
+the API. Overfunded progress is still labeled above 100% while the bar caps at 100%.
+Missing coverage remains unavailable. Other screens retain their existing precision.
+
+New demo goal titles use ordinary names. Existing demo workspaces display the five
+known seeded names without their legacy `Synthetic /` prefix; this presentation-only
+compatibility does not rename personal/custom goals or require resetting a database.
+The global demo context and synthetic source metadata remain intact.
+
+## Approved redesign implementation
+
+The [approved specification](UX_REDESIGN_SPEC.md),
+[implementation record](UX_REDESIGN_IMPLEMENTATION.md) and
+[current comparison gallery](screenshots/ux-redesign-shell/index.html) supersede
+the earlier appearance-only and parity-audit captures. The older galleries remain
+historical evidence.
+
+- Primary navigation: Dashboard, Accounts, Activities, Holdings, Insights, Goals,
+  Settings. Dashboard opens Spending and also contains Investments and Net Worth.
+  Insights contains Overview, Performance and Income. Activities shares section
+  navigation between transactions and investment activity, while Tools retains
+  distinct schedules, import, Gmail and reconciliation workflows.
+- The 70px collapsed / 220px expanded sidebar and appearance preferences are shared.
+  Demo preferences remain separate from the normal workspace. Canonical hash routes
+  and compatibility aliases preserve bookmarks, browser history and exact filters.
+- Spending and investment value heroes use approximately 280px plot containers;
+  Performance uses a dominant 560px plot. Income has three compact summary areas
+  and a 2:1 history/source grid. Portfolio Insights has a summary, four exposure
+  gauges, full-width composition and an exact breakdown. Use the source-specific
+  grouping and hierarchy, not a universal card or border rule.
+- Accounts and Holdings are directories, not sidebar balance lists. Fixed income is
+  a Holdings filter. Dedicated subscription/redemption services retain immutable
+  terms; dated-index entry belongs to Settings with contract/date context.
+- Full-page entity details keep their selection in the URL. Create/edit/posting
+  forms use focused dialogs. `DetailDrawer` uses native focus containment, Escape,
+  focus restoration and draft-discard protection. `CandidateInspector` keeps its
+  editor mounted when switching between desktop and mobile; focus is independent
+  from approval selection. Preserve each ingestion tool's confirmation contract.
+- Budgets remain monthly even when Spending selects a broader range. Show base,
+  signed rollover, available target, spent and remaining. Existing target edits
+  default to one month; new targets from ongoing setup default to ongoing.
+- Shared Money formatting accepts exact strings, with minor-unit summaries and
+  exact accessible values. Ratios can use compact display precision with exact
+  titles. Chart coordinates may normalize BigInt ratios; financial arithmetic
+  and source labels must retain exact values.
+- Life Events keep inline details and date-scaled overlap bands, with a calendar
+  adaptation on phones. Goal inputs are temporary contribution-only scenarios.
+  Native basis/P&L, original payment currencies, missing valuation and source
+  evidence must remain available through the appropriate rows or disclosures.
+
+`appearance.css` owns semantic themes and self-hosted fonts. `ux-redesign.css`
+provides the approved cross-screen layout refinements while existing components
+retain their financial contracts. Only appearance preferences use localStorage.
+Use [appearance/localization contracts](APPEARANCE_AND_LOCALIZATION.md).
+The approved reference fallback is paired at 1440x900; wider checks are source-guided.
+Functional test results do not substitute for final visual review.
+
+The shared [motion system](MOTION.md) provides scoped selection springs,
+position-only layout transitions, restrained dialog/page entry and chart updates.
+Exact financial labels never tween. Live reduced-motion preferences disable
+spatial motion and chart interpolation without resetting editors.
+
 ## v0.11 conventions
 
 - Preserve the existing neutral palette, mono typography, 70/220px sidebar and
@@ -7,7 +98,7 @@
 - Use `SectionNavigation` for workflow destinations, `WorkflowSteps` for ordered
   ingestion context, and existing PageHeader/SectionHeader/Money/state primitives.
   Tabs inside chart/analytics tools remain local controls, not fake product pages.
-- Page and workflow URLs use `/#/…`; `view` selects a section and `reconcile`
+- Page and workflow URLs use `/#/â€¦`; `view` selects a section and `reconcile`
   selects the reconciliation subview. Hash routes work with the existing local
   Vite/optional static-server deployment. Back, Forward and refresh retain these
   destinations. Ctrl/Cmd+K opens Find a page, including secondary workflows.

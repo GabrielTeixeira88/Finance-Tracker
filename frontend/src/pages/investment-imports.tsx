@@ -1,11 +1,19 @@
+import { CandidateInspector } from '@/components/candidate-inspector'
+import { t as tr, ui } from '@/lib/i18n'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { Field } from '@/components/forms'
 import { Button } from '@/components/ui/button'
-import { ErrorState, Money, SectionHeader } from '@/components/primitives'
+import {
+  ErrorState,
+  LoadingState,
+  Money,
+  SectionHeader,
+} from '@/components/primitives'
 import { request, type Account } from '@/lib/api'
 import { useWrite } from '@/lib/use-write'
+import { useRoute } from '@/lib/navigation'
 
 const candidateSchema = z
   .object({
@@ -23,6 +31,8 @@ const candidateSchema = z
   .passthrough()
 const batchSchema = z.object({
   id: z.string(),
+  source_type: z.string().optional(),
+  account_id: z.string().optional(),
   status: z.string(),
   filename: z.string(),
   ready: z.boolean(),
@@ -82,7 +92,16 @@ export default function BrokerageImports({
     mappingSchema.parse({ columns: initialColumns }),
   )
   const [file, setFile] = useState<File | null>(null)
-  const [batch, setBatch] = useState<Batch | null>(null)
+  const [localBatch, setBatch] = useState<Batch | null>(null)
+  const linkedBatchId = useRoute().params.get('batch')
+  const linkedBatch = useQuery({
+    queryKey: ['investments', 'import', linkedBatchId],
+    enabled: !!linkedBatchId,
+    queryFn: async () =>
+      batchSchema.parse(await request('/investments/imports/' + linkedBatchId)),
+  })
+  const batch = localBatch ?? linkedBatch.data ?? null
+  const [focused, setFocused] = useState<string | null>(null)
   const [confirmed, setConfirmed] = useState(false)
   const [error, setError] = useState('')
   const [profileName, setProfileName] = useState('')
@@ -118,14 +137,16 @@ export default function BrokerageImports({
       setBatch(batchSchema.parse(result))
       setConfirmed(false)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Import failed')
+      setError(
+        e instanceof Error ? e.message : tr('dynamic:import_failed_fbae89'),
+      )
     }
   }
   async function preview() {
     setError('')
     try {
       if (!file || file.size > 2 * 1024 * 1024 || file.size === 0)
-        throw new Error('Choose a nonempty CSV of at most 2 MiB')
+        throw new Error(ui('Choose a nonempty CSV of at most 2 MiB'))
       const bytes = new Uint8Array(await file.arrayBuffer())
       let binary = ''
       for (const byte of bytes) binary += String.fromCharCode(byte)
@@ -136,14 +157,34 @@ export default function BrokerageImports({
         configuration: mapping,
       })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to read file')
+      setError(
+        e instanceof Error
+          ? e.message
+          : tr('dynamic:unable_to_read_file_73df89'),
+      )
     }
   }
+  if (linkedBatchId && !batch && linkedBatch.isPending) return <LoadingState />
+  if (linkedBatchId && !batch && linkedBatch.isError)
+    return (
+      <ErrorState
+        text={linkedBatch.error.message}
+        retry={() => void linkedBatch.refetch()}
+      />
+    )
   return (
-    <section>
+    <section className={`candidate-review ${focused ? 'has-inspector' : ''}`}>
       <SectionHeader
-        title="Brokerage CSV imports"
-        detail="Local files · Explicit review · No activities or cash movements until confirmation"
+        title={tr(
+          batch?.source_type === 'PLUGGY_INVESTMENT'
+            ? 'pluggy:investment_review'
+            : 'investment_imports:brokerage_csv_imports_e1171b',
+        )}
+        detail={tr(
+          batch?.source_type === 'PLUGGY_INVESTMENT'
+            ? 'pluggy:investment_review_scope'
+            : 'investment_imports:local_files_explicit_review_no_activities_or_cas_eeeda2',
+        )}
       />
       {(error || profiles.isError || history.isError) && (
         <ErrorState
@@ -151,26 +192,30 @@ export default function BrokerageImports({
             error ||
             profiles.error?.message ||
             history.error?.message ||
-            'Unable to load import data'
+            tr('dynamic:unable_to_load_import_data_fc5c4e')
           }
         />
       )}
       {!batch ? (
         <>
           <div className="form-grid investment-editor">
-            <Field label="Brokerage CSV file">
+            <Field label={tr('investment_imports:brokerage_csv_file_9a461b')}>
               <input
                 type="file"
                 accept=".csv"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
               />
             </Field>
-            <Field label="Brokerage target account">
+            <Field
+              label={tr('investment_imports:brokerage_target_account_02c1ce')}
+            >
               <select
                 value={account}
                 onChange={(e) => setAccount(e.target.value)}
               >
-                <option value="">Choose account</option>
+                <option value="">
+                  {tr('investment_imports:choose_account_9ccef0')}
+                </option>
                 {accounts
                   .filter((a) => a.type === 'INVESTMENT' && a.active)
                   .map((a) => (
@@ -180,7 +225,9 @@ export default function BrokerageImports({
                   ))}
               </select>
             </Field>
-            <Field label="Brokerage mapping profile">
+            <Field
+              label={tr('investment_imports:brokerage_mapping_profile_421893')}
+            >
               <select
                 defaultValue=""
                 onChange={(e) => {
@@ -188,7 +235,9 @@ export default function BrokerageImports({
                   if (p) setMapping(p.configuration)
                 }}
               >
-                <option value="">Custom mapping</option>
+                <option value="">
+                  {tr('investment_imports:custom_mapping_0ab83e')}
+                </option>
                 {profiles.data?.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -196,16 +245,20 @@ export default function BrokerageImports({
                 ))}
               </select>
             </Field>
-            <Field label="Broker source namespace">
+            <Field
+              label={tr('investment_imports:broker_source_namespace_62eb0f')}
+            >
               <input
                 value={mapping.source_namespace}
                 onChange={(e) =>
                   setMapping({ ...mapping, source_namespace: e.target.value })
                 }
-                placeholder="Stable broker/export identity"
+                placeholder={tr(
+                  'investment_imports:stable_broker_export_identity_6b5f91',
+                )}
               />
             </Field>
-            <Field label="CSV delimiter">
+            <Field label={tr('investment_imports:csv_delimiter_2b8868')}>
               <select
                 value={mapping.delimiter}
                 onChange={(e) =>
@@ -215,11 +268,15 @@ export default function BrokerageImports({
                   })
                 }
               >
-                <option value=",">Comma</option>
-                <option value=";">Semicolon</option>
+                <option value=",">
+                  {tr('investment_imports:comma_b9ee3d')}
+                </option>
+                <option value=";">
+                  {tr('investment_imports:semicolon_727cec')}
+                </option>
               </select>
             </Field>
-            <Field label="CSV date format">
+            <Field label={tr('investment_imports:csv_date_format_2eee79')}>
               <select
                 value={mapping.date_format}
                 onChange={(e) =>
@@ -234,7 +291,9 @@ export default function BrokerageImports({
                 ))}
               </select>
             </Field>
-            <Field label="CSV decimal separator">
+            <Field
+              label={tr('investment_imports:csv_decimal_separator_b0bc6e')}
+            >
               <select
                 value={mapping.decimal_separator}
                 onChange={(e) =>
@@ -244,11 +303,15 @@ export default function BrokerageImports({
                   })
                 }
               >
-                <option value=".">Dot</option>
-                <option value=",">Comma</option>
+                <option value=".">{tr('investment_imports:dot_46856b')}</option>
+                <option value=",">
+                  {tr('investment_imports:comma_b9ee3d')}
+                </option>
               </select>
             </Field>
-            <Field label="CSV thousands separator">
+            <Field
+              label={tr('investment_imports:csv_thousands_separator_ead4ff')}
+            >
               <select
                 value={mapping.thousands_separator}
                 onChange={(e) =>
@@ -259,12 +322,14 @@ export default function BrokerageImports({
                   })
                 }
               >
-                <option value="">None</option>
-                <option value=".">Dot</option>
-                <option value=",">Comma</option>
+                <option value="">{tr('investment_imports:none_6eef66')}</option>
+                <option value=".">{tr('investment_imports:dot_46856b')}</option>
+                <option value=",">
+                  {tr('investment_imports:comma_b9ee3d')}
+                </option>
               </select>
             </Field>
-            <Field label="CSV encoding">
+            <Field label={tr('investment_imports:csv_encoding_1d2ef1')}>
               <select
                 value={mapping.encoding}
                 onChange={(e) =>
@@ -274,8 +339,12 @@ export default function BrokerageImports({
                   })
                 }
               >
-                <option value="utf-8-sig">UTF-8</option>
-                <option value="cp1252">Windows-1252</option>
+                <option value="utf-8-sig">
+                  {tr('investment_imports:utf_8_663b90')}
+                </option>
+                <option value="cp1252">
+                  {tr('investment_imports:windows_1252_694498')}
+                </option>
               </select>
             </Field>
             <label>
@@ -286,14 +355,21 @@ export default function BrokerageImports({
                   setMapping({ ...mapping, has_header: e.target.checked })
                 }
               />{' '}
-              First row is a header
+              {tr('investment_imports:first_row_is_a_header_2f0a21')}{' '}
             </label>
           </div>
           <details>
-            <summary>Column mapping (zero-based indexes)</summary>
+            <summary>
+              {tr(
+                'investment_imports:column_mapping_zero_based_indexes__299a26',
+              )}
+            </summary>
             <div className="form-grid investment-editor">
               {[...Object.keys(initialColumns), 'notes'].map((key) => (
-                <Field label={`Map ${key}`} key={key}>
+                <Field
+                  label={tr('messages:message_3410bc39c4fb', { value0: key })}
+                  key={key}
+                >
                   <input
                     type="number"
                     min="0"
@@ -311,7 +387,9 @@ export default function BrokerageImports({
             </div>
           </details>
           <div className="investment-actions">
-            <Field label="Save brokerage profile as">
+            <Field
+              label={tr('investment_imports:save_brokerage_profile_as_c15a3f')}
+            >
               <input
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
@@ -335,26 +413,33 @@ export default function BrokerageImports({
                   .catch((e) => setError(e.message))
               }
             >
-              Save brokerage profile
+              {tr('investment_imports:save_brokerage_profile_3f8f62')}
             </Button>
             <Button
               disabled={!file || !account || write.isPending}
               onClick={() => void preview()}
             >
-              Preview brokerage CSV
+              {tr('investment_imports:preview_brokerage_csv_a777ae')}
             </Button>
           </div>
           <p className="metadata">
-            Create assets first using exact symbol, exchange and currency. Rows
-            must be in economic posting order. External IDs are scoped to the
-            selected account and source namespace.
+            {tr(
+              'investment_imports:create_assets_first_using_exact_symbol_exchange__44a62c',
+            )}
           </p>
         </>
       ) : (
         <>
+          {batch.account_id && (
+            <p className="metadata">
+              {tr('pluggy:local_account')}:{' '}
+              {accounts.find((a) => a.id === batch.account_id)?.name ??
+                batch.account_id}
+            </p>
+          )}
           <div className="investment-actions">
             <strong>
-              {batch.filename} · {batch.status}
+              {batch.filename} · {ui(batch.status)}
             </strong>
             <Button
               variant="outline"
@@ -363,18 +448,20 @@ export default function BrokerageImports({
                 setConfirmed(false)
               }}
             >
-              New brokerage import
+              {tr('investment_imports:new_brokerage_import_67a355')}
             </Button>
             <Button
               variant="outline"
               onClick={() => void update('/' + batch.id, 'GET')}
             >
-              Refresh brokerage preview
+              {tr('investment_imports:refresh_brokerage_preview_280d39')}
             </Button>
           </div>
           <div className="table-scroll">
             <table className="investment-table">
-              <caption className="sr-only">Brokerage import preview</caption>
+              <caption className="sr-only">
+                {tr('investment_imports:brokerage_import_preview_9756cc')}
+              </caption>
               <thead>
                 <tr>
                   {[
@@ -445,37 +532,66 @@ export default function BrokerageImports({
                       )}
                     </td>
                     <td>
-                      {r.status}
+                      {ui(r.status)}
                       <small>{r.errors.join(' · ')}</small>
-                      {batch.status === 'DRAFT' && (
-                        <select
-                          aria-label={`Brokerage row ${r.row_number} decision`}
-                          value={r.decision.action || ''}
-                          disabled={write.isPending}
-                          onChange={(e) =>
-                            void update(`/${batch.id}/rows/${r.id}`, 'PATCH', {
-                              action: e.target.value,
-                            })
-                          }
-                        >
-                          <option value="" disabled>
-                            Choose decision
-                          </option>
-                          <option value="SKIP">Skip this row</option>
-                          {r.status !== 'INVALID' &&
-                            r.status !== 'EXACT_DUPLICATE' && (
-                              <option value="NEW">
-                                Confirmed separate activity
-                              </option>
-                            )}
-                        </select>
-                      )}
+                      <Button variant="ghost" onClick={() => setFocused(r.id)}>
+                        {tr('parity:inspect')}
+                      </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {batch.rows
+            .filter((r) => r.id === focused)
+            .map((r) => (
+              <CandidateInspector
+                key={r.id}
+                title={tr('investment_imports:brokerage_import_preview_9756cc')}
+                onClose={() => setFocused(null)}
+              >
+                <p>{ui(r.status)}</p>
+                <p role="status">{r.errors.join(' / ')}</p>
+                <dl className="source-evidence">
+                  {Object.entries(r.candidate ?? {}).map(([key, value]) => (
+                    <div key={key}>
+                      <dt>{key}</dt>
+                      <dd>{String(value ?? '')}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {batch.status === 'DRAFT' && (
+                  <select
+                    aria-label={tr('messages:message_26a598364645', {
+                      value0: r.row_number,
+                    })}
+                    value={r.decision.action || ''}
+                    disabled={write.isPending}
+                    onChange={(e) =>
+                      void update(`/${batch.id}/rows/${r.id}`, 'PATCH', {
+                        action: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="" disabled>
+                      {tr('investment_imports:choose_decision_b0982e')}
+                    </option>
+                    <option value="SKIP">
+                      {tr('investment_imports:skip_this_row_87e0bd')}
+                    </option>
+                    {r.status !== 'INVALID' &&
+                      r.status !== 'EXACT_DUPLICATE' && (
+                        <option value="NEW">
+                          {tr(
+                            'investment_imports:confirmed_separate_activity_3fcd64',
+                          )}
+                        </option>
+                      )}
+                  </select>
+                )}
+              </CandidateInspector>
+            ))}
           {batch.status === 'DRAFT' ? (
             <div className="investment-actions">
               <label>
@@ -484,7 +600,9 @@ export default function BrokerageImports({
                   checked={confirmed}
                   onChange={(e) => setConfirmed(e.target.checked)}
                 />{' '}
-                I confirm this brokerage account and reviewed activities
+                {tr(
+                  'investment_imports:i_confirm_this_brokerage_account_and_reviewed_ac_74dedc',
+                )}{' '}
               </label>
               <Button
                 disabled={!confirmed || !batch.ready || write.isPending}
@@ -495,24 +613,30 @@ export default function BrokerageImports({
                   })
                 }
               >
-                Confirm brokerage import
+                {tr('investment_imports:confirm_brokerage_import_99188e')}
               </Button>
             </div>
           ) : (
             <p role="status">
-              Imported: {batch.counts.imported} · Duplicates:{' '}
-              {batch.counts.duplicate} · Skipped: {batch.counts.skipped}
+              {' '}
+              {tr('investment_imports:imported__55e557')}{' '}
+              {batch.counts.imported}{' '}
+              {tr('investment_imports:_duplicates__e9325e')}{' '}
+              {batch.counts.duplicate}{' '}
+              {tr('investment_imports:_skipped__fcd5d9')} {batch.counts.skipped}
             </p>
           )}
         </>
       )}
-      <SectionHeader title="Brokerage import history" />
+      <SectionHeader
+        title={tr('investment_imports:brokerage_import_history_1fe8e7')}
+      />
       {history.data?.map((b) => (
         <div className="investment-actions" key={b.id}>
           <button onClick={() => void update('/' + b.id, 'GET')}>
             {b.filename}
           </button>
-          <span className="metadata">{b.status}</span>
+          <span className="metadata">{ui(b.status)}</span>
         </div>
       ))}
     </section>

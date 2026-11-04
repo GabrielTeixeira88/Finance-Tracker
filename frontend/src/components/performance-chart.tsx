@@ -1,4 +1,8 @@
+import { useChartMotion } from '@/lib/motion'
+import { t as tr } from '@/lib/i18n'
+import { getLocale } from '@/lib/preferences'
 import {
+  CartesianGrid,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -6,10 +10,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { chartCoordinates } from '@/lib/money'
+import { chartCoordinates, decimalUnits, unitsToMoney } from '@/lib/money'
 import { percent, type Performance } from '@/lib/investment-analytics'
 
 export default function PerformanceChart({ data }: { data: Performance }) {
+  const chartMotion = useChartMotion()
   const combined = [
     ...data.points.map((p) => ({
       date: `p-${p.date}`,
@@ -20,6 +25,11 @@ export default function PerformanceChart({ data }: { data: Performance }) {
       balance: p.return_percent,
     })) ?? []),
   ]
+  const values = combined.flatMap((p) =>
+    p.balance === null ? [] : [decimalUnits(p.balance)],
+  )
+  const minimum = values.reduce((a, b) => (a < b ? a : b), values[0] ?? 0n)
+  const maximum = values.reduce((a, b) => (a > b ? a : b), values[0] ?? 0n)
   // Both series share one normalization domain. Separate domains would misrepresent comparisons.
   const coordinates = new Map(
     chartCoordinates(
@@ -40,13 +50,15 @@ export default function PerformanceChart({ data }: { data: Performance }) {
   }))
   return (
     <figure
-      className="balance-chart"
-      aria-label="Cash-flow-adjusted investment performance"
+      className="balance-chart performance-hero"
+      aria-label={tr(
+        'performance_chart:cash_flow_adjusted_investment_performance_e310cf',
+      )}
     >
       <ResponsiveContainer
         width="100%"
-        height={320}
-        initialDimension={{ width: 900, height: 320 }}
+        height={560}
+        initialDimension={{ width: 900, height: 400 }}
       >
         <LineChart
           data={rows}
@@ -60,16 +72,36 @@ export default function PerformanceChart({ data }: { data: Performance }) {
             axisLine={false}
             tickLine={false}
             minTickGap={65}
-            tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
+            tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
             tickFormatter={(value) =>
-              new Intl.DateTimeFormat(navigator.language, {
+              new Intl.DateTimeFormat(getLocale(), {
                 month: 'short',
                 day: 'numeric',
                 timeZone: 'UTC',
               }).format(new Date(value))
             }
           />
-          <YAxis hide domain={[-8, 108]} />
+          <CartesianGrid
+            vertical={false}
+            stroke="var(--border)"
+            opacity={0.45}
+          />
+          <YAxis
+            domain={[-8, 108]}
+            width={68}
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: 'var(--chart-axis)', fontSize: 11 }}
+            tickFormatter={(v) =>
+              percent(
+                unitsToMoney(
+                  minimum +
+                    ((maximum - minimum) * BigInt(Math.round(v * 100))) /
+                      10000n,
+                ),
+              )
+            }
+          />
           <Tooltip
             content={({ active, payload }) => {
               const p = payload?.[0]?.payload as
@@ -77,7 +109,11 @@ export default function PerformanceChart({ data }: { data: Performance }) {
               return active && p ? (
                 <div className="chart-tooltip">
                   <p>{p.date}</p>
-                  <p>Portfolio · {percent(p.return_percent)}</p>
+                  <p>
+                    {' '}
+                    {tr('performance_chart:portfolio__10d144')}{' '}
+                    {percent(p.return_percent)}
+                  </p>
                   {data.benchmark && (
                     <p>
                       {data.benchmark.symbol} · {percent(p.benchmarkReturn)}
@@ -94,7 +130,7 @@ export default function PerformanceChart({ data }: { data: Performance }) {
             strokeWidth={2}
             dot={false}
             connectNulls={false}
-            isAnimationActive={false}
+            {...chartMotion}
           />
           {data.benchmark && (
             <Line
@@ -104,27 +140,38 @@ export default function PerformanceChart({ data }: { data: Performance }) {
               strokeDasharray="5 4"
               dot={false}
               connectNulls={false}
-              isAnimationActive={false}
+              {...chartMotion}
             />
           )}
         </LineChart>
       </ResponsiveContainer>
       <figcaption className="metadata">
-        Portfolio TWR
+        {' '}
+        {tr('performance_chart:portfolio_twr_3b58e3')}{' '}
         {data.benchmark
-          ? ` · Dashed: ${data.benchmark.symbol} price-return proxy (not total return)`
+          ? tr('messages:message_2dc827014173', {
+              value0: data.benchmark.symbol,
+            })
           : ''}{' '}
-        · Gaps mean unavailable coverage
+        {tr('performance_chart:_gaps_mean_unavailable_coverage_5bb9f4')}{' '}
       </figcaption>
       <details className="chart-data">
-        <summary>View exact performance data</summary>
+        <summary>
+          {tr('performance_chart:view_exact_performance_data_fd32aa')}
+        </summary>
         <div className="table-scroll">
           <table>
             <thead>
               <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Portfolio return</th>
-                {data.benchmark && <th scope="col">Benchmark return</th>}
+                <th scope="col">{tr('performance_chart:date_eb9a4b')}</th>
+                <th scope="col">
+                  {tr('performance_chart:portfolio_return_c21454')}
+                </th>
+                {data.benchmark && (
+                  <th scope="col">
+                    {tr('performance_chart:benchmark_return_7e9d73')}
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -133,13 +180,13 @@ export default function PerformanceChart({ data }: { data: Performance }) {
                   <td>{p.date}</td>
                   <td>
                     {p.return_percent === null
-                      ? 'Unavailable'
+                      ? tr('dynamic:unavailable_2c9c1f')
                       : `${p.return_percent}%`}
                   </td>
                   {data.benchmark && (
                     <td>
                       {p.benchmarkReturn === null
-                        ? 'Unavailable'
+                        ? tr('dynamic:unavailable_2c9c1f')
                         : `${p.benchmarkReturn}%`}
                     </td>
                   )}

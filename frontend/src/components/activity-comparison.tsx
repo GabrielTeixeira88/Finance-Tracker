@@ -1,3 +1,4 @@
+import { t as tr } from '@/lib/i18n'
 import {
   Bar,
   BarChart,
@@ -35,15 +36,15 @@ export function ActivityComparison({
       <div className="activity-legend">
         <div>
           <span>
-            <i className="legend-dot positive" />
-            Income
+            <i className="legend-dot positive" />{' '}
+            {tr('activity_comparison:income_1c89b1')}{' '}
           </span>
           <Money value={income} currency={currency} />
         </div>
         <div>
           <span>
-            <i className="legend-dot negative" />
-            Expenses
+            <i className="legend-dot negative" />{' '}
+            {tr('activity_comparison:expenses_8d437d')}{' '}
           </span>
           <Money value={expenses} currency={currency} />
         </div>
@@ -78,8 +79,10 @@ export function ActivityComparison({
         </ResponsiveContainer>
       </div>
       <p className="metadata">
-        {currency} · Share of monthly income and expenses. Transfers and opening
-        balances are excluded.
+        {currency}{' '}
+        {tr(
+          'activity_comparison:_share_of_monthly_income_and_expenses_transfers__312a21',
+        )}{' '}
       </p>
     </div>
   )

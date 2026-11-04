@@ -1,3 +1,5 @@
+import { t as tr, ui } from '@/lib/i18n'
+import { exactFormData } from '@/lib/localized-number'
 import { useState, type FormEvent } from 'react'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
@@ -16,7 +18,7 @@ const decimal = z
     'Use a positive decimal with up to six fractional digits',
   )
 const fields = (form: HTMLFormElement) =>
-  Object.fromEntries(new FormData(form)) as Record<string, string>
+  Object.fromEntries(exactFormData(form)) as Record<string, string>
 
 export function AssetForm({ onSaved }: { onSaved: () => void }) {
   const write = useWrite()
@@ -35,21 +37,21 @@ export function AssetForm({ onSaved }: { onSaved: () => void }) {
           .catch(() => {})
       }}
     >
-      <Field label="Security symbol">
+      <Field label={tr('investment_forms:security_symbol_328573')}>
         <input name="symbol" required maxLength={40} />
       </Field>
-      <Field label="Security name">
+      <Field label={tr('investment_forms:security_name_55a120')}>
         <input name="name" required maxLength={120} />
       </Field>
-      <Field label="Exchange">
+      <Field label={tr('investment_forms:exchange_5b13ea')}>
         <input
           name="exchange"
-          placeholder="XBSP / XNYS"
+          placeholder={tr('investment_forms:xbsp_xnys_8b43db')}
           required
           maxLength={40}
         />
       </Field>
-      <Field label="Security currency">
+      <Field label={tr('investment_forms:security_currency_8e0442')}>
         <input
           name="currency"
           defaultValue="BRL"
@@ -58,20 +60,24 @@ export function AssetForm({ onSaved }: { onSaved: () => void }) {
           maxLength={3}
         />
       </Field>
-      <Field label="Asset type">
+      <Field label={tr('investment_forms:asset_type_e6f887')}>
         <select name="asset_type">
           {['STOCK', 'ETF', 'FUND', 'BOND', 'REIT', 'FII', 'BDR', 'OTHER'].map(
             (t) => (
-              <option key={t}>{t}</option>
+              <option key={t} value={t}>
+                {ui(t)}
+              </option>
             ),
           )}
         </select>
       </Field>
-      <Field label="ISIN (optional)">
+      <Field label={tr('investment_forms:isin_optional__c64ed4')}>
         <input name="isin" maxLength={12} />
       </Field>
       {write.isError && <p role="alert">{write.error.message}</p>}
-      <Button disabled={write.isPending}>Save security</Button>
+      <Button disabled={write.isPending}>
+        {tr('investment_forms:save_security_2f5ff4')}
+      </Button>
     </form>
   )
 }
@@ -98,7 +104,7 @@ export function PriceForm({
           .catch(() => {})
       }}
     >
-      <Field label="Manual price date">
+      <Field label={tr('investment_forms:manual_price_date_2890a9')}>
         <input
           type="date"
           name="price_date"
@@ -106,14 +112,20 @@ export function PriceForm({
           required
         />
       </Field>
-      <Field label={`Manual price (${asset.currency})`}>
+      <Field
+        label={tr('messages:message_0a7ce40611a6', { value0: asset.currency })}
+      >
         <input name="price" inputMode="decimal" required />
       </Field>
       <p className="metadata">
-        Manual observation, not a live quote. One observation per security/date.
+        {tr(
+          'investment_forms:manual_observation_not_a_live_quote_one_observat_c28a80',
+        )}
       </p>
       {write.isError && <p role="alert">{write.error.message}</p>}
-      <Button disabled={write.isPending}>Save manual price</Button>
+      <Button disabled={write.isPending}>
+        {tr('investment_forms:save_manual_price_70b04c')}
+      </Button>
     </form>
   )
 }
@@ -179,7 +191,11 @@ export function ActivityForm({
       setApproved(data)
     } catch (e) {
       setApproved(null)
-      setError(e instanceof Error ? e.message : 'Unable to preview activity')
+      setError(
+        e instanceof Error
+          ? e.message
+          : tr('dynamic:unable_to_preview_activity_2fe8ba'),
+      )
     }
   }
   return (
@@ -188,13 +204,15 @@ export function ActivityForm({
       onSubmit={submit}
       onChange={() => setApproved(null)}
     >
-      <Field label="Investment account">
+      <Field label={tr('investment_forms:investment_account_f3d13a')}>
         <select
           required
           value={accountId}
           onChange={(e) => setAccountId(e.target.value)}
         >
-          <option value="">Choose account</option>
+          <option value="">
+            {tr('investment_forms:choose_account_9ccef0')}
+          </option>
           {accounts
             .filter((a) => a.type === 'INVESTMENT' && a.active)
             .map((a) => (
@@ -204,16 +222,20 @@ export function ActivityForm({
             ))}
         </select>
       </Field>
-      <Field label="Activity type">
+      <Field label={tr('investment_forms:activity_type_c66092')}>
         <select value={kind} onChange={(e) => setKind(e.target.value)}>
           {['BUY', 'SELL', 'DIVIDEND', 'INTEREST', 'FEE', 'TAX'].map((t) => (
-            <option key={t}>{t}</option>
+            <option key={t} value={t}>
+              {ui(t)}
+            </option>
           ))}
         </select>
       </Field>
-      <Field label="Activity security">
+      <Field label={tr('investment_forms:activity_security_6a7e9f')}>
         <select name="asset_id" required={trade}>
-          <option value="">Account cash / no security</option>
+          <option value="">
+            {tr('investment_forms:account_cash_no_security_f2dcef')}
+          </option>
           {assets
             .filter((a) => a.currency === account?.currency)
             .map((a) => (
@@ -223,7 +245,7 @@ export function ActivityForm({
             ))}
         </select>
       </Field>
-      <Field label="Activity date">
+      <Field label={tr('investment_forms:activity_date_14bd67')}>
         <input
           type="date"
           name="activity_date"
@@ -233,29 +255,29 @@ export function ActivityForm({
       </Field>
       {trade ? (
         <>
-          <Field label="Quantity">
+          <Field label={tr('investment_forms:quantity_44f6af')}>
             <input name="quantity" inputMode="decimal" required />
           </Field>
-          <Field label="Unit price">
+          <Field label={tr('investment_forms:unit_price_3c6c77')}>
             <input name="unit_price" inputMode="decimal" required />
           </Field>
         </>
       ) : (
-        <Field label="Gross amount">
+        <Field label={tr('investment_forms:gross_amount_ae5b9d')}>
           <input name="gross_amount" inputMode="decimal" required />
         </Field>
       )}
       {kind !== 'FEE' && kind !== 'TAX' && (
         <>
-          <Field label="Activity fees">
+          <Field label={tr('investment_forms:activity_fees_8955ed')}>
             <input name="fees" inputMode="decimal" defaultValue="0" required />
           </Field>
-          <Field label="Activity taxes">
+          <Field label={tr('investment_forms:activity_taxes_82bdf6')}>
             <input name="taxes" inputMode="decimal" defaultValue="0" required />
           </Field>
         </>
       )}
-      <Field label="Activity notes">
+      <Field label={tr('investment_forms:activity_notes_5f27dd')}>
         <input name="notes" maxLength={500} />
       </Field>
       {(error || write.isError) && (
@@ -263,22 +285,24 @@ export function ActivityForm({
       )}
       <div className="investment-actions">
         <Button disabled={preview.isPending || write.isPending}>
-          Preview activity
+          {tr('investment_forms:preview_activity_c4ee6d')}
         </Button>
         {approved && preview.data && account && (
           <>
             <div role="status" className="investment-preview">
-              Gross{' '}
+              {' '}
+              {tr('investment_forms:gross_9580a6')}{' '}
               <Money
                 value={preview.data.gross_amount}
                 currency={account.currency}
               />{' '}
-              · Net cash {preview.data.direction === 'OUT' ? '−' : '+'}
+              {tr('investment_forms:_net_cash_df0c37')}{' '}
+              {preview.data.direction === 'OUT' ? '−' : '+'}
               <Money
                 value={preview.data.cash_amount}
                 currency={account.currency}
               />{' '}
-              · Resulting quantity{' '}
+              {tr('investment_forms:_resulting_quantity_2db465')}{' '}
               {quantityText(preview.data.resulting_quantity)}
             </div>
             <Button
@@ -294,14 +318,15 @@ export function ActivityForm({
                   .catch(() => {})
               }
             >
-              Confirm activity
+              {tr('investment_forms:confirm_activity_b868c2')}
             </Button>
           </>
         )}
       </div>
       <p className="metadata">
-        Activities are immutable. Validated void and replacement correct
-        mistakes; short sales and margin are unsupported.
+        {tr(
+          'investment_forms:activities_are_immutable_validated_void_and_repl_98f3f7',
+        )}
       </p>
     </form>
   )

@@ -1,3 +1,5 @@
+import { ui, t } from './i18n'
+import { getLocale } from './preferences'
 import { z } from 'zod'
 
 export const accountTypes = [
@@ -15,11 +17,13 @@ export const transactionTypes = [
 ] as const
 export const moneyInput = z
   .string()
-  .regex(/^\d{1,18}(\.\d{1,6})?$/, 'Use up to 18 whole digits and 6 decimals.')
-  .refine((value) => /[1-9]/.test(value), 'Amount must be greater than zero.')
-export const openingInput = z
-  .string()
-  .regex(/^\d{1,18}(\.\d{1,6})?$/, 'Use zero or a positive decimal amount.')
+  .regex(/^\d{1,18}(\.\d{1,6})?$/, { error: () => t('errors:INVALID_MONEY') })
+  .refine((value) => /[1-9]/.test(value), {
+    error: () => t('errors:POSITIVE_MONEY'),
+  })
+export const openingInput = z.string().regex(/^\d{1,18}(\.\d{1,6})?$/, {
+  error: () => t('errors:NONNEGATIVE_MONEY'),
+})
 const decimal = z.string().regex(/^-?\d+(\.\d+)?$/)
 const accountSchema = z.object({
   id: z.string(),
@@ -171,6 +175,16 @@ export function getDemoDate() {
   return demoDate
 }
 
+export class ApiError extends Error {
+  constructor(
+    public readonly code: string,
+    public readonly diagnostic: string | undefined,
+    message: string,
+  ) {
+    super(getLocale() === 'en' && diagnostic ? diagnostic : message)
+  }
+}
+
 export async function request(
   path: string,
   options: RequestInit = {},
@@ -185,13 +199,32 @@ export async function request(
         : {}),
       ...options.headers,
     },
+  }).catch((error: unknown) => {
+    if (error instanceof Error && error.name === 'AbortError') throw error
+    throw new ApiError('NETWORK_ERROR', undefined, t('errors:NETWORK_ERROR'))
   })
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    throw new Error(
-      typeof body.detail === 'string'
-        ? body.detail
-        : 'Check the submitted fields and try again.',
+    const code =
+      response.headers?.get('X-Error-Code') ?? `HTTP_${response.status}`
+    const known = [
+      'HTTP_400',
+      'HTTP_403',
+      'HTTP_404',
+      'HTTP_409',
+      'HTTP_422',
+      'HTTP_413',
+      'HTTP_429',
+      'HTTP_500',
+      'HTTP_503',
+      'VALIDATION_ERROR',
+    ].includes(code)
+      ? code
+      : 'HTTP_500'
+    throw new ApiError(
+      code,
+      typeof body.detail === 'string' ? body.detail : undefined,
+      t(`errors:${known}`),
     )
   }
   onResponse?.(response)
@@ -237,5 +270,5 @@ export function localDate() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 export function label(value: string) {
-  return value.toLowerCase().replaceAll('_', ' ')
+  return ui(value.toLowerCase().replaceAll('_', ' '))
 }

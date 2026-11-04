@@ -98,7 +98,7 @@ def history(db: DB, limit: int = Query(50, ge=1, le=100), offset: int = Query(0,
         ingestion.batch_info(batch)
         for batch in db.scalars(
             select(ImportBatch)
-            .where(ImportBatch.source_type.in_(["CSV", "OFX"]))
+            .where(ImportBatch.source_type.in_(["CSV", "OFX", "PLUGGY"]))
             .order_by(ImportBatch.created_at.desc(), ImportBatch.id)
             .limit(limit)
             .offset(offset)

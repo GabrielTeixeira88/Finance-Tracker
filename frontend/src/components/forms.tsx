@@ -1,3 +1,6 @@
+import { t as tr, ui } from '@/lib/i18n'
+import { DecimalInput } from './decimal-input'
+import { exactFormData } from '@/lib/localized-number'
 import {
   cloneElement,
   isValidElement,
@@ -5,6 +8,7 @@ import {
   useState,
   type FormEvent,
   type ReactNode,
+  type InputHTMLAttributes,
 } from 'react'
 import { useWrite } from '@/lib/use-write'
 import { z } from 'zod'
@@ -30,6 +34,18 @@ export function Field({
   children: ReactNode
 }) {
   const id = useId()
+  if (
+    isValidElement<InputHTMLAttributes<HTMLInputElement>>(children) &&
+    children.type === 'input' &&
+    children.props.inputMode === 'decimal'
+  ) {
+    return (
+      <div className="field">
+        <label htmlFor={id}>{text}</label>
+        <DecimalInput {...children.props} id={id} />
+      </div>
+    )
+  }
   return (
     <div className="field">
       <label htmlFor={id}>{text}</label>
@@ -66,7 +82,7 @@ function Editor({
     setError('')
     setSaved(false)
     try {
-      const fields = new FormData(form)
+      const fields = exactFormData(form)
       const data = payload(fields)
       await mutation.mutateAsync({
         path,
@@ -82,7 +98,7 @@ function Editor({
           ? failure.issues[0].message
           : failure instanceof Error
             ? failure.message
-            : 'Unable to save.',
+            : tr('dynamic:unable_to_save__78f9b8'),
       )
     }
   }
@@ -100,12 +116,14 @@ function Editor({
         )}
         {saved && (
           <p role="status" className="mt-3 text-sm text-primary">
-            Saved.
+            {tr('forms:saved__9d4af6')}
           </p>
         )}
         <div className="mt-4 flex gap-3">
           <Button disabled={mutation.isPending} type="submit">
-            {mutation.isPending ? 'Saving…' : 'Save'}
+            {mutation.isPending
+              ? tr('dynamic:saving__56a228')
+              : tr('dynamic:save_efc007')}
           </Button>
           {onSaved && (
             <Button
@@ -114,7 +132,7 @@ function Editor({
               type="button"
               onClick={onSaved}
             >
-              Cancel
+              {tr('forms:cancel_77dfd2')}
             </Button>
           )}
         </div>
@@ -136,7 +154,11 @@ export function AccountForm({
 }) {
   return (
     <Editor
-      title={account ? 'Edit account' : 'Create account'}
+      title={
+        account
+          ? tr('dynamic:edit_account_101882')
+          : tr('dynamic:create_account_aaf374')
+      }
       path={account ? `/accounts/${account.id}` : '/accounts'}
       editing={!!account}
       onSaved={onSaved}
@@ -152,10 +174,9 @@ export function AccountForm({
               ...base,
               currency: z
                 .string()
-                .regex(
-                  /^[A-Z]{3}$/,
-                  'Use a three-letter uppercase currency code.',
-                )
+                .regex(/^[A-Z]{3}$/, {
+                  error: () => tr('errors:INVALID_CURRENCY'),
+                })
                 .parse(value(form, 'currency')),
               opening_balance: openingInput.parse(
                 value(form, 'opening_balance'),
@@ -165,7 +186,7 @@ export function AccountForm({
             }
       }}
     >
-      <Field label="Account name">
+      <Field label={tr('forms:account_name_abe4d6')}>
         <input
           name="name"
           required
@@ -173,7 +194,7 @@ export function AccountForm({
           defaultValue={account?.name}
         />
       </Field>
-      <Field label="Account type">
+      <Field label={tr('forms:account_type_144b49')}>
         <select name="type" defaultValue={account?.type ?? 'CHECKING'}>
           {accountTypes.map((type) => (
             <option key={type} value={type}>
@@ -182,7 +203,7 @@ export function AccountForm({
           ))}
         </select>
       </Field>
-      <Field label="Institution (optional)">
+      <Field label={tr('forms:institution_optional__965901')}>
         <input
           name="institution"
           maxLength={120}
@@ -190,7 +211,7 @@ export function AccountForm({
         />
       </Field>
       {account ? (
-        <Field label="Active">
+        <Field label={tr('forms:active_a733b8')}>
           <input
             name="active"
             type="checkbox"
@@ -199,7 +220,7 @@ export function AccountForm({
         </Field>
       ) : (
         <>
-          <Field label="Currency">
+          <Field label={tr('forms:currency_e070de')}>
             <input
               name="currency"
               required
@@ -208,7 +229,7 @@ export function AccountForm({
               defaultValue="BRL"
             />
           </Field>
-          <Field label="Opening balance">
+          <Field label={tr('forms:opening_balance_7622a7')}>
             <input
               name="opening_balance"
               inputMode="decimal"
@@ -216,13 +237,15 @@ export function AccountForm({
               defaultValue="0"
             />
           </Field>
-          <Field label="Opening direction">
+          <Field label={tr('forms:opening_direction_627e72')}>
             <select name="opening_direction">
-              <option value="IN">Positive balance</option>
-              <option value="OUT">Negative balance / liability</option>
+              <option value="IN">{tr('forms:positive_balance_fb11b1')}</option>
+              <option value="OUT">
+                {tr('forms:negative_balance_liability_40a89b')}
+              </option>
             </select>
           </Field>
-          <Field label="Opening date">
+          <Field label={tr('forms:opening_date_a08c44')}>
             <input
               name="opening_date"
               type="date"
@@ -256,7 +279,11 @@ export function TransactionForm({
       value(form, 'transaction_type') !== transaction.transaction_type)
   return (
     <Editor
-      title={transaction ? 'Edit transaction' : 'Add income or expense'}
+      title={
+        transaction
+          ? tr('dynamic:edit_transaction_f6bd9c')
+          : tr('dynamic:add_income_or_expense_0e14f7')
+      }
       path={transaction ? `/transactions/${transaction.id}` : '/transactions'}
       editing={!!transaction}
       onSaved={onSaved}
@@ -302,7 +329,7 @@ export function TransactionForm({
         const account = accounts.find(
           (a) => a.id === value(form, 'account_id') && a.active,
         )
-        if (!account) throw new Error('Choose an active account.')
+        if (!account) throw new Error(ui('Choose an active account.'))
         return {
           ...Object.fromEntries(
             Object.entries(base).filter(
@@ -316,7 +343,7 @@ export function TransactionForm({
         }
       }}
     >
-      <Field label="Account">
+      <Field label={tr('forms:account_85dfa3')}>
         <select
           name="account_id"
           required
@@ -324,7 +351,7 @@ export function TransactionForm({
           defaultValue={transaction?.account_id ?? ''}
         >
           <option value="" disabled>
-            Choose account
+            {tr('forms:choose_account_9ccef0')}
           </option>
           {accounts
             .filter((a) => a.active || a.id === transaction?.account_id)
@@ -338,17 +365,17 @@ export function TransactionForm({
       {kind ? (
         <input type="hidden" name="transaction_type" value={kind} />
       ) : (
-        <Field label="Type">
+        <Field label={tr('forms:type_3deb74')}>
           <select
             name="transaction_type"
             defaultValue={transaction?.transaction_type ?? 'EXPENSE'}
           >
-            <option value="EXPENSE">Expense</option>
-            <option value="INCOME">Income</option>
+            <option value="EXPENSE">{tr('forms:expense_a0db8e')}</option>
+            <option value="INCOME">{tr('forms:income_1c89b1')}</option>
           </select>
         </Field>
       )}
-      <Field label="Amount">
+      <Field label={tr('forms:amount_43dc85')}>
         <input
           name="amount"
           inputMode="decimal"
@@ -356,7 +383,7 @@ export function TransactionForm({
           defaultValue={transaction?.amount}
         />
       </Field>
-      <Field label="Date">
+      <Field label={tr('forms:date_eb9a4b')}>
         <input
           name="transaction_date"
           type="date"
@@ -364,7 +391,7 @@ export function TransactionForm({
           defaultValue={transaction?.transaction_date ?? localDate()}
         />
       </Field>
-      <Field label="Description">
+      <Field label={tr('forms:description_55f8eb')}>
         <input
           name="description"
           required
@@ -372,7 +399,7 @@ export function TransactionForm({
           defaultValue={transaction?.description}
         />
       </Field>
-      <Field label="Merchant (optional)">
+      <Field label={tr('forms:merchant_optional__33d4eb')}>
         <input
           name="merchant"
           maxLength={120}
@@ -380,24 +407,28 @@ export function TransactionForm({
         />
       </Field>
       <PayeePicker initial={transaction?.payee} />
-      <Field label="Review status">
+      <Field label={tr('forms:review_status_0fe6b8')}>
         <select
           name="review_status"
           defaultValue={transaction?.review_status ?? 'AUTO'}
         >
           {!transaction && (
-            <option value="AUTO">Use rules / default Reviewed</option>
+            <option value="AUTO">
+              {tr('forms:use_rules_default_reviewed_e9232b')}
+            </option>
           )}
-          <option value="REVIEWED">Reviewed</option>
-          <option value="NEEDS_REVIEW">Needs review</option>
+          <option value="REVIEWED">{tr('forms:reviewed_31ef85')}</option>
+          <option value="NEEDS_REVIEW">
+            {tr('forms:needs_review_33a506')}
+          </option>
         </select>
       </Field>
-      <Field label="Category">
+      <Field label={tr('forms:category_a3c686')}>
         <select
           name="category_id"
           defaultValue={transaction?.category_id ?? ''}
         >
-          <option value="">Uncategorized</option>
+          <option value="">{tr('forms:uncategorized_4ef7d7')}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -408,18 +439,20 @@ export function TransactionForm({
       {transaction && (
         <div className="field">
           <span className="metadata">
-            Manual assignments take precedence over rules.
+            {tr('forms:manual_assignments_take_precedence_over_rules__4c3564')}
           </span>
           {(transaction.manual_fields ?? []).map((field) => (
             <label key={field}>
-              <input type="checkbox" name={`unlock_${field}`} /> Allow rules to
-              update {field.replace('_id', '').replace('_', ' ')}
+              <input type="checkbox" name={`unlock_${field}`} />{' '}
+              {tr('forms:allow_rules_to_update_3d96bb')}{' '}
+              {field.replace('_id', '').replace('_', ' ')}
             </label>
           ))}
           {Object.values(transaction.rule_assignments ?? {}).map(
             (assignment) => (
               <small key={assignment.rule_id}>
-                Assigned by rule: {assignment.rule_name}
+                {' '}
+                {tr('forms:assigned_by_rule__d75af5')} {assignment.rule_name}
               </small>
             ),
           )}
@@ -440,7 +473,7 @@ export function TransferForm({
   const selected = accounts.find((a) => a.id === source)
   return (
     <Editor
-      title="Transfer between accounts"
+      title={tr('forms:transfer_between_accounts_d4d3b6')}
       path="/transfers"
       onSaved={() => {
         setSource('')
@@ -454,9 +487,9 @@ export function TransferForm({
           (a) => a.id === value(form, 'destination') && a.active,
         )
         if (!from || !to || from.id === to.id)
-          throw new Error('Choose two different active accounts.')
+          throw new Error(ui('Choose two different active accounts.'))
         if (from.currency !== to.currency)
-          throw new Error('Both accounts must use the same currency.')
+          throw new Error(ui('Both accounts must use the same currency.'))
         return {
           source_account_id: from.id,
           destination_account_id: to.id,
@@ -467,14 +500,14 @@ export function TransferForm({
         }
       }}
     >
-      <Field label="From account">
+      <Field label={tr('forms:from_account_3cebdd')}>
         <select
           name="source"
           required
           value={source}
           onChange={(e) => setSource(e.target.value)}
         >
-          <option value="">Choose account</option>
+          <option value="">{tr('forms:choose_account_9ccef0')}</option>
           {accounts
             .filter((a) => a.active)
             .map((a) => (
@@ -484,10 +517,10 @@ export function TransferForm({
             ))}
         </select>
       </Field>
-      <Field label="To account">
+      <Field label={tr('forms:to_account_aef07b')}>
         <select key={source} name="destination" required defaultValue="">
           <option value="" disabled>
-            Choose account
+            {tr('forms:choose_account_9ccef0')}
           </option>
           {accounts
             .filter(
@@ -503,18 +536,17 @@ export function TransferForm({
             ))}
         </select>
       </Field>
-      <Field label="Amount">
+      <Field label={tr('forms:amount_43dc85')}>
         <input name="amount" inputMode="decimal" required />
       </Field>
-      <Field label="Date">
+      <Field label={tr('forms:date_eb9a4b')}>
         <input name="date" type="date" required defaultValue={localDate()} />
       </Field>
-      <Field label="Description (optional)">
+      <Field label={tr('forms:description_optional__388de6')}>
         <input name="description" maxLength={500} />
       </Field>
       <p className="text-sm text-muted-foreground">
-        Transfers move money without changing income or expenses. Both accounts
-        must use the same currency.
+        {tr('forms:transfers_move_money_without_changing_income_or__d93c9e')}
       </p>
     </Editor>
   )
@@ -529,13 +561,17 @@ export function CategoryForm({
 }) {
   return (
     <Editor
-      title={category ? 'Edit category' : 'Create category'}
+      title={
+        category
+          ? tr('dynamic:edit_category_c6071d')
+          : tr('dynamic:create_category_61495a')
+      }
       path={category ? `/categories/${category.id}` : '/categories'}
       editing={!!category}
       onSaved={onSaved}
       payload={(form) => ({ name: value(form, 'name') })}
     >
-      <Field label="Category name">
+      <Field label={tr('forms:category_name_ed3dc4')}>
         <input
           name="name"
           required
@@ -559,14 +595,14 @@ export function TransactionComposer({
   const [kind, setKind] = useState<'EXPENSE' | 'INCOME' | 'TRANSFER'>('EXPENSE')
   return (
     <div className="transaction-composer">
-      <Field label="Transaction type">
+      <Field label={tr('forms:transaction_type_575da7')}>
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value as typeof kind)}
         >
-          <option value="EXPENSE">Expense</option>
-          <option value="INCOME">Income</option>
-          <option value="TRANSFER">Transfer</option>
+          <option value="EXPENSE">{tr('forms:expense_a0db8e')}</option>
+          <option value="INCOME">{tr('forms:income_1c89b1')}</option>
+          <option value="TRANSFER">{tr('forms:transfer_cbb4cc')}</option>
         </select>
       </Field>
       {kind === 'TRANSFER' ? (

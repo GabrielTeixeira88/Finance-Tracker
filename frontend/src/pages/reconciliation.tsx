@@ -1,5 +1,6 @@
+import { t as tr, ui } from '@/lib/i18n'
 import { useState } from 'react'
-import { useSection } from '@/lib/navigation'
+import { useSection, useRoute, navigateTo } from '@/lib/navigation'
 import { SectionNavigation } from '@/components/section-navigation'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -55,19 +56,21 @@ export default function Reconciliation({
   return (
     <>
       <PageHeader
-        title="Reconciliation"
-        description="Match source evidence and verify posted bank balances. Review status stays independent."
+        title={tr('reconciliation:reconciliation_b29da9')}
+        description={tr(
+          'reconciliation:match_source_evidence_and_verify_posted_bank_bal_9a2da5',
+        )}
       />
       <SectionNavigation
-        label="Reconciliation views"
+        label={tr('reconciliation:reconciliation_views_5e980b')}
         items={sections}
         value={view}
         onChange={setView}
       />
       <p className="metadata workflow-context">
-        Link evidence first, clear verified entries, then complete a statement
-        only when its difference is zero. Marking a transaction reviewed does
-        not clear or reconcile it.
+        {tr(
+          'reconciliation:link_evidence_first_clear_verified_entries_then__d936dd',
+        )}
       </p>
       {view === 'sources' ? (
         <SourceQueue accounts={accounts} categories={categories} />
@@ -137,8 +140,10 @@ function SourceQueue({
       {batch.error && <ErrorState text={batch.error.message} />}
       {rows.data?.length === 0 && (
         <EmptyState
-          title="No source records yet"
-          detail="Import a statement or review Gmail candidates to compare evidence."
+          title={tr('reconciliation:no_source_records_yet_8e59cc')}
+          detail={tr(
+            'reconciliation:import_a_statement_or_review_gmail_candidates_to_3a19c7',
+          )}
         />
       )}
       <div className="divide-y divide-border">
@@ -157,14 +162,14 @@ function SourceQueue({
           disabled={!offset}
           onClick={() => setOffset(offset - 50)}
         >
-          Previous
+          {tr('reconciliation:previous_50f942')}
         </Button>
         <Button
           variant="outline"
           disabled={(rows.data?.length ?? 0) < 50}
           onClick={() => setOffset(offset + 50)}
         >
-          Next
+          {tr('reconciliation:next_bc9819')}
         </Button>
       </div>
     </>
@@ -218,14 +223,16 @@ function SourceItem({
         {String(row.candidate.description ?? 'Unparsed record')} ·{' '}
         {account?.name} ·{' '}
         {row.detached
-          ? 'Detached'
+          ? tr('dynamic:detached_bbbf4e')
           : row.dismissed
-            ? 'Dismissed'
+            ? tr('dynamic:dismissed_e8db5f')
             : row.classification.replaceAll('_', ' ')}
       </summary>
       <div className="grid gap-3 py-3 md:grid-cols-2">
         <div>
-          <h3 className="text-sm font-medium">Incoming evidence</h3>
+          <h3 className="text-sm font-medium">
+            {tr('reconciliation:incoming_evidence_0233f2')}
+          </h3>
           <p className="metadata">
             {String(row.candidate.transaction_date ?? '')} · {row.reason}
           </p>
@@ -237,12 +244,15 @@ function SourceItem({
               />
             )}
           <p className="metadata">
-            Ledger metadata is preserved when linking. Conflicting amounts
-            cannot be linked.
+            {tr(
+              'reconciliation:ledger_metadata_is_preserved_when_linking_confli_8f0007',
+            )}
           </p>
         </div>
         <div>
-          <h3 className="text-sm font-medium">Existing ledger alternatives</h3>
+          <h3 className="text-sm font-medium">
+            {tr('reconciliation:existing_ledger_alternatives_dd1ed3')}
+          </h3>
           {row.matches.map((match) => (
             <div className="py-2" key={match.id}>
               <p>
@@ -251,32 +261,39 @@ function SourceItem({
               </p>
               <p className="metadata">{match.evidence.join(' · ')}</p>
               <p className="metadata">
-                Payee: {match.payee?.name ?? 'Unassigned'} · Category:{' '}
-                {match.category_id ?? 'Unassigned'}
+                {' '}
+                {tr('reconciliation:payee__704e06')}{' '}
+                {match.payee?.name ?? tr('dynamic:unassigned_e57016')}{' '}
+                {tr('reconciliation:_category__cece31')}{' '}
+                {match.category_id ?? tr('dynamic:unassigned_e57016')}
               </p>
             </div>
           ))}
           {!row.matches.length && (
-            <p className="metadata">No compatible linked alternative.</p>
+            <p className="metadata">
+              {tr('reconciliation:no_compatible_linked_alternative__f17094')}
+            </p>
           )}
         </div>
       </div>
       {row.batch_status === 'DRAFT' && (
         <Button variant="outline" onClick={onReview}>
-          Review import / keep separate
+          {tr('reconciliation:review_import_keep_separate_3759fc')}
         </Button>
       )}
       <div className="filter-bar mt-3">
-        <Field label="Correction reason">
+        <Field label={tr('reconciliation:correction_reason_a09190')}>
           <input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             maxLength={500}
           />
         </Field>
-        <Field label="Existing ledger transaction">
+        <Field label={tr('reconciliation:existing_ledger_transaction_d09a5c')}>
           <select value={target} onChange={(e) => setTarget(e.target.value)}>
-            <option value="">Choose transaction</option>
+            <option value="">
+              {tr('reconciliation:choose_transaction_1ffa24')}
+            </option>
             {targets.data?.rows.map((tx) => (
               <option key={tx.id} value={tx.id}>
                 {tx.transaction_date} ? {tx.payee?.name ?? tx.description}
@@ -300,7 +317,9 @@ function SourceItem({
             }
             onClick={() => act(action)}
           >
-            {action === 'LINK' ? 'Reassign source' : action.toLowerCase()}
+            {action === 'LINK'
+              ? tr('dynamic:reassign_source_209728')
+              : action.toLowerCase()}
           </Button>
         ))}
       </div>
@@ -316,8 +335,21 @@ function Statements({
   accounts: Account[]
   account?: Account
 }) {
+  const route = useRoute()
+  const selected = route.params.get('statement')
+  const select = (statement: string, accountId: string) =>
+    navigateTo('Transactions', undefined, {
+      ...Object.fromEntries(route.params),
+      view: 'reconciliation',
+      reconcile: 'statements',
+      statement,
+      statement_account: accountId,
+    })
   const [accountId, setAccountId] = useState(
-    account?.id ?? accounts.find((a) => a.type !== 'INVESTMENT')?.id ?? '',
+    route.params.get('statement_account') ??
+      account?.id ??
+      accounts.find((a) => a.type !== 'INVESTMENT')?.id ??
+      '',
   )
   const [cutoff, setCutoff] = useState(localDate())
   const [balance, setBalance] = useState('')
@@ -328,6 +360,31 @@ function Statements({
     queryFn: () => getStatements(accountId),
     enabled: !!accountId,
   })
+  if (selected)
+    return (
+      <section className="statement-workbench">
+        <Button variant="ghost" onClick={() => select('', accountId)}>
+          {tr('parity:back_to_statements')}
+        </Button>
+        {rows.isPending ? (
+          <LoadingState />
+        ) : rows.isError ? (
+          <ErrorState
+            text={rows.error.message}
+            retry={() => void rows.refetch()}
+          />
+        ) : rows.data.find((r) => r.id === selected) ? (
+          <StatementReview
+            row={rows.data.find((r) => r.id === selected)!}
+            accountName={
+              accounts.find((a) => a.id === accountId)?.name ?? accountId
+            }
+          />
+        ) : (
+          <EmptyState title={tr('common:unavailable')} />
+        )}
+      </section>
+    )
   return (
     <>
       <form
@@ -345,7 +402,7 @@ function Statements({
           })
         }}
       >
-        <Field label="Statement account">
+        <Field label={tr('reconciliation:statement_account_b27094')}>
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
@@ -359,7 +416,7 @@ function Statements({
               ))}
           </select>
         </Field>
-        <Field label="Statement cutoff">
+        <Field label={tr('reconciliation:statement_cutoff_85cd8e')}>
           <input
             type="date"
             required
@@ -367,7 +424,7 @@ function Statements({
             onChange={(e) => setCutoff(e.target.value)}
           />
         </Field>
-        <Field label="Ending balance">
+        <Field label={tr('reconciliation:ending_balance_ea39ad')}>
           <input
             inputMode="decimal"
             required
@@ -376,7 +433,7 @@ function Statements({
             onChange={(e) => setBalance(e.target.value)}
           />
         </Field>
-        <Field label="Reference / notes">
+        <Field label={tr('reconciliation:reference_notes_06b029')}>
           <input
             value={notes}
             maxLength={500}
@@ -384,65 +441,93 @@ function Statements({
           />
         </Field>
         <Button disabled={mutation.isPending || !accountId}>
-          Start reconciliation
+          {tr('reconciliation:start_reconciliation_8892d5')}
         </Button>
       </form>
       <p className="metadata my-3">
-        Enter card liabilities as negative balances. Verify opening history
-        explicitly. No balancing adjustment is created.
+        {tr(
+          'reconciliation:enter_card_liabilities_as_negative_balances_veri_18f556',
+        )}
       </p>
       {mutation.error && <ErrorState text={mutation.error.message} />}
       {rows.error && <ErrorState text={rows.error.message} />}
       {rows.isPending && accountId && <LoadingState />}
-      {rows.data?.length === 0 && <EmptyState title="No statements yet" />}
+      {rows.data?.length === 0 && (
+        <EmptyState title={tr('reconciliation:no_statements_yet_ec4e6d')} />
+      )}
       {rows.data?.map((row) => (
-        <StatementReview key={row.id} row={row} />
+        <button
+          className="statement-list-row"
+          key={row.id}
+          onClick={() => select(row.id, accountId)}
+        >
+          <span>
+            {row.cutoff} - {ui(row.status)}
+          </span>
+          <Money value={row.statement_balance} currency={row.currency} />
+        </button>
       ))}
     </>
   )
 }
 
-function StatementReview({ row }: { row: Statement }) {
+function StatementReview({
+  row,
+  accountName,
+}: {
+  row: Statement
+  accountName: string
+}) {
   const mutation = useWrite()
   const [reason, setReason] = useState('')
   return (
-    <details
-      className="border-b border-border py-3"
-      open={row.status !== 'COMPLETED'}
-    >
-      <summary className="cursor-pointer">
-        {row.cutoff} · {row.status} ·{' '}
+    <section className="statement-detail">
+      <h1>
+        {row.cutoff} · {ui(row.status)} ·{' '}
         <Money value={row.statement_balance} currency={row.currency} />
-      </summary>
+      </h1>
+      <p className="metadata">
+        {accountName} - {row.currency} - {tr('parity:revision')} {row.revision}
+      </p>
       <div className="flex flex-wrap gap-6 py-3">
         <div>
-          Cleared balance
+          {tr('parity:statement_balance')}
           <br />
+          <Money value={row.statement_balance} currency={row.currency} />
+        </div>
+        <div>
+          {' '}
+          {tr('reconciliation:cleared_balance_113543')} <br />
           <Money value={row.cleared_balance} currency={row.currency} />
         </div>
         <div>
-          Difference
-          <br />
+          {' '}
+          {tr('reconciliation:difference_b16f1f')} <br />
           <Money value={row.difference} currency={row.currency} />
           <p className="metadata">
-            Exact difference: {row.difference} {row.currency}
+            {' '}
+            {tr('reconciliation:exact_difference__7daa47')} {row.difference}{' '}
+            {row.currency}
           </p>
         </div>
       </div>
       {!!row.pending_source_ids?.length && (
         <p role="alert">
-          Resolve {row.pending_source_ids.length} pending bank sources in Source
-          matching before completing.
+          {' '}
+          {tr('reconciliation:resolve_ac7f95')} {row.pending_source_ids.length}{' '}
+          {tr(
+            'reconciliation:pending_bank_sources_in_source_matching_before_c_24cd42',
+          )}{' '}
         </p>
       )}
       <div className="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Description</th>
-              <th>Amount</th>
-              <th>Bank status</th>
+              <th>{tr('reconciliation:date_eb9a4b')}</th>
+              <th>{tr('reconciliation:description_55f8eb')}</th>
+              <th>{tr('reconciliation:amount_43dc85')}</th>
+              <th>{tr('reconciliation:bank_status_03c91a')}</th>
             </tr>
           </thead>
           <tbody>
@@ -453,7 +538,9 @@ function StatementReview({ row }: { row: Statement }) {
                   {tx.description}
                   {row.settlement_after_cutoff_ids?.includes(tx.id) && (
                     <small className="metadata block">
-                      Bank source is after this cutoff; excluded
+                      {tr(
+                        'reconciliation:bank_source_is_after_this_cutoff_excluded_0bf3a5',
+                      )}
                     </small>
                   )}
                 </td>
@@ -492,7 +579,7 @@ function StatementReview({ row }: { row: Statement }) {
         </table>
       </div>
       <div className="filter-bar mt-3">
-        <Field label="Statement decision reason">
+        <Field label={tr('reconciliation:statement_decision_reason_6b6719')}>
           <input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -505,7 +592,12 @@ function StatementReview({ row }: { row: Statement }) {
             !reason ||
             (row.status !== 'COMPLETED' && decimalUnits(row.difference) !== 0n)
           }
-          onClick={() =>
+          onClick={() => {
+            if (
+              row.status === 'COMPLETED' &&
+              !window.confirm(tr('parity:reopen_statement'))
+            )
+              return
             mutation.mutate({
               path: `/reconciliation/sessions/${row.id}`,
               data: newCommand({
@@ -514,15 +606,15 @@ function StatementReview({ row }: { row: Statement }) {
                 reason,
               }),
             })
-          }
+          }}
         >
           {row.status === 'COMPLETED'
-            ? 'Reopen this and later statements'
-            : 'Complete and lock'}
+            ? tr('dynamic:reopen_this_and_later_statements_e9a06b')
+            : tr('dynamic:complete_and_lock_66348a')}
         </Button>
       </div>
       {mutation.error && <ErrorState text={mutation.error.message} />}
-    </details>
+    </section>
   )
 }
 
@@ -563,14 +655,14 @@ function DecisionHistory() {
           disabled={!offset}
           onClick={() => setOffset(offset - 100)}
         >
-          Previous
+          {tr('reconciliation:previous_50f942')}
         </Button>
         <Button
           variant="outline"
           disabled={(rows.data?.length ?? 0) < 100}
           onClick={() => setOffset(offset + 100)}
         >
-          Next
+          {tr('reconciliation:next_bc9819')}
         </Button>
       </div>
     </>

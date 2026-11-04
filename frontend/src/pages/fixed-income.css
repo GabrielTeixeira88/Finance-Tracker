@@ -1,0 +1,80 @@
+.fixed-income-workspace > * {
+  margin-bottom: 20px;
+}
+.fixed-income-workspace .section-header {
+  flex-wrap: wrap;
+}
+.fixed-income-workspace .numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.fixed-income-workspace td small {
+  display: block;
+}
+.fixed-income-workspace tr[aria-selected='true'] {
+  background: var(--muted);
+}
+.fixed-income-detail {
+  border-block: 1px solid var(--border);
+  padding-block: 20px;
+}
+.fixed-income-detail > * {
+  margin-bottom: 16px;
+}
+.fixed-income-terms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 0;
+}
+.fixed-income-terms dt {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.fixed-income-terms dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+.fixed-income-tax .financial-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.fixed-income-tax strong {
+  display: block;
+  margin: 4px 0 12px;
+}
+.maturity-timeline {
+  padding: 0;
+  list-style: none;
+}
+.maturity-timeline li {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.maturity-timeline button {
+  text-align: left;
+}
+.fixed-income-chart {
+  min-width: 0;
+  padding: 12px 0;
+}
+@media (max-width: 700px) {
+  .fixed-income-workspace .section-header > div {
+    flex-basis: 100%;
+  }
+  .fixed-income-terms {
+    grid-template-columns: 1fr;
+  }
+  .maturity-timeline li {
+    grid-template-columns: 100px 1fr;
+    gap: 8px;
+  }
+  .maturity-timeline li > span {
+    grid-column: 2;
+  }
+}

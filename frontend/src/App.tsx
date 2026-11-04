@@ -1,10 +1,13 @@
+import { t as tr } from '@/lib/i18n'
+import { useTranslation } from 'react-i18next'
+import '@/lib/i18n'
 import { lazy, Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AppShell, type Page } from '@/components/app-shell'
 import { ErrorState, LoadingState, PageHeader } from '@/components/primitives'
 import { getAccounts, getCategories } from '@/lib/api'
 import { navigateTo, useRoute } from '@/lib/navigation'
-import Dashboard from '@/pages/dashboard'
+import { SectionNavigation } from '@/components/section-navigation'
 import Transactions from '@/pages/transaction-workspace'
 import { Accounts, Settings } from '@/pages/management'
 import type { PreviewPage } from '@/pages/previews'
@@ -17,10 +20,21 @@ const NetWorth = lazy(() => import('@/pages/wealth'))
 const Goals = lazy(() => import('@/pages/goals'))
 
 export default function App() {
+  useTranslation()
   const route = useRoute()
   const filters = Object.fromEntries(
     [...route.params].filter(
-      ([key]) => !['view', 'account', 'reconcile'].includes(key),
+      ([key]) =>
+        ![
+          'view',
+          'account',
+          'reconcile',
+          'tool',
+          'kind',
+          'section',
+          'detail',
+          'stage',
+        ].includes(key),
     ),
   )
   const accounts = useQuery({
@@ -39,14 +53,16 @@ export default function App() {
       <DemoExperience />
       {accounts.isPending || categories.isPending ? (
         <>
-          <PageHeader title="Workspace" />
-          <LoadingState text="Loading workspace…" />
+          <PageHeader title={tr('App:workspace_4ca0a7')} />
+          <LoadingState text={tr('App:loading_workspace__89f0dd')} />
         </>
       ) : accounts.isError || categories.isError ? (
         <>
-          <PageHeader title="Workspace" />
+          <PageHeader title={tr('App:workspace_4ca0a7')} />
           <ErrorState
-            text="Unable to load your local workspace. Check that the API is running."
+            text={tr(
+              'App:unable_to_load_your_local_workspace_check_that_t_3edca9',
+            )}
             retry={() => {
               void accounts.refetch()
               void categories.refetch()
@@ -54,12 +70,24 @@ export default function App() {
           />
         </>
       ) : (
-        <Suspense fallback={<LoadingState text="Loading page…" />}>
-          {route.page === 'Overview' && (
-            <Dashboard
-              accounts={accounts.data}
-              categories={categories.data}
-              navigate={navigate}
+        <Suspense
+          fallback={<LoadingState text={tr('App:loading_page__053228')} />}
+        >
+          {((route.page === 'Budget' && !route.params.has('detail')) ||
+            (route.page === 'Net Worth' && !route.params.has('position')) ||
+            (route.page === 'Investments' &&
+              ['Overview', null].includes(route.params.get('view')))) && (
+            <SectionNavigation
+              label="Dashboard"
+              items={
+                [
+                  ['Budget', 'Spending'],
+                  ['Investments', 'Investments'],
+                  ['Net Worth', 'Net Worth'],
+                ] as const
+              }
+              value={route.page as 'Budget' | 'Investments' | 'Net Worth'}
+              onChange={(page) => navigateTo(page)}
             />
           )}
           {route.page === 'Accounts' && (
@@ -91,7 +119,7 @@ export default function App() {
               />
             ) : (
               <ErrorState
-                text="Account no longer available."
+                text={tr('App:account_no_longer_available__2766ba')}
                 retry={() => navigate('Accounts')}
               />
             ))}

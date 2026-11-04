@@ -140,7 +140,7 @@ def candidate_row(session, source, account_id, active_rules, payees):
 
 
 def preview(session, batch):
-    if batch.source_type == "BROKERAGE_CSV":
+    if batch.source_type in {"BROKERAGE_CSV", "PLUGGY_INVESTMENT"}:
         raise HTTPException(422, "Use the investment import workflow for brokerage activities")
     sources = source_rows(session, batch)
     if batch.status == "COMPLETED":
@@ -193,7 +193,14 @@ def preview(session, batch):
     ready = account.active
     for source in sources:
         metadata_errors = []
-        if source.source_type == "GMAIL" and source.normalized_data.get("currency") not in {
+        if source.source_type == "PLUGGY":
+            from app.pluggy_service import stale_error
+
+            if error := stale_error(session, source):
+                metadata_errors.append(error)
+        if source.source_type in {"GMAIL", "PLUGGY"} and source.normalized_data.get(
+            "currency"
+        ) not in {
             None,
             account.currency,
         }:
@@ -273,7 +280,7 @@ def preview(session, batch):
         counts[item["status"]] += 1
         action = source.decision.get("action")
         if (
-            source.source_type == "GMAIL"
+            source.source_type in {"GMAIL", "PLUGGY"}
             and source.raw_data.get("link_only") == "yes"
             and action not in {"SKIP", "LINK"}
         ):
@@ -328,7 +335,7 @@ def preview(session, batch):
 
 
 def decide(session, batch, source_id, decision):
-    if batch.source_type == "BROKERAGE_CSV":
+    if batch.source_type in {"BROKERAGE_CSV", "PLUGGY_INVESTMENT"}:
         raise HTTPException(422, "Use the investment import workflow for brokerage activities")
     if batch.status != "DRAFT":
         raise HTTPException(409, "Completed imports cannot be reprocessed")

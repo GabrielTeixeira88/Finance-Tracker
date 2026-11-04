@@ -1,3 +1,12 @@
+import { AlertTriangle } from 'lucide-react'
+import { analyticsPeriods } from '@/lib/investment-analytics'
+import { incomeSummary } from '@/lib/income-summary'
+import { MotionChoice } from '@/components/selection-indicator'
+import { useSelectionId } from '@/lib/motion'
+import { useRoute, navigateTo } from '@/lib/navigation'
+import { t as tr, ui } from '@/lib/i18n'
+import { exactFormData } from '@/lib/localized-number'
+import { CompositionChart } from '@/components/composition-chart'
 import { lazy, Suspense, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
@@ -24,24 +33,42 @@ import {
 } from '@/lib/investment-analytics'
 import { getAssets } from '@/lib/investments'
 import { request } from '@/lib/api'
-import { decimalUnits, sumMoney } from '@/lib/money'
+import { decimalUnits, sumMoney, formatDate } from '@/lib/money'
 import { useWrite } from '@/lib/use-write'
 
 const PerformanceChart = lazy(() => import('@/components/performance-chart'))
 const IncomeChart = lazy(() => import('@/components/income-chart'))
-const periods = ['1M', '3M', '6M', 'YTD', '1Y', '3Y', 'ALL', 'Custom']
+
+function MetricReasons({ reasons }: { reasons: string[] }) {
+  if (!reasons.length) return null
+  const message = reasons
+    .map((r) => r.replaceAll('_', ' ').toLowerCase())
+    .join(' / ')
+  return (
+    <details className="metric-reasons">
+      <summary aria-label={tr('parity:metric_coverage')} title={message}>
+        <AlertTriangle size={12} />
+      </summary>
+      <p>{message}</p>
+    </details>
+  )
+}
 
 export function NullableMoney({
   value,
   currency,
+  minorUnits = false,
 }: {
+  minorUnits?: boolean
   value: string | null
   currency: string
 }) {
   return value === null ? (
-    <span className="metadata">Unavailable</span>
+    <span className="metadata">
+      {tr('investment_analytics:unavailable_2c9c1f')}
+    </span>
   ) : (
-    <Money value={value} currency={currency} />
+    <Money value={value} currency={currency} minorUnits={minorUnits} />
   )
 }
 
@@ -65,27 +92,37 @@ export function AnalyticsSummary({
     queryFn: ({ signal }) => getPerformance(params, signal),
   })
   return (
-    <section aria-label="Investment return summary">
+    <section
+      aria-label={tr('investment_analytics:investment_return_summary_d0984c')}
+    >
       <div className="investment-toolbar">
         <span className="metadata">
-          Last 3 months · BRL reporting · Cash-flow-adjusted
+          {tr(
+            'investment_analytics:last_3_months_brl_reporting_cash_flow_adjusted_87cf8a',
+          )}
         </span>
         <Button variant="ghost" onClick={onOpen}>
-          Explore performance
+          {tr('investment_analytics:explore_performance_1a6a06')}
         </Button>
       </div>
       {query.data ? (
         <div className="investment-metrics">
           <div>
-            <span className="metadata">Time-weighted return</span>
+            <span className="metadata">
+              {tr('investment_analytics:time_weighted_return_5e454c')}
+            </span>
             {percent(query.data.twr.value)}
           </div>
           <div>
-            <span className="metadata">XIRR · annualized</span>
+            <span className="metadata">
+              {tr('investment_analytics:xirr_annualized_cf8763')}
+            </span>
             {percent(query.data.xirr.value)}
           </div>
           <div>
-            <span className="metadata">Period gain / loss</span>
+            <span className="metadata">
+              {tr('investment_analytics:period_gain_loss_d4939c')}
+            </span>
             <NullableMoney
               value={query.data.absolute_gain.value}
               currency="BRL"
@@ -94,30 +131,47 @@ export function AnalyticsSummary({
         </div>
       ) : query.isError ? (
         <p className="metadata">
-          Performance unavailable. Open Performance to inspect coverage.
+          {tr(
+            'investment_analytics:performance_unavailable_open_performance_to_insp_5821d2',
+          )}
         </p>
       ) : (
-        <LoadingState text="Calculating returns…" />
+        <LoadingState
+          text={tr('investment_analytics:calculating_returns__356489')}
+        />
       )}
     </section>
   )
 }
 
 export default function InvestmentAnalytics({
+  externalRangeControls = false,
   view,
   accountId,
   asOf,
   onSecurity,
 }: {
+  externalRangeControls?: boolean
   view: string
   accountId: string
   asOf: string
   onSecurity: (id: string) => void
 }) {
-  const [period, setPeriod] = useState('3M')
-  const [custom, setCustom] = useState(asOf.slice(0, 8) + '01')
-  const [currency, setCurrency] = useState('BRL')
-  const [benchmark, setBenchmark] = useState('')
+  const route = useRoute()
+  const rangeId = useSelectionId()
+  const update = (values: Record<string, string>) =>
+    navigateTo('Investments', undefined, {
+      ...Object.fromEntries(route.params),
+      view,
+      ...values,
+    })
+  const period = route.params.get('range') || (view === 'Income' ? 'ALL' : '3M')
+  const custom = route.params.get('start') || asOf.slice(0, 8) + '01'
+  const setCustom = (start: string) => update({ start })
+  const currency = route.params.get('currency') || 'BRL'
+  const setCurrency = (currency: string) => update({ currency })
+  const benchmark = route.params.get('benchmark') || ''
+  const setBenchmark = (benchmark: string) => update({ benchmark })
   const start = startDate(period, asOf, custom)
   const params = analyticsParams(
     period === 'ALL' && view === 'Performance' ? '' : start,
@@ -149,7 +203,7 @@ export default function InvestmentAnalytics({
   const insights = useQuery({
     queryKey: ['investment-insights', detailParams],
     queryFn: ({ signal }) => getInsights(detailParams, signal),
-    enabled: view === 'Performance',
+    enabled: view === 'Performance' || view === 'Allocation',
   })
   const query =
     view === 'Performance'
@@ -158,23 +212,32 @@ export default function InvestmentAnalytics({
         ? income
         : allocation
   return (
-    <section aria-label={`Investment ${view.toLowerCase()}`}>
+    <section
+      className={`analytics-page analytics-${view.toLowerCase()}`}
+      aria-label={tr('messages:message_0f171b582664', {
+        value0: ui(view.toLowerCase()),
+      })}
+    >
       <div className="investment-toolbar">
-        {view !== 'Allocation' && (
-          <nav className="range-tabs" aria-label="Analytics period">
-            {periods.map((p) => (
-              <button
-                key={p}
-                aria-pressed={period === p}
-                onClick={() => setPeriod(p)}
+        {!externalRangeControls && view !== 'Allocation' && (
+          <nav
+            className="range-tabs"
+            aria-label={tr('investment_analytics:analytics_period_2d5f60')}
+          >
+            {analyticsPeriods.map((range) => (
+              <MotionChoice
+                key={range}
+                groupId={rangeId}
+                selected={period === range}
+                onClick={() => update({ range })}
               >
-                {p}
-              </button>
+                {ui(range)}
+              </MotionChoice>
             ))}
           </nav>
         )}
         {period === 'Custom' && view !== 'Allocation' && (
-          <Field label="Period opening date">
+          <Field label={tr('investment_analytics:period_opening_date_008580')}>
             <input
               type="date"
               value={custom}
@@ -183,8 +246,8 @@ export default function InvestmentAnalytics({
             />
           </Field>
         )}
-        {view !== 'Income' && (
-          <Field label="Analytics currency">
+        {!externalRangeControls && view !== 'Income' && (
+          <Field label={tr('investment_analytics:analytics_currency_ceeca4')}>
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
@@ -196,15 +259,18 @@ export default function InvestmentAnalytics({
           </Field>
         )}
         {view === 'Performance' && (
-          <Field label="Benchmark">
+          <Field label={tr('investment_analytics:benchmark_9ed99e')}>
             <select
               value={benchmark}
               onChange={(e) => setBenchmark(e.target.value)}
             >
-              <option value="">No benchmark</option>
+              <option value="">
+                {tr('investment_analytics:no_benchmark_4b21b1')}
+              </option>
               {assets.data?.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.symbol} · {a.currency} price proxy
+                  {a.symbol} · {a.currency}{' '}
+                  {tr('investment_analytics:price_proxy_334a90')}{' '}
                 </option>
               ))}
             </select>
@@ -212,7 +278,11 @@ export default function InvestmentAnalytics({
         )}
       </div>
       {query.isPending ? (
-        <LoadingState text="Calculating investment analytics…" />
+        <LoadingState
+          text={tr(
+            'investment_analytics:calculating_investment_analytics__4e9228',
+          )}
+        />
       ) : query.isError ? (
         <ErrorState
           text={query.error.message}
@@ -222,127 +292,152 @@ export default function InvestmentAnalytics({
         <>
           {view === 'Performance' && performance.data && (
             <>
-              <SectionHeader
-                title="Performance"
-                detail={`${performance.data.start} – ${asOf} · Closing-value boundaries · ${currency}`}
-              />
-              <div className="investment-metrics">
-                <div>
-                  <span className="metadata">Ending portfolio value</span>
-                  <NullableMoney
-                    value={performance.data.ending_value}
-                    currency={currency}
-                  />
+              <div className="performance-panel">
+                <SectionHeader
+                  title={tr('investment_analytics:performance_63c904')}
+                  detail={`${formatDate(performance.data.start)} - ${formatDate(asOf)}`}
+                />
+                <div className="investment-metrics">
+                  <div>
+                    <div className="metadata">
+                      {tr('investment_analytics:ending_portfolio_value_f85721')}
+                    </div>
+                    <NullableMoney
+                      minorUnits
+                      value={performance.data.ending_value}
+                      currency={currency}
+                    />
+                  </div>
+                  <div>
+                    <div className="metadata">
+                      {tr('investment_analytics:time_weighted_return_5e454c')}
+                      <MetricReasons reasons={performance.data.twr.reasons} />
+                    </div>
+                    <strong>{percent(performance.data.twr.value)}</strong>
+                  </div>
+                  <div>
+                    <div className="metadata">
+                      {tr('investment_analytics:xirr_annualized_cf8763')}
+                      <MetricReasons reasons={performance.data.xirr.reasons} />
+                    </div>
+                    <strong>{percent(performance.data.xirr.value)}</strong>
+                  </div>
+                  <div>
+                    <div className="metadata">
+                      {tr('investment_analytics:period_gain_loss_d4939c')}
+                      <MetricReasons
+                        reasons={performance.data.absolute_gain.reasons}
+                      />
+                    </div>
+                    <NullableMoney
+                      minorUnits
+                      value={performance.data.absolute_gain.value}
+                      currency={currency}
+                    />
+                  </div>
+                  <div>
+                    <div className="metadata">
+                      {tr('investment_analytics:net_external_funding_147c8c')}
+                    </div>
+                    <NullableMoney
+                      minorUnits
+                      value={performance.data.net_external_flows}
+                      currency={currency}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <span className="metadata">Time-weighted return</span>
-                  <strong>{percent(performance.data.twr.value)}</strong>
-                </div>
-                <div>
-                  <span className="metadata">XIRR · annualized</span>
-                  <strong>{percent(performance.data.xirr.value)}</strong>
-                </div>
-                <div>
-                  <span className="metadata">Period gain / loss</span>
-                  <NullableMoney
-                    value={performance.data.absolute_gain.value}
-                    currency={currency}
-                  />
-                </div>
-                <div>
-                  <span className="metadata">Net external funding</span>
-                  <NullableMoney
-                    value={performance.data.net_external_flows}
-                    currency={currency}
-                  />
-                </div>
+                <Suspense
+                  fallback={
+                    <LoadingState
+                      text={tr(
+                        'investment_analytics:loading_performance_chart__c84b9d',
+                      )}
+                    />
+                  }
+                >
+                  {performance.data.points.filter(
+                    (p) => p.return_percent !== null,
+                  ).length > 1 ||
+                  (performance.data.benchmark?.points.filter(
+                    (p) => p.return_percent !== null,
+                  ).length ?? 0) > 1 ? (
+                    <PerformanceChart data={performance.data} />
+                  ) : (
+                    <EmptyState
+                      title={tr(
+                        'investment_analytics:no_return_history_available_cde23b',
+                      )}
+                      detail={tr(
+                        'investment_analytics:choose_a_funded_period_with_eligible_cached_pric_7adef7',
+                      )}
+                    />
+                  )}
+                </Suspense>
               </div>
               <p className="metadata">
-                Time-weighted return separates investment results from deposits
-                and withdrawals. XIRR reflects their timing and amounts as an
-                annualized return; neither is a forecast.
-              </p>
-              {[
-                performance.data.twr,
-                performance.data.xirr,
-                performance.data.absolute_gain,
-              ].some((m) => m.reasons.length > 0) && (
-                <p role="status" className="metadata">
-                  {[
-                    ...new Set(
-                      [
-                        performance.data.twr,
-                        performance.data.xirr,
-                        performance.data.absolute_gain,
-                      ].flatMap((m) => m.reasons),
-                    ),
-                  ]
-                    .map((r) => r.replaceAll('_', ' ').toLowerCase())
-                    .join(' · ')}
-                </p>
-              )}
-              <Suspense
-                fallback={<LoadingState text="Loading performance chart…" />}
-              >
-                {performance.data.points.filter(
-                  (p) => p.return_percent !== null,
-                ).length > 1 ||
-                (performance.data.benchmark?.points.filter(
-                  (p) => p.return_percent !== null,
-                ).length ?? 0) > 1 ? (
-                  <PerformanceChart data={performance.data} />
-                ) : (
-                  <EmptyState
-                    title="No return history available"
-                    detail="Choose a funded period with eligible cached prices and FX. Missing returns are never plotted as zero."
-                  />
+                {tr(
+                  'investment_analytics:time_weighted_return_separates_investment_result_f7fa10',
                 )}
-              </Suspense>
+              </p>
               {performance.data.benchmark && (
                 <p className="metadata">
-                  Benchmark return:{' '}
-                  {percent(performance.data.benchmark.return.value)} ·
-                  Difference:{' '}
+                  {' '}
+                  {tr('investment_analytics:benchmark_return__32212f')}{' '}
+                  {percent(performance.data.benchmark.return.value)}{' '}
+                  {tr('investment_analytics:_difference__32db18')}{' '}
                   {performance.data.benchmark.difference_percentage_points ===
                   null
-                    ? 'Unavailable'
-                    : `${performance.data.benchmark.difference_percentage_points} percentage points`}{' '}
-                  · Same boundary dates and reporting currency.{' '}
-                  {performance.data.benchmark.source ?? 'No eligible source'} ·
-                  Quote {performance.data.benchmark.quote_date ?? 'unavailable'}{' '}
-                  · {performance.data.benchmark.missing_days ?? 0} missing days.
+                    ? tr('dynamic:unavailable_2c9c1f')
+                    : tr('messages:message_f48635fcb2cb', {
+                        value0:
+                          performance.data.benchmark
+                            .difference_percentage_points,
+                      })}{' '}
+                  {tr(
+                    'investment_analytics:_same_boundary_dates_and_reporting_currency__44934f',
+                  )}{' '}
+                  {performance.data.benchmark.source ??
+                    tr('dynamic:no_eligible_source_089615')}{' '}
+                  {tr('investment_analytics:_quote_680a0b')}{' '}
+                  {performance.data.benchmark.quote_date ??
+                    tr('dynamic:unavailable_1d5ee3')}{' '}
+                  · {performance.data.benchmark.missing_days ?? 0}{' '}
+                  {tr('investment_analytics:missing_days__f6d4b4')}{' '}
                   <Button variant="ghost" onClick={() => onSecurity(benchmark)}>
-                    Open benchmark pricing
+                    {tr('investment_analytics:open_benchmark_pricing_8bdca0')}
                   </Button>
                 </p>
               )}
               <details className="chart-data">
-                <summary>Calculation method and external flows</summary>
+                <summary>
+                  {tr(
+                    'investment_analytics:calculation_method_and_external_flows_d438f3',
+                  )}
+                </summary>
                 <p className="metadata">
-                  Daily TWR treats contributions and withdrawals at end of day.
-                  The opening date is a closing-value boundary; later flows are
-                  included. XIRR uses actual dates / 365 and is annualized even
-                  for short periods. Missing daily values invalidate TWR;
-                  missing endpoints or flow FX invalidate XIRR.
-                  Multiple-sign-change cash flows are conservatively unavailable
-                  because roots may be ambiguous. Returns include recorded fees
-                  and taxes.
+                  {tr(
+                    'investment_analytics:daily_twr_treats_contributions_and_withdrawals_a_97d4e8',
+                  )}
                 </p>
                 <div className="table-scroll">
                   <table>
                     <thead>
                       <tr>
-                        <th>Date</th>
-                        <th>Operation</th>
-                        <th>Original amount</th>
-                        <th>Reporting amount</th>
+                        <th>{tr('investment_analytics:date_eb9a4b')}</th>
+                        <th>{tr('investment_analytics:operation_430d32')}</th>
+                        <th>
+                          {tr('investment_analytics:original_amount_3ba05b')}
+                        </th>
+                        <th>
+                          {tr('investment_analytics:reporting_amount_4875d7')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {performance.data.flows.map((f) => (
                         <tr key={f.id}>
                           <td>{f.date}</td>
-                          <td>{f.type}</td>
+                          <td>{ui(f.type)}</td>
                           <td>
                             <Money value={f.amount} currency={f.currency} />
                           </td>
@@ -371,10 +466,19 @@ export default function InvestmentAnalytics({
             </>
           )}
           {view === 'Income' && income.data && (
-            <IncomeView data={income.data} onSecurity={onSecurity} />
+            <IncomeView
+              data={income.data}
+              start={period === 'ALL' ? '' : start}
+              end={asOf}
+              onSecurity={onSecurity}
+            />
           )}
           {view === 'Allocation' && allocation.data && (
-            <AllocationView data={allocation.data} onSecurity={onSecurity} />
+            <AllocationView
+              data={allocation.data}
+              insights={insights.data}
+              onSecurity={onSecurity}
+            />
           )}
         </>
       )}
@@ -384,13 +488,33 @@ export default function InvestmentAnalytics({
 
 function IncomeView({
   data,
+  start,
+  end,
   onSecurity,
 }: {
   data: Income
+  start: string
+  end: string
   onSecurity: (id: string) => void
 }) {
   const [group, setGroup] = useState('month')
+  const route = useRoute()
+  const selectedCurrency = route.params.get('income_currency') || ''
+  const setSelectedCurrency = (income_currency: string) =>
+    navigateTo('Investments', undefined, {
+      ...Object.fromEntries(route.params),
+      view: 'Income',
+      income_currency,
+    })
   const currencies = [...new Set(data.events.map((e) => e.currency))]
+  const visibleCurrency = selectedCurrency || currencies[0]
+  const summary = incomeSummary(data, visibleCurrency ?? 'BRL', start, end)
+  const sources = (data.breakdowns.type ?? []).filter(
+    (r) => r.currency === visibleCurrency,
+  )
+  const sourceTotal = decimalUnits(sumMoney(sources.map((r) => r.net)))
+  const positiveSources =
+    sourceTotal > 0n && sources.every((r) => decimalUnits(r.net) >= 0n)
   const grouped =
     group === 'month'
       ? data.months.map((m) => ({
@@ -399,47 +523,174 @@ function IncomeView({
           id: null as string | null,
         }))
       : data.breakdowns[group]
-  if (!data.events.length)
+  if (!data.events.length && !data.redemptions?.length)
     return (
       <EmptyState
-        title="No investment income in this period"
-        detail="Recorded dividends and interest appear here; no future distributions are estimated."
+        title={tr(
+          'investment_analytics:no_investment_income_in_this_period_c9d4c0',
+        )}
+        detail={tr(
+          'investment_analytics:recorded_dividends_and_interest_appear_here_no_f_259800',
+        )}
       />
     )
   return (
     <>
-      <SectionHeader
-        title="Investment income"
-        detail="Actual dividend and interest activities · Original currencies · No projected yield"
-      />
-      <div className="investment-metrics">
-        {currencies.map((c) => (
-          <div key={c}>
-            <span className="metadata">Net income · {c}</span>
-            <Money
-              value={sumMoney(
-                data.events.filter((e) => e.currency === c).map((e) => e.net),
+      <div className="income-summary-strip">
+        <div>
+          <small>{tr('parity:net_received')}</small>
+          <Money
+            value={summary.total}
+            currency={visibleCurrency || 'BRL'}
+            minorUnits
+          />
+          <div className="income-currency">
+            <Field label={tr('parity:currency')}>
+              <select
+                value={visibleCurrency ?? ''}
+                onChange={(e) => setSelectedCurrency(e.target.value)}
+              >
+                {currencies.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        </div>
+        <div>
+          <small>{tr('parity:monthly_average')}</small>
+          <Money
+            value={summary.average}
+            currency={visibleCurrency || 'BRL'}
+            minorUnits
+          />
+          <p className="metadata">
+            {summary.months} {tr('parity:calendar_months')}
+          </p>
+        </div>
+        <div>
+          <small>{tr('parity:income_sources')}</small>
+          {sources.map((r, index) => (
+            <div className="income-type-source" key={r.name}>
+              <div>
+                <span>{ui(r.name)}</span>
+                <Money value={r.net} currency={r.currency} minorUnits />
+              </div>
+              {positiveSources && (
+                <div className="income-type-track" aria-hidden="true">
+                  <span
+                    style={{
+                      width: `${Number((decimalUnits(r.net) * 10000n) / sourceTotal) / 100}%`,
+                      background: `var(${['--chart-line', '--chart-secondary', '--chart-3', '--chart-4'][index % 4]})`,
+                    }}
+                  />
+                </div>
               )}
-              currency={c}
-            />
+            </div>
+          ))}
+        </div>
+      </div>
+      {currencies
+        .filter((c) => c === visibleCurrency)
+        .map((c) => (
+          <div className="income-visual-grid" key={c}>
+            <Suspense
+              fallback={
+                <LoadingState
+                  text={tr(
+                    'investment_analytics:loading_income_history__8a54c1',
+                  )}
+                />
+              }
+            >
+              <IncomeChart currency={c} rows={summary.rows} />
+            </Suspense>
+            <aside>
+              <SectionHeader title={tr('parity:top_income_sources')} />
+              <ol className="income-source-ranking">
+                {(data.breakdowns.security ?? [])
+                  .filter((r) => r.currency === c && decimalUnits(r.net) > 0n)
+                  .sort((a, b) =>
+                    decimalUnits(a.net) > decimalUnits(b.net) ? -1 : 1,
+                  )
+                  .slice(0, 10)
+                  .map((r) => (
+                    <li key={r.id ?? r.name}>
+                      <button
+                        disabled={!r.id}
+                        onClick={() => r.id && onSecurity(r.id)}
+                      >
+                        {r.name}
+                      </button>
+                      <Money value={r.net} currency={c} minorUnits />
+                    </li>
+                  ))}
+              </ol>
+            </aside>
           </div>
         ))}
-      </div>
-      {currencies.map((c) => (
-        <Suspense
-          key={c}
-          fallback={<LoadingState text="Loading income history…" />}
-        >
-          <IncomeChart
-            currency={c}
-            rows={data.months.filter((m) => m.currency === c)}
-          />
-        </Suspense>
-      ))}
+      <p className="metadata income-average-context">
+        {tr('parity:income_average_context')}
+      </p>
+      <p className="metadata">{tr('parity:accrual_not_income')}</p>
+      {!!data.redemptions?.length && (
+        <section>
+          <SectionHeader title={tr('parity:redemption_results')} />
+          <div className="table-scroll">
+            <table className="investment-table">
+              <thead>
+                <tr>
+                  {[
+                    'Date',
+                    'Account',
+                    'Security',
+                    'Principal',
+                    'Gross',
+                    'Taxes',
+                    'Fees',
+                    'Net',
+                    'Realized P&L',
+                  ].map((h) => (
+                    <th key={h}>{ui(h)}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.redemptions.map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.date}</td>
+                    <td>{r.account}</td>
+                    <td>
+                      <button
+                        className="investment-security"
+                        onClick={() => onSecurity(r.asset_id)}
+                      >
+                        {r.symbol}
+                      </button>
+                    </td>
+                    {[
+                      r.principal,
+                      r.gross,
+                      r.taxes,
+                      r.fees,
+                      r.net,
+                      r.realized,
+                    ].map((v, i) => (
+                      <td className="number" key={i}>
+                        <Money value={v} currency={r.currency} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
       <div className="table-scroll">
         <table className="investment-table">
           <caption>
-            <Field label="Group income by">
+            <Field label={tr('investment_analytics:group_income_by_d0da5d')}>
               <select value={group} onChange={(e) => setGroup(e.target.value)}>
                 {['month', 'year', 'account', 'security', 'type'].map((g) => (
                   <option key={g}>{g}</option>
@@ -449,11 +700,17 @@ function IncomeView({
           </caption>
           <thead>
             <tr>
-              <th scope="col">Income source / period</th>
-              <th scope="col">Gross</th>
-              <th scope="col">Fees</th>
-              <th scope="col">Withholding / taxes</th>
-              <th scope="col">Net income</th>
+              <th scope="col">
+                {tr('investment_analytics:income_source_period_ff2463')}
+              </th>
+              <th scope="col">{tr('investment_analytics:gross_9580a6')}</th>
+              <th scope="col">{tr('investment_analytics:fees_72abbc')}</th>
+              <th scope="col">
+                {tr('investment_analytics:withholding_taxes_6bce7a')}
+              </th>
+              <th scope="col">
+                {tr('investment_analytics:net_income_84c5b8')}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -484,16 +741,20 @@ function IncomeView({
       </div>
       <div className="table-scroll">
         <table className="investment-table">
-          <caption>Income activities</caption>
+          <caption>
+            {tr('investment_analytics:income_activities_dbccc4')}
+          </caption>
           <thead>
             <tr>
-              <th scope="col">Date</th>
-              <th scope="col">Account</th>
-              <th scope="col">Type / security</th>
-              <th scope="col">Gross</th>
-              <th scope="col">Fees</th>
-              <th scope="col">Taxes</th>
-              <th scope="col">Net</th>
+              <th scope="col">{tr('investment_analytics:date_eb9a4b')}</th>
+              <th scope="col">{tr('investment_analytics:account_85dfa3')}</th>
+              <th scope="col">
+                {tr('investment_analytics:type_security_1ffd1d')}
+              </th>
+              <th scope="col">{tr('investment_analytics:gross_9580a6')}</th>
+              <th scope="col">{tr('investment_analytics:fees_72abbc')}</th>
+              <th scope="col">{tr('investment_analytics:taxes_7e36e3')}</th>
+              <th scope="col">{tr('investment_analytics:net_9bb81c')}</th>
             </tr>
           </thead>
           <tbody>
@@ -507,7 +768,7 @@ function IncomeView({
                       className="investment-security"
                       onClick={() => onSecurity(e.asset_id!)}
                     >
-                      {e.symbol} · {e.type}
+                      {e.symbol} · {ui(e.type)}
                     </button>
                   ) : (
                     e.type
@@ -529,60 +790,158 @@ function IncomeView({
 
 function AllocationView({
   data,
+  insights,
   onSecurity,
 }: {
   data: Allocation
+  insights?: Insights
   onSecurity: (id: string) => void
 }) {
   const [dimension, setDimension] = useState('security')
   const [expanded, setExpanded] = useState('')
+  const cash = data.rows?.filter((r) => r.asset_id === null)
+  const invested = data.rows?.filter((r) => r.asset_id !== null)
+  const total = (rows: typeof cash) =>
+    !rows || rows.some((r) => r.value === null)
+      ? null
+      : sumMoney(rows.map((r) => r.value!))
   return (
     <>
-      <SectionHeader
-        title="Portfolio composition"
-        detail={data.metadata_policy}
-      />
-      <div className="investment-metrics">
+      <div className="investment-metrics allocation-summary">
         <div>
-          <span className="metadata">Cash + holdings</span>
-          <NullableMoney value={data.total_value} currency={data.currency} />
+          <span className="metadata">
+            {tr('market_data:portfolio_value_73adb8')}
+          </span>
+          <NullableMoney
+            minorUnits
+            value={data.total_value}
+            currency={data.currency}
+          />
         </div>
-        {Object.entries(data.concentration).map(([n, v]) => (
-          <div key={n}>
-            <span className="metadata">Top {n} securities / portfolio</span>
-            {percent(v)}
-          </div>
-        ))}
+        <div>
+          <span className="metadata">{tr('parity:cash')}</span>
+          <NullableMoney
+            minorUnits
+            value={total(cash)}
+            currency={data.currency}
+          />
+        </div>
+        <div>
+          <span className="metadata">{tr('parity:invested')}</span>
+          <NullableMoney
+            minorUnits
+            value={total(invested)}
+            currency={data.currency}
+          />
+        </div>
       </div>
       {data.quality !== 'COMPLETE' && (
         <p role="status">
-          Incomplete valuation · Known subtotal{' '}
-          <Money value={data.known_value} currency={data.currency} /> · Weights
-          unavailable
+          {' '}
+          {tr(
+            'investment_analytics:incomplete_valuation_known_subtotal_8b566e',
+          )}{' '}
+          <Money value={data.known_value} currency={data.currency} />{' '}
+          {tr('investment_analytics:_weights_unavailable_f6e61d')}{' '}
         </p>
       )}
-      <nav className="range-tabs" aria-label="Allocation dimension">
-        {Object.keys(data.groups).map((d) => (
-          <button
-            key={d}
-            aria-pressed={dimension === d}
-            onClick={() => {
-              setDimension(d)
-              setExpanded('')
-            }}
-          >
-            {d.replaceAll('_', ' ')}
-          </button>
-        ))}
-      </nav>
+      <div className="exposure-grid">
+        {['account', 'asset_class', 'geography', 'sector']
+          .filter((key) => data.groups[key])
+          .map((key) => (
+            <CompositionChart
+              key={key}
+              compact
+              title={ui(key.replaceAll('_', ' '))}
+              currency={data.currency}
+              complete={data.quality === 'COMPLETE'}
+              items={data.groups[key].map((g) => ({
+                name: key === 'asset_class' ? ui(g.name) : g.name,
+                value: g.value,
+                weight: g.weight_percent,
+              }))}
+              onSelect={(item) => {
+                setDimension(key)
+                setExpanded(item.name)
+              }}
+            />
+          ))}
+      </div>
+      <div className="allocation-composition">
+        <nav
+          className="range-tabs allocation-dimensions"
+          aria-label={tr('investment_analytics:allocation_dimension_c0ca3b')}
+        >
+          {Object.keys(data.groups).map((d) => (
+            <button
+              key={d}
+              aria-pressed={dimension === d}
+              onClick={() => {
+                setDimension(d)
+                setExpanded('')
+              }}
+            >
+              {ui(d.replaceAll('_', ' '))}
+            </button>
+          ))}
+        </nav>
+
+        <CompositionChart
+          title={tr('investment_analytics:proportional_composition_b7dffb')}
+          kind="treemap"
+          currency={data.currency}
+          complete={data.quality === 'COMPLETE'}
+          items={(data.groups[dimension] ?? []).map((g) => ({
+            name: g.name,
+            value: g.value,
+            weight: g.weight_percent,
+          }))}
+        />
+      </div>
+      {insights && (
+        <details className="native-basis-details">
+          <summary>{tr('parity:native_basis')}</summary>
+          <div className="native-basis-strip">
+            {[...new Set(insights.positions.map((p) => p.currency))].map(
+              (currency) => {
+                const positions = insights.positions.filter(
+                  (p) => p.currency === currency,
+                )
+                return (
+                  <div key={currency}>
+                    <small>
+                      {tr('parity:native_basis')} - {currency}
+                    </small>
+                    <Money
+                      value={sumMoney(positions.map((p) => p.cost_basis))}
+                      currency={currency}
+                    />
+                    <small>{tr('parity:native_unrealized')}</small>
+                    <NullableMoney
+                      value={
+                        positions.some((p) => p.unrealized === null)
+                          ? null
+                          : sumMoney(positions.map((p) => p.unrealized!))
+                      }
+                      currency={currency}
+                    />
+                  </div>
+                )
+              },
+            )}
+          </div>
+        </details>
+      )}
       <div className="table-scroll">
         <table className="investment-table">
           <thead>
             <tr>
-              <th scope="col">Exposure</th>
-              <th scope="col">Value</th>
-              <th scope="col">Weight</th>
-              <th scope="col">Composition</th>
+              <th scope="col">{tr('investment_analytics:exposure_862ee3')}</th>
+              <th scope="col">{tr('investment_analytics:value_8dce17')}</th>
+              <th scope="col">{tr('investment_analytics:weight_69c0b8')}</th>
+              <th scope="col">
+                {tr('investment_analytics:composition_ca5e00')}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -607,10 +966,12 @@ function AllocationView({
                             variant="ghost"
                             onClick={() => onSecurity(m.asset_id!)}
                           >
-                            View security
+                            {tr('investment_analytics:view_security_ab14a2')}
                           </Button>
                         ) : (
-                          <small key={i}>Account cash</small>
+                          <small key={i}>
+                            {tr('investment_analytics:account_cash_99eb24')}
+                          </small>
                         ),
                       )}
                     </div>
@@ -623,7 +984,9 @@ function AllocationView({
                 <td>
                   {g.weight_percent !== null && (
                     <progress
-                      aria-label={`${g.name} allocation`}
+                      aria-label={tr('messages:message_ab4f8cca6eab', {
+                        value0: g.name,
+                      })}
                       max={10000}
                       value={Number(decimalUnits(g.weight_percent) / 10000n)}
                     />
@@ -633,6 +996,17 @@ function AllocationView({
             ))}
           </tbody>
         </table>
+      </div>
+      <SectionHeader title={tr('parity:concentration')} />
+      <div className="investment-metrics">
+        {Object.entries(data.concentration).map(([n, value]) => (
+          <div key={n}>
+            <small>
+              {tr('investment_analytics:top_cae043')} {n}
+            </small>
+            <strong>{percent(value)}</strong>
+          </div>
+        ))}
       </div>
     </>
   )
@@ -663,35 +1037,56 @@ function PnL({
   return (
     <>
       <SectionHeader
-        title="Security results"
-        detail="Selected-period realized results and income · Ending unrealized results · Original currencies"
+        title={tr('investment_analytics:security_results_0266cb')}
+        detail={tr(
+          'investment_analytics:selected_period_realized_results_and_income_endi_a517df',
+        )}
       />
       <p className="metadata">{data.warning}</p>
       <div className="investment-toolbar">
-        <Field label="Rank positions within currency">
+        <Field
+          label={tr(
+            'investment_analytics:rank_positions_within_currency_d8f045',
+          )}
+        >
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as typeof sort)}
           >
-            <option value="total_gain">Period gain / loss</option>
-            <option value="realized">Realized result</option>
-            <option value="unrealized">Unrealized result</option>
-            <option value="income">Income generated</option>
-            <option value="market_value">Current position value</option>
+            <option value="total_gain">
+              {tr('investment_analytics:period_gain_loss_d4939c')}
+            </option>
+            <option value="realized">
+              {tr('investment_analytics:realized_result_a229ad')}
+            </option>
+            <option value="unrealized">
+              {tr('investment_analytics:unrealized_result_4124e3')}
+            </option>
+            <option value="income">
+              {tr('investment_analytics:income_generated_0085ee')}
+            </option>
+            <option value="market_value">
+              {tr('investment_analytics:current_position_value_5acc8c')}
+            </option>
           </select>
         </Field>
-        <Field label="Position ranking order">
+        <Field label={tr('investment_analytics:position_ranking_order_408669')}>
           <select
             value={ascending ? 'asc' : 'desc'}
             onChange={(e) => setAscending(e.target.value === 'asc')}
           >
-            <option value="desc">Largest / best first</option>
-            <option value="asc">Smallest / worst first</option>
+            <option value="desc">
+              {tr('investment_analytics:largest_best_first_e4d5d6')}
+            </option>
+            <option value="asc">
+              {tr('investment_analytics:smallest_worst_first_1b3f9a')}
+            </option>
           </select>
         </Field>
         <span className="metadata">
-          Absolute amounts within each original currency, not time-weighted
-          security returns.
+          {tr(
+            'investment_analytics:absolute_amounts_within_each_original_currency_n_00c9a6',
+          )}
         </span>
       </div>
       <div className="table-scroll">
@@ -731,7 +1126,9 @@ function PnL({
                   )}
                   <small>
                     {p.account} · {p.currency}
-                    {decimalUnits(p.quantity) === 0n ? ' · Closed / cash' : ''}
+                    {decimalUnits(p.quantity) === 0n
+                      ? tr('dynamic:_closed_cash_f23f50')
+                      : ''}
                   </small>
                 </td>
                 {[
@@ -759,21 +1156,27 @@ function PnL({
         </table>
       </div>
       <details className="chart-data">
-        <summary>Investment activity trends</summary>
+        <summary>
+          {tr('investment_analytics:investment_activity_trends_2e9ef8')}
+        </summary>
         <div className="table-scroll">
           <table className="investment-table">
             <thead>
               <tr>
-                <th scope="col">Month</th>
-                <th scope="col">Activity</th>
-                <th scope="col">Recorded count</th>
+                <th scope="col">{tr('investment_analytics:month_082bc3')}</th>
+                <th scope="col">
+                  {tr('investment_analytics:activity_81c0d9')}
+                </th>
+                <th scope="col">
+                  {tr('investment_analytics:recorded_count_0f8b5e')}
+                </th>
               </tr>
             </thead>
             <tbody>
               {data.activity_trends.map((row) => (
                 <tr key={`${row.month}-${row.type}`}>
                   <td>{row.month}</td>
-                  <td>{row.type}</td>
+                  <td>{ui(row.type)}</td>
                   <td className="number">{row.count}</td>
                 </tr>
               ))}
@@ -802,13 +1205,16 @@ export function SecurityResults({
     queryFn: ({ signal }) => getInsights(params, signal),
   })
   return (
-    <section aria-label="Security analytics">
+    <section aria-label={tr('investment_analytics:security_analytics_77eaa2')}>
       <p className="metadata">
-        Security results · Last year · FX effect in BRL · Original-currency
-        P&amp;L
+        {tr(
+          'investment_analytics:security_results_last_year_fx_effect_in_brl_orig_9a0b09',
+        )}
       </p>
       {query.isPending ? (
-        <LoadingState text="Calculating security results…" />
+        <LoadingState
+          text={tr('investment_analytics:calculating_security_results__c9d932')}
+        />
       ) : query.isError ? (
         <ErrorState
           text={query.error.message}
@@ -834,10 +1240,13 @@ export function SecurityClassification({ id }: { id: string }) {
   const write = useWrite()
   return (
     <details className="chart-data">
-      <summary>Sector and geographic classification</summary>
+      <summary>
+        {tr('investment_analytics:sector_and_geographic_classification_2b3aa8')}
+      </summary>
       <p className="metadata">
-        Explicit metadata only. Leave blank for Unknown. Fund holdings are not
-        looked through.
+        {tr(
+          'investment_analytics:explicit_metadata_only_leave_blank_for_unknown_f_f626a2',
+        )}
       </p>
       {query.data && (
         <form
@@ -845,7 +1254,7 @@ export function SecurityClassification({ id }: { id: string }) {
           key={JSON.stringify(query.data)}
           onSubmit={(e) => {
             e.preventDefault()
-            const form = new FormData(e.currentTarget)
+            const form = exactFormData(e.currentTarget)
             write.mutate({
               path: `/investments/analytics/assets/${id}/classification`,
               method: 'PUT',
@@ -856,21 +1265,23 @@ export function SecurityClassification({ id }: { id: string }) {
             })
           }}
         >
-          <Field label="Sector">
+          <Field label={tr('investment_analytics:sector_39fd20')}>
             <input
               name="sector"
               maxLength={100}
               defaultValue={query.data.sector ?? ''}
             />
           </Field>
-          <Field label="Geography">
+          <Field label={tr('investment_analytics:geography_77fc62')}>
             <input
               name="geography"
               maxLength={100}
               defaultValue={query.data.geography ?? ''}
             />
           </Field>
-          <Button disabled={write.isPending}>Save classification</Button>
+          <Button disabled={write.isPending}>
+            {tr('investment_analytics:save_classification_96a7d5')}
+          </Button>
         </form>
       )}
       {query.isError && <p role="alert">{query.error.message}</p>}

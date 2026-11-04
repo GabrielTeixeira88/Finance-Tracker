@@ -21,7 +21,16 @@ DEFAULT_ROOT = PROJECT_ROOT / "data" / "demo-v012"
 
 
 class DemoStore:
-    def __init__(self, root: Path, normal_path: Path):
+    def __init__(self, root: Path, normal_path: Path, scenario="real-market-br"):
+        if scenario not in {"synthetic", "real-market-br"}:
+            raise ValueError("Unknown demo scenario")
+        self.scenario = scenario
+        self.version, self.seed = VERSION, seed
+        if scenario == "real-market-br":
+            from app.demo.real_market import VERSION as market_version
+            from app.demo.real_market import seed as market_seed
+
+            self.version, self.seed = market_version, market_seed
         self.root = root.absolute()
         # Refuse symlinks/junctions before any filesystem mutation.
         for path in [self.root, *self.root.parents]:
@@ -48,7 +57,7 @@ class DemoStore:
     def initialize(self):
         self.root.mkdir(parents=True, exist_ok=True)
         marker = self.owned("owner.json")
-        expected = {"application": "finance-tracker-local-demo", "version": VERSION}
+        expected = {"application": "finance-tracker-local-demo", "version": self.version}
         if marker.exists():
             if json.loads(marker.read_text()) != expected:
                 raise ValueError("Unknown demo storage owner")
@@ -77,7 +86,14 @@ class DemoStore:
             raise ValueError("Demo is already running; use one process") from None
         try:
             baseline = self.owned("baseline.db")
-            if not baseline.exists():
+            if baseline.exists():
+                self.validate(baseline)
+            if not baseline.exists() or self.revision(baseline) in {
+                "sqlite_0013",
+                "sqlite_0014",
+                "sqlite_0015",
+                "sqlite_0016",
+            }:
                 staging = self.owned(f"build-{uuid4().hex}.db")
                 url = URL.create("sqlite+pysqlite", database=str(staging))
                 config = Config(str(PROJECT_ROOT / "backend/alembic.ini"))
@@ -86,12 +102,14 @@ class DemoStore:
                 engine = make_engine(url)
                 try:
                     with Session(engine) as session, session.begin():
-                        seed(session)
+                        self.seed(session)
                     with engine.connect() as connection:
                         connection.exec_driver_sql("PRAGMA wal_checkpoint(TRUNCATE)")
                 finally:
                     engine.dispose()
                 self.validate(staging)
+                if baseline.exists():
+                    self.backup(baseline, self.owned(f"baseline-archive-{uuid4().hex}.db"))
                 staging.replace(baseline)
             self.validate(baseline)
             active = self.owned("active.json")
@@ -101,6 +119,28 @@ class DemoStore:
                     raise ValueError("Invalid demo session")
                 self.path = self.owned(name)
                 self.validate(self.path)
+                if self.revision(self.path) in {
+                    "sqlite_0013",
+                    "sqlite_0014",
+                    "sqlite_0015",
+                    "sqlite_0016",
+                }:
+                    # Upgrade a copy, preserving edits and the prior generation on failure.
+                    target = self.owned(f"session-{uuid4().hex}.db")
+                    self.backup(self.path, target)
+                    config = Config(str(PROJECT_ROOT / "backend/alembic.ini"))
+                    config.attributes["database_url"] = URL.create(
+                        "sqlite+pysqlite", database=str(target)
+                    )
+                    command.upgrade(config, "head")
+                    self.validate(target)
+                    pointer = self.owned("next.json")
+                    with pointer.open("w") as stream:
+                        json.dump({"database": target.name}, stream)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    pointer.replace(active)
+                    self.path = target
                 self.engine = make_engine(URL.create("sqlite+pysqlite", database=str(self.path)))
             else:
                 self.reset()
@@ -108,6 +148,17 @@ class DemoStore:
         except Exception:
             self.close()
             raise
+
+    def revision(self, path):
+        with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)) as db:
+            return db.execute("SELECT version_num FROM alembic_version").fetchone()[0]
+
+    def backup(self, source, target):
+        with (
+            closing(sqlite3.connect(source.as_uri() + "?mode=ro", uri=True)) as src,
+            closing(sqlite3.connect(target)) as dst,
+        ):
+            src.backup(dst)
 
     def validate(self, path):
         path = self.owned(path.name)
@@ -119,7 +170,7 @@ class DemoStore:
                 or db.execute("PRAGMA foreign_key_check").fetchall()
             ):
                 raise ValueError("Demo integrity check failed")
-            if db.execute("SELECT id FROM demo_fixtures").fetchall() != [(VERSION,)]:
+            if db.execute("SELECT id FROM demo_fixtures").fetchall() != [(self.version,)]:
                 raise ValueError("Not an authorized demo database")
 
     def reset(self):

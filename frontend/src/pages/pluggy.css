@@ -1,0 +1,58 @@
+.pluggy-workspace {
+  display: grid;
+  gap: 16px;
+}
+.pluggy-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.integration-notice {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  max-width: 85ch;
+}
+.pluggy-configuration {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.pluggy-configuration summary {
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+.pluggy-existing {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.pluggy-evidence {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  margin: 16px 0;
+}
+.pluggy-activity {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.pluggy-activity-evidence {
+  grid-column: 1 / -1;
+}
+.pluggy-workspace td:first-child {
+  max-width: 420px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .pluggy-activity {
+    grid-template-columns: 1fr;
+  }
+  .pluggy-workspace table {
+    min-width: 680px;
+  }
+}

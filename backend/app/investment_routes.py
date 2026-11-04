@@ -1,7 +1,7 @@
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
 
 from app import investments, ledger
@@ -54,9 +54,17 @@ def asset(asset_id: UUID, db: DB, as_of: date | None = None):
 
 @router.post("/assets/{asset_id}/prices", status_code=201)
 def price(asset_id: UUID, data: PriceInput, db: DB):
+    from app.fixed_income_models import FixedIncomeContract
     from app.market_models import AssetPricing
 
     ledger.require(db, Asset, asset_id)
+    contract = db.scalar(
+        select(FixedIncomeContract).where(FixedIncomeContract.asset_id == asset_id)
+    )
+    if contract and contract.instrument_type != "TESOURO_SELIC":
+        raise HTTPException(
+            422, "CDB values derive from contract terms and dated index observations"
+        )
     row = PriceObservation(asset_id=asset_id, **data.model_dump())
     db.add(row)
     db.flush()

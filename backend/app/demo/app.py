@@ -16,14 +16,31 @@ from app.config import PROJECT_ROOT
 from app.database import get_session
 from app.demo.runtime import DEFAULT_ROOT, DemoStore
 from app.demo.scenarios import sample_files, simulate_notification, upload_sample
-from app.demo.seed import END, START, VERSION
+from app.demo.seed import END, START
+from app.error_codes import install_error_codes
 from app.gmail_routes import get_service, local_request
 from app.main import app as normal_app
 from app.routes import DB
 
 
-def create_demo_app(normal_path, root=DEFAULT_ROOT):
-    store = DemoStore(root, normal_path)
+def create_demo_app(
+    normal_path, root=DEFAULT_ROOT, scenario="real-market-br", *, legacy_fixture=False
+):
+    from app.demo.real_market_snapshot import scenario_root
+
+    # The old international household survives only as an explicit regression
+    # fixture. Public startup and scenario switching expose Brazil alone.
+    roots = {"real-market-br": None}
+    if legacy_fixture:
+        roots["synthetic"] = root
+
+    def root_for(selected):
+        return root if selected == "synthetic" else scenario_root(root)
+
+    if scenario not in roots:
+        raise ValueError("Unknown demo scenario")
+    store = DemoStore(root_for(scenario), normal_path, scenario)
+    stores = {scenario: store}
 
     @asynccontextmanager
     async def lifespan(app):
@@ -31,7 +48,8 @@ def create_demo_app(normal_path, root=DEFAULT_ROOT):
         try:
             yield
         finally:
-            store.close()
+            for opened in stores.values():
+                opened.close()
 
     app = FastAPI(
         title="Finance Tracker — Local Fictional Demo",
@@ -45,6 +63,7 @@ def create_demo_app(normal_path, root=DEFAULT_ROOT):
             "auto_configure": False,
         },
     )
+    install_error_codes(app)
     app.state.demo_store = store
     gate = asyncio.Lock()
 
@@ -84,6 +103,8 @@ def create_demo_app(normal_path, root=DEFAULT_ROOT):
             elif writing and request.headers.get("x-finance-demo") != "1":
                 error = "Demo writes require the local application header"
             path = request.url.path
+            if path.startswith("/api/pluggy"):
+                error = "Pluggy and external credential access are disabled in the demo"
             if path.startswith("/api/gmail") and not (
                 path in {"/api/gmail/queue", "/api/gmail/approve"}
                 or path.startswith("/api/gmail/candidates/")
@@ -122,10 +143,22 @@ def create_demo_app(normal_path, root=DEFAULT_ROOT):
     def runtime():
         return {
             "mode": "local_demo",
-            "profile": "Alex Morgan (fictional)",
+            "profile": "Brazilian investor (fictional holdings)"
+            if store.scenario == "real-market-br"
+            else "Alex Morgan (fictional)",
             "start_date": START,
             "end_date": END,
-            "dataset": VERSION,
+            "dataset": store.version,
+            "scenario": store.scenario,
+            "scenarios": [
+                {
+                    "id": key,
+                    "name": "Real Market Portfolio — Brazil"
+                    if key == "real-market-br"
+                    else "Legacy regression fixture",
+                }
+                for key in roots
+            ],
             "generation": store.path.stem,
             "hosted": False,
         }
@@ -141,13 +174,51 @@ def create_demo_app(normal_path, root=DEFAULT_ROOT):
         store.reset()
         return runtime()
 
+    class Scenario(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+        scenario: str
+
+    @app.post("/api/demo-control/scenario")
+    def select_scenario(data: Scenario):
+        nonlocal store
+        if data.scenario not in roots:
+            raise HTTPException(422, "Unknown demo scenario")
+        if data.scenario not in stores:
+            try:
+                stores[data.scenario] = DemoStore(
+                    root_for(data.scenario), normal_path, data.scenario
+                ).initialize()
+            except (ValueError, KeyError, OSError):
+                raise HTTPException(
+                    422, "Historical snapshot unavailable or invalid; review local setup"
+                ) from None
+        store = stores[data.scenario]
+        app.state.demo_store = store
+        return runtime()
+
+    @app.get("/api/demo-control/market-evidence")
+    def evidence(db: DB):
+        from app.demo.real_market_report import report
+        from app.models import DemoFixture
+
+        fixture = db.get(DemoFixture, store.version)
+        if store.scenario != "real-market-br":
+            return {"enabled": False}
+        return {"enabled": True, **fixture.payload["market_evidence"], **report(db)}
+
     @app.post("/api/demo-control/notification")
     def notification(db: DB):
+        if store.scenario != "synthetic":
+            raise HTTPException(
+                409, "Notification examples belong to the synthetic household scenario"
+            )
         batch = simulate_notification(db)
         return {"batch_id": str(batch.id), "simulation": True}
 
     @app.post("/api/demo-control/sample/{name}")
     def sample(name: str, db: DB):
+        if store.scenario != "synthetic":
+            raise HTTPException(409, "Import examples belong to the synthetic household scenario")
         if name not in sample_files():
             raise HTTPException(404, "Unknown synthetic sample")
         batch = upload_sample(db, name)
@@ -155,6 +226,8 @@ def create_demo_app(normal_path, root=DEFAULT_ROOT):
 
     @app.get("/api/demo-control/files/{name}")
     def download(name: str):
+        if store.scenario != "synthetic":
+            raise HTTPException(409, "Legacy import examples are not part of the Brazil portfolio")
         files = sample_files()
         if name not in files:
             raise HTTPException(404, "Unknown synthetic sample")

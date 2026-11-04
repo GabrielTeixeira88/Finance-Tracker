@@ -3,6 +3,10 @@ import { render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import App from './App'
+import { budgetFixture } from '@/test/fixtures/synthetic/budget'
+import { act } from '@testing-library/react'
+import { navigateTo } from '@/lib/navigation'
+import { AppShell } from '@/components/app-shell'
 import { localDate } from './lib/api'
 
 vi.mock('@/components/balance-chart', () => ({
@@ -36,8 +40,50 @@ function renderApp() {
   )
 }
 
+it('keeps normal and demo sidebar preferences separate and preserves the legacy normal choice', () => {
+  localStorage.setItem('finance-tracker-sidebar', 'expanded')
+  document.documentElement.dataset.workspace = 'normal'
+  const normal = render(
+    <AppShell page="Budget" navigate={vi.fn()}>
+      Normal
+    </AppShell>,
+  )
+  expect(document.querySelector('.application-shell')).not.toHaveClass(
+    'sidebar-collapsed',
+  )
+  normal.unmount()
+  document.documentElement.dataset.workspace = 'demo'
+  const demo = render(
+    <AppShell page="Budget" navigate={vi.fn()}>
+      Demo
+    </AppShell>,
+  )
+  expect(document.querySelector('.application-shell')).toHaveClass(
+    'sidebar-collapsed',
+  )
+  expect(localStorage.getItem('finance-tracker-sidebar-normal')).toBe(
+    'expanded',
+  )
+  expect(localStorage.getItem('finance-tracker-sidebar-demo')).toBe('collapsed')
+  demo.unmount()
+  document.documentElement.dataset.workspace = 'normal'
+})
+
 function mockApi() {
   const fetch = vi.fn(async (url: string) => {
+    if (url.startsWith('/api/budgets/monthly'))
+      return new Response(
+        JSON.stringify({ ...budgetFixture(), as_of: localDate() }),
+      )
+    if (url.startsWith('/api/spending/summary'))
+      return new Response(
+        JSON.stringify({
+          income: '1000',
+          expenses: '200',
+          categories: [{ category_id: null, spent: '200' }],
+          daily: [{ date: localDate(), amount: '200' }],
+        }),
+      )
     const data = url.startsWith('/api/history')
       ? {
           date_from: '2026-01-01',
@@ -101,23 +147,23 @@ it('restores an account ledger bookmark and keeps skip-to-content on that route'
   expect(screen.getByRole('main')).toHaveFocus()
 })
 
-it('renders API dashboard balances and separate reporting totals', async () => {
+it('renders API spending totals and keeps account balances in Accounts', async () => {
   mockApi()
   renderApp()
-  expect(await screen.findByTestId('Total balance')).toHaveTextContent(
-    'R$7,800.00',
-  )
-  expect(screen.getByTestId('Income')).toHaveTextContent('R$1,000.00')
-  expect(screen.getByTestId('Expenses')).toHaveTextContent('R$200.00')
-  expect(screen.getByTestId('Net cash flow')).toHaveTextContent('R$800.00')
-  expect(screen.getByText('R$5,300.00')).toBeInTheDocument()
+  await screen.findByText('Where it went')
+  const metrics = document.querySelector('.spending-kpis')!
+  expect(metrics).toHaveTextContent('R$1,000.00')
+  expect(metrics).toHaveTextContent('R$200.00')
+  expect(metrics).toHaveTextContent('R$800.00')
+  await userEvent.click(screen.getByRole('button', { name: 'Accounts' }))
+  expect(await screen.findByText('R$5,300.00')).toBeInTheDocument()
 })
 
 it('sends transaction filters to the API', async () => {
   const fetch = mockApi()
   renderApp()
-  await screen.findByRole('button', { name: 'Open Synthetic Checking' })
-  await userEvent.click(screen.getByRole('button', { name: 'Transactions' }))
+  await screen.findByText('Where it went')
+  await userEvent.click(screen.getByRole('button', { name: 'Activities' }))
   await userEvent.selectOptions(
     screen.getByLabelText('Filter type'),
     'TRANSFER',
@@ -131,9 +177,17 @@ it('sends transaction filters to the API', async () => {
 it('renders compact product navigation and categories under Settings', async () => {
   mockApi()
   renderApp()
-  await screen.findByRole('button', { name: 'Open Synthetic Checking' })
+  await screen.findByText('Where it went')
   const nav = screen.getByRole('navigation', { name: 'Main navigation' })
-  for (const name of ['Overview', 'Accounts', 'Transactions', 'Settings'])
+  for (const name of [
+    'Dashboard',
+    'Accounts',
+    'Activities',
+    'Holdings',
+    'Insights',
+    'Goals',
+    'Settings',
+  ])
     expect(within(nav).getByRole('button', { name })).toBeInTheDocument()
   expect(
     within(nav).queryByRole('button', { name: 'Transfers' }),
@@ -157,6 +211,8 @@ it('renders compact product navigation and categories under Settings', async () 
 it('opens account details with a fixed account ledger filter', async () => {
   const fetch = mockApi()
   renderApp()
+  await screen.findByText('Where it went')
+  await userEvent.click(screen.getByRole('button', { name: 'Accounts' }))
   await userEvent.click(
     await screen.findByRole('button', { name: 'Open Synthetic Checking' }),
   )
@@ -172,35 +228,32 @@ it('opens account details with a fixed account ledger filter', async () => {
   )
 })
 
-it('requests real month-filtered summaries and recent transactions when navigating months', async () => {
+it('requests selected-period spending summaries and preserves independent budget navigation', async () => {
   const fetch = mockApi()
   renderApp()
-  await screen.findByTestId('Income')
-  const current = localDate().slice(0, 7)
-  await userEvent.click(
-    screen.getByRole('button', { name: 'Overview options' }),
-  )
-  await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+  await screen.findByText('Where it went')
+  await userEvent.click(screen.getByRole('button', { name: 'Last month' }))
   await waitFor(() =>
     expect(
-      fetch.mock.calls.some(
-        ([url]) =>
-          url.startsWith('/api/history?') && !url.includes(`end=${current}`),
+      fetch.mock.calls.some(([url]) =>
+        url.startsWith('/api/spending/summary?'),
       ),
     ).toBe(true),
   )
-  await userEvent.click(screen.getByRole('button', { name: '3M' }))
-  await waitFor(() =>
-    expect(fetch.mock.calls.some(([url]) => url.includes('period=3M'))).toBe(
-      true,
-    ),
+  expect(window.location.hash).toContain('start=')
+  const period = new URLSearchParams(window.location.hash.split('?')[1]).get(
+    'start',
   )
+  await userEvent.click(screen.getByRole('button', { name: 'Previous month' }))
+  expect(
+    new URLSearchParams(window.location.hash.split('?')[1]).get('start'),
+  ).toBe(period)
 })
 
 it('keeps labeled navigation available in collapsed and expanded sidebar modes', async () => {
   mockApi()
   renderApp()
-  await screen.findByTestId('Total balance')
+  await screen.findByText('Where it went')
   expect(document.querySelector('.application-shell')).toHaveClass(
     'sidebar-collapsed',
   )
@@ -226,40 +279,31 @@ it('keeps labeled navigation available in collapsed and expanded sidebar modes',
   ).toBeInTheDocument()
 })
 
-it('shows ledger spending and exact chart values without inventing investment metrics', async () => {
+it('shows ledger spending and accessible exact daily values without inventing investment metrics', async () => {
   mockApi()
   renderApp()
-  await screen.findByTestId('Total balance')
-  expect(screen.getByRole('button', { name: '3M' })).toHaveAttribute(
+  await screen.findByText('Where it went')
+  expect(screen.getByRole('button', { name: 'This month' })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
-  await userEvent.click(
-    screen.getByRole('button', { name: 'View exact chart data' }),
-  )
-  const table = screen.getByRole('table')
-  expect(within(table).getByText('R$7,000.00')).toBeInTheDocument()
-  expect(within(table).getByText('R$7,800.00')).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Spending' }))
+  await userEvent.click(screen.getByLabelText('Daily spending details'))
   expect(
-    screen.getByRole('heading', { name: 'Spending by category' }),
+    within(screen.getByRole('table', { name: 'Daily spending' })).getByText(
+      'R$200.00',
+    ),
   ).toBeInTheDocument()
   expect(screen.getByText('Uncategorized')).toBeInTheDocument()
-  const views = screen.getByRole('navigation', { name: 'Overview views' })
-  await userEvent.click(within(views).getByRole('button', { name: 'Overview' }))
-  expect(
-    screen.getByRole('button', { name: 'Open Synthetic Checking' }),
-  ).toBeInTheDocument()
 })
 
 it('opens drawer navigation and closes it after choosing a page', async () => {
   mockApi()
   renderApp()
-  await screen.findByTestId('Income')
+  await screen.findByText('Where it went')
   await userEvent.click(screen.getByRole('button', { name: 'Open navigation' }))
   const drawer = screen.getByRole('dialog', { name: 'Navigation' })
   await userEvent.click(
-    within(drawer).getByRole('button', { name: 'Transactions' }),
+    within(drawer).getByRole('button', { name: 'Activities' }),
   )
   await waitFor(() =>
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
@@ -276,11 +320,22 @@ it('switches theme without persisting any financial records', async () => {
     screen.getByRole('button', { name: 'Switch to light mode' }),
   )
   expect(document.documentElement).toHaveAttribute('data-theme', 'light')
-  expect(localStorage.getItem('finance-tracker-theme')).toBe('light')
-  expect(localStorage.getItem('finance-tracker-sidebar')).toBe('collapsed')
+  expect(
+    JSON.parse(localStorage.getItem('finance-tracker-preferences-normal')!),
+  ).toEqual({
+    font: 'mono',
+    palette: 'olive',
+    mode: 'light',
+    language: 'en',
+    chartPalette: 'theme',
+    financialColors: 'standard',
+  })
+  expect(localStorage.getItem('finance-tracker-sidebar-normal')).toBe(
+    'collapsed',
+  )
   expect(Object.keys(localStorage).sort()).toEqual([
-    'finance-tracker-sidebar',
-    'finance-tracker-theme',
+    'finance-tracker-preferences-normal',
+    'finance-tracker-sidebar-normal',
   ])
 })
 
@@ -297,8 +352,8 @@ it('shows a recoverable workspace error', async () => {
 it('opens transfer creation from the Transactions action', async () => {
   mockApi()
   renderApp()
-  await screen.findByTestId('Total balance')
-  await userEvent.click(screen.getByRole('button', { name: 'Transactions' }))
+  await screen.findByText('Where it went')
+  await userEvent.click(screen.getByRole('button', { name: 'Activities' }))
   await userEvent.click(
     screen.getByRole('button', { name: '+ Add Transaction' }),
   )
@@ -311,38 +366,21 @@ it('opens transfer creation from the Transactions action', async () => {
   expect(screen.queryByLabelText('Category')).not.toBeInTheDocument()
 })
 
-it('labels future sections as previews and never injects a fake portfolio into a real workspace', async () => {
+it('keeps previews out of primary navigation and preserves their bookmarks', async () => {
   mockApi()
   renderApp()
-  await screen.findByTestId('Total balance')
+  await screen.findByText('Where it went')
   const nav = screen.getByRole('navigation', { name: 'Main navigation' })
-  expect(
-    within(nav).getByRole('button', { name: 'Budget' }),
-  ).toBeInTheDocument()
-  expect(
-    within(nav).queryByRole('button', { name: 'Budget Preview' }),
-  ).not.toBeInTheDocument()
-  expect(
-    within(nav).getByRole('button', { name: 'Investments' }),
-  ).toBeInTheDocument()
-  expect(
-    within(nav).queryByRole('button', { name: 'Investments Preview' }),
-  ).not.toBeInTheDocument()
-  expect(
-    within(nav).getByRole('button', { name: 'Performance' }),
-  ).toBeInTheDocument()
-  expect(
-    within(nav).queryByRole('button', { name: 'Performance Preview' }),
-  ).not.toBeInTheDocument()
-  for (const page of ['Reports']) {
-    expect(
-      within(nav).getByRole('button', { name: `${page} Preview` }),
-    ).toBeInTheDocument()
-  }
+  for (const name of [
+    'Budget',
+    'Investments',
+    'Performance',
+    'Reports Preview',
+  ])
+    expect(within(nav).queryByRole('button', { name })).not.toBeInTheDocument()
   expect(screen.queryByText('WRLD11')).not.toBeInTheDocument()
-  await userEvent.click(
-    within(nav).getByRole('button', { name: 'Reports Preview' }),
-  )
+  act(() => navigateTo('Reports'))
+  expect(window.location.hash).toContain('view=previews')
   expect(
     await screen.findByRole('heading', { name: 'Account breakdown' }),
   ).toBeInTheDocument()

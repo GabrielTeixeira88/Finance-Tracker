@@ -1,3 +1,4 @@
+import { t as tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -34,14 +35,18 @@ export default function DuplicateReview() {
   return (
     <>
       <p className="metadata mb-3">
-        These are suggestions, not proven duplicates. Choose the surviving entry
-        explicitly. Transfer, schedule, refund and statement protections remain
-        enforced.
+        {tr(
+          'duplicate_review:these_are_suggestions_not_proven_duplicates_choo_f4d8f8',
+        )}
       </p>
       {data.isPending && <LoadingState />}
       {data.error && <ErrorState text={data.error.message} />}
       {data.data?.length === 0 && (
-        <EmptyState title="No duplicate suggestions in this comparison window" />
+        <EmptyState
+          title={tr(
+            'duplicate_review:no_duplicate_suggestions_in_this_comparison_wind_e60e81',
+          )}
+        />
       )}
       {data.data?.map((row) => (
         <MergePair key={row.survivor.id + row.duplicate.id} initial={row} />
@@ -52,10 +57,10 @@ export default function DuplicateReview() {
           disabled={!offset}
           onClick={() => setOffset(offset - 50)}
         >
-          Previous comparisons
+          {tr('duplicate_review:previous_comparisons_c8626c')}
         </Button>
         <Button variant="outline" onClick={() => setOffset(offset + 50)}>
-          Next comparisons
+          {tr('duplicate_review:next_comparisons_3cee68')}
         </Button>
       </div>
     </>
@@ -88,14 +93,18 @@ function MergePair({ initial }: { initial: Preview }) {
         {[survivor, duplicate].map((row, index) => (
           <div key={row.id}>
             <h3 className="text-sm font-medium">
-              {index ? 'Remove duplicate posting' : 'Keep this entry'}
+              {index
+                ? tr('dynamic:remove_duplicate_posting_47ef66')
+                : tr('dynamic:keep_this_entry_f82b49')}
             </h3>
             <p>{row.payee?.name ?? row.description}</p>
             <p className="metadata">
               {row.description} · {row.transaction_date} · {row.review_status}
             </p>
             <p className="metadata">
-              Category: {row.category_id ?? 'Unassigned'}
+              {' '}
+              {tr('duplicate_review:category__61b920')}{' '}
+              {row.category_id ?? tr('dynamic:unassigned_e57016')}
             </p>
             <Money value={row.amount} currency={row.currency} />
           </div>
@@ -104,15 +113,17 @@ function MergePair({ initial }: { initial: Preview }) {
       {shown && (
         <>
           <p>
-            Account balance change:{' '}
+            {' '}
+            {tr('duplicate_review:account_balance_change__5d1de7')}{' '}
             <Money value={shown.balance_change} currency={survivor.currency} />
           </p>
           <p className="metadata">
-            Survivor metadata is retained. Sources move to it; the duplicate is
-            soft-deleted. Its original history remains auditable.
+            {tr(
+              'duplicate_review:survivor_metadata_is_retained_sources_move_to_it_05a412',
+            )}
           </p>
           <details>
-            <summary>Source evidence</summary>
+            <summary>{tr('duplicate_review:source_evidence_149bdd')}</summary>
             <pre className="overflow-auto text-xs">
               {JSON.stringify(
                 {
@@ -137,7 +148,7 @@ function MergePair({ initial }: { initial: Preview }) {
                 setConfirmed(false)
               }}
             >
-              Swap survivor
+              {tr('duplicate_review:swap_survivor_e0fd74')}
             </Button>
             <label>
               <input
@@ -145,7 +156,9 @@ function MergePair({ initial }: { initial: Preview }) {
                 checked={confirmed}
                 onChange={(e) => setConfirmed(e.target.checked)}
               />{' '}
-              I verified these are the same event
+              {tr(
+                'duplicate_review:i_verified_these_are_the_same_event_861bbd',
+              )}{' '}
             </label>
             <Button
               disabled={
@@ -162,7 +175,7 @@ function MergePair({ initial }: { initial: Preview }) {
                 })
               }
             >
-              Merge confirmed duplicate
+              {tr('duplicate_review:merge_confirmed_duplicate_29aad3')}
             </Button>
           </div>
         </>

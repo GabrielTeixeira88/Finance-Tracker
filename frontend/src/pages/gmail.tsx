@@ -1,3 +1,5 @@
+import { CandidateInspector } from '@/components/candidate-inspector'
+import { t as tr, ui } from '@/lib/i18n'
 import { useDemoRuntime } from '@/lib/demo-runtime'
 import { useState } from 'react'
 import { navigateTo } from '@/lib/navigation'
@@ -47,8 +49,10 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
   return (
     <>
       <PageHeader
-        title="Gmail integration"
-        description="Read selected notifications locally. Review before posting."
+        title={tr('gmail:gmail_integration_838691')}
+        description={tr(
+          'gmail:read_selected_notifications_locally_review_befor_7b151a',
+        )}
       >
         <Button
           variant="outline"
@@ -56,16 +60,14 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
             navigateTo('Transactions', undefined, { view: 'gmail' })
           }
         >
-          Open review queue
+          {tr('gmail:open_review_queue_38b8f4')}
         </Button>
       </PageHeader>
       <p className="metadata">
-        Google read-only permission covers your mailbox. The selected label is
-        an application filter, not an OAuth permission boundary. Finance Tracker
-        never modifies or sends mail.
+        {tr('gmail:google_read_only_permission_covers_your_mailbox__e5833c')}
       </p>
       {status.isPending ? (
-        <LoadingState text="Loading Gmail settings…" />
+        <LoadingState text={tr('gmail:loading_gmail_settings__0cb396')} />
       ) : status.isError ? (
         <ErrorState
           text={status.error.message}
@@ -74,13 +76,18 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
       ) : (
         <>
           <div className="section-header mt-4">
-            <h2>{status.data.mailbox ?? 'No Gmail connection'}</h2>
+            <h2>
+              {status.data.mailbox ?? tr('dynamic:no_gmail_connection_f24a7a')}
+            </h2>
             <span>{status.data.status.replaceAll('_', ' ')}</span>
           </div>
           <p className="metadata">
-            Pending candidates: {status.data.pending} · Last attempt:{' '}
-            {status.data.last_attempt ?? 'Never'} · Last success:{' '}
-            {status.data.last_success ?? 'Never'}
+            {' '}
+            {tr('gmail:pending_candidates__179f26')} {status.data.pending}{' '}
+            {tr('gmail:_last_attempt__031cd3')}{' '}
+            {status.data.last_attempt ?? tr('dynamic:never_80c305')}{' '}
+            {tr('gmail:_last_success__d22124')}{' '}
+            {status.data.last_success ?? tr('dynamic:never_80c305')}
           </p>
           {(action.isError || status.data.error) && (
             <ErrorState
@@ -91,9 +98,9 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
           )}
           {!status.data.configured && (
             <p className="mt-3">
-              Configure a Google Desktop OAuth client in the backend environment
-              first. See the Gmail setup guide in docs/GMAIL.md. Credentials
-              never belong in this form.
+              {tr(
+                'gmail:configure_a_google_desktop_oauth_client_in_the_b_5b980f',
+              )}
             </p>
           )}
           <div className="flex flex-wrap gap-2 mt-3">
@@ -113,14 +120,14 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
                       'https://accounts.google.com/o/oauth2/v2/auth?',
                     )
                   )
-                    throw new Error('Invalid authorization URL')
+                    throw new Error(ui('Invalid authorization URL'))
                   setAuthorization(result.authorization_url)
                 })
               }
             >
               {status.data.status === 'DISCONNECTED'
-                ? 'Connect Gmail'
-                : 'Reconnect Gmail'}
+                ? tr('dynamic:connect_gmail_aa27af')
+                : tr('dynamic:reconnect_gmail_d89d2e')}
             </Button>
             {authorization && (
               <a
@@ -129,7 +136,7 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
                 rel="noreferrer"
                 className="underline"
               >
-                Continue to Google authorization
+                {tr('gmail:continue_to_google_authorization_3c46d5')}
               </a>
             )}
             <Button
@@ -138,7 +145,9 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
               onClick={() => {
                 if (
                   !window.confirm(
-                    'Disconnect Gmail and remove its local vault token? Imported transactions and source history will remain.',
+                    tr(
+                      'dynamic:disconnect_gmail_and_remove_its_local_vault_toke_0b29f0',
+                    ),
                   )
                 )
                   return
@@ -148,14 +157,14 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
                 })
               }}
             >
-              Disconnect
+              {tr('gmail:disconnect_ed28e0')}
             </Button>
             {status.data.active_run && (
               <Button
                 variant="outline"
                 onClick={() => action.mutate(() => gmailRequest('/cancel', {}))}
               >
-                Cancel synchronization
+                {tr('gmail:cancel_synchronization_fa4824')}
               </Button>
             )}
           </div>
@@ -167,18 +176,18 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
             />
           )}
           <p className="metadata mt-4">
-            Parser: Synthetic Bank v1 (fictional notifications only). Real bank
-            templates are not yet verified. Unsupported emails stay unposted.
-            Automatic posting is disabled.
+            {tr(
+              'gmail:parser_synthetic_bank_v1_fictional_notifications_4f956a',
+            )}
           </p>
           <p className="metadata">
-            Polling runs only while this local backend is open. Disconnect
-            removes local tokens and attempts revocation; imported history is
-            retained.
+            {tr(
+              'gmail:polling_runs_only_while_this_local_backend_is_op_9c4508',
+            )}
           </p>
         </>
       )}
-      <h2 className="mt-4">Sync history</h2>
+      <h2 className="mt-4">{tr('gmail:sync_history_32ccc9')}</h2>
       {runs.isError ? (
         <ErrorState text={runs.error.message} />
       ) : (
@@ -186,20 +195,20 @@ export function GmailSettings({ accounts }: { accounts: Account[] }) {
           <table>
             <thead>
               <tr>
-                <th>Started</th>
-                <th>Mode</th>
-                <th>Status</th>
-                <th>Recorded</th>
-                <th>Already seen</th>
-                <th>Diagnostic</th>
+                <th>{tr('gmail:started_faa9e7')}</th>
+                <th>{tr('gmail:mode_a7b93d')}</th>
+                <th>{tr('gmail:status_bae7d5')}</th>
+                <th>{tr('gmail:recorded_d5383e')}</th>
+                <th>{tr('gmail:already_seen_7705fb')}</th>
+                <th>{tr('gmail:diagnostic_852a16')}</th>
               </tr>
             </thead>
             <tbody>
               {runs.data?.map((r) => (
                 <tr key={r.id}>
                   <td>{r.created_at}</td>
-                  <td>{r.mode}</td>
-                  <td>{r.status}</td>
+                  <td>{ui(r.mode)}</td>
+                  <td>{ui(r.status)}</td>
                   <td>{r.processed}</td>
                   <td>{r.duplicates}</td>
                   <td>{r.error?.replaceAll('_', ' ') ?? '—'}</td>
@@ -239,7 +248,7 @@ function GmailConfiguration({
   const action = useGmailAction()
   return (
     <section className="mt-4">
-      <h2>Label, account and bounded backfill</h2>
+      <h2>{tr('gmail:label_account_and_bounded_backfill_8c6a77')}</h2>
       {(labels.isError || action.isError) && (
         <ErrorState text={labels.error?.message ?? action.error!.message} />
       )}
@@ -270,13 +279,13 @@ function GmailConfiguration({
           disabled={action.isPending || !!connection.active_run}
           className="filter-bar"
         >
-          <Field label="Gmail label">
+          <Field label={tr('gmail:gmail_label_46963a')}>
             <select
               required
               value={labelId}
               onChange={(e) => setLabelId(e.target.value)}
             >
-              <option value="">Choose label</option>
+              <option value="">{tr('gmail:choose_label_e9f241')}</option>
               {labels.data?.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.name}
@@ -284,13 +293,13 @@ function GmailConfiguration({
               ))}
             </select>
           </Field>
-          <Field label="Default target account">
+          <Field label={tr('gmail:default_target_account_3e05cf')}>
             <select
               required
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
             >
-              <option value="">Choose account</option>
+              <option value="">{tr('gmail:choose_account_9ccef0')}</option>
               {accounts
                 .filter((a) => a.active)
                 .map((a) => (
@@ -300,13 +309,13 @@ function GmailConfiguration({
                 ))}
             </select>
           </Field>
-          <Field label="Sender allowlist (comma separated)">
+          <Field label={tr('gmail:sender_allowlist_comma_separated__b1e2ff')}>
             <input
               value={senders}
               onChange={(e) => setSenders(e.target.value)}
             />
           </Field>
-          <Field label="Backfill from">
+          <Field label={tr('gmail:backfill_from_33c216')}>
             <input
               type="date"
               required
@@ -315,7 +324,7 @@ function GmailConfiguration({
               onChange={(e) => setStart(e.target.value)}
             />
           </Field>
-          <Field label="Backfill through">
+          <Field label={tr('gmail:backfill_through_9169ef')}>
             <input
               type="date"
               required
@@ -325,7 +334,7 @@ function GmailConfiguration({
               onChange={(e) => setEnd(e.target.value)}
             />
           </Field>
-          <Field label="Polling interval">
+          <Field label={tr('gmail:polling_interval_5dc046')}>
             <select
               value={interval}
               onChange={(e) => setInterval(e.target.value)}
@@ -342,13 +351,11 @@ function GmailConfiguration({
               ))}
             </select>
           </Field>
-          <Button type="submit">Save configuration</Button>
+          <Button type="submit">{tr('gmail:save_configuration_33e5a5')}</Button>
         </fieldset>
       </form>
       <p className="metadata">
-        Maximum 90 days per backfill. Saving pauses polling; review the first
-        sync before enabling it. History expiry triggers a bounded recovery and
-        is recorded in sync history.
+        {tr('gmail:maximum_90_days_per_backfill_saving_pauses_polli_4fa58d')}
       </p>
       <div className="flex gap-2 mt-3">
         <Button
@@ -358,8 +365,8 @@ function GmailConfiguration({
           onClick={() => action.mutate(() => gmailRequest('/sync', {}))}
         >
           {connection.active_run
-            ? 'Synchronizing…'
-            : 'Sync now / initial backfill'}
+            ? tr('dynamic:synchronizing__72da46')
+            : tr('dynamic:sync_now_initial_backfill_fccf10')}
         </Button>
         <Button
           variant="outline"
@@ -372,7 +379,9 @@ function GmailConfiguration({
             )
           }
         >
-          {connection.paused ? 'Enable polling' : 'Pause polling'}
+          {connection.paused
+            ? tr('dynamic:enable_polling_0516d4')
+            : tr('dynamic:pause_polling_f60f45')}
         </Button>
       </div>
     </section>
@@ -412,71 +421,87 @@ export function GmailQueue({
       })),
     })
   return (
-    <>
+    <div
+      className={batch ? 'candidate-review has-inspector' : 'candidate-review'}
+    >
       <PageHeader
-        title={runtime ? 'Gmail Notification Simulation' : 'Gmail review'}
+        title={
+          runtime
+            ? tr('dynamic:gmail_notification_simulation_cf5d19')
+            : tr('dynamic:gmail_review_cfafdb')
+        }
         description={
           runtime
-            ? 'Fictional parser candidates. Gmail is not connected. Review and explicitly confirm to post.'
-            : 'Email candidates do not affect balances until you confirm. Configure the connection in Settings → Gmail.'
+            ? tr(
+                'dynamic:fictional_parser_candidates_gmail_is_not_connect_b957c9',
+              )
+            : tr(
+                'dynamic:email_candidates_do_not_affect_balances_until_yo_e34440',
+              )
         }
       >
         <Button
           variant="outline"
           onClick={() => navigateTo('Settings', undefined, { view: 'gmail' })}
         >
-          {runtime ? 'Simulation examples' : 'Connection settings'}
+          {runtime
+            ? tr('dynamic:simulation_examples_dc34e5')
+            : tr('dynamic:connection_settings_618aac')}
         </Button>
       </PageHeader>
       {action.isError && <ErrorState text={action.error.message} />}
       {queue.isPending ? (
-        <LoadingState text="Loading Gmail candidates…" />
+        <LoadingState text={tr('gmail:loading_gmail_candidates__abdac8')} />
       ) : queue.isError ? (
         <ErrorState
           text={queue.error.message}
           retry={() => void queue.refetch()}
         />
-      ) : batch ? (
-        <>
-          {!completed &&
-            batch.rows[0]?.candidate &&
-            batch.rows[0].raw.link_only !== 'yes' && (
-              <CandidateEditor
-                batch={batch}
-                accounts={accounts}
-                onSave={(data) =>
-                  run(() =>
-                    gmailRequest(`/candidates/${batch.id}`, data, 'PUT'),
-                  )
-                }
-                busy={action.isPending}
-              />
-            )}
-          <ImportReview
-            batch={batch}
-            accounts={accounts}
-            categories={categories}
-            busy={action.isPending}
-            onBack={() => setOpened(null)}
-            onDecision={(row, decision) =>
-              run(() =>
-                request(`/imports/${batch.id}/rows/${row.id}`, {
-                  method: 'PATCH',
-                  body: JSON.stringify(decision),
-                }),
-              )
-            }
-            onConfirm={() =>
-              run(async () => {
-                await approve([batch])
-                setOpened(null)
-                setSelected([])
-              })
-            }
-          />
-        </>
       ) : (
         <>
+          {batch && (
+            <CandidateInspector
+              title={tr('gmail:review_status_0fe6b8')}
+              onClose={() => setOpened(null)}
+            >
+              {!completed &&
+                batch.rows[0]?.candidate &&
+                batch.rows[0].raw.link_only !== 'yes' && (
+                  <CandidateEditor
+                    batch={batch}
+                    accounts={accounts}
+                    onSave={(data) =>
+                      run(() =>
+                        gmailRequest(`/candidates/${batch.id}`, data, 'PUT'),
+                      )
+                    }
+                    busy={action.isPending}
+                  />
+                )}
+              <ImportReview
+                batch={batch}
+                accounts={accounts}
+                categories={categories}
+                busy={action.isPending}
+                onBack={() => setOpened(null)}
+                onDecision={(row, decision) =>
+                  run(() =>
+                    request(`/imports/${batch.id}/rows/${row.id}`, {
+                      method: 'PATCH',
+                      body: JSON.stringify(decision),
+                    }),
+                  )
+                }
+                onConfirm={() =>
+                  run(async () => {
+                    await approve([batch])
+                    setOpened(null)
+                    setSelected([])
+                  })
+                }
+              />
+            </CandidateInspector>
+          )}
           <div className="filter-bar">
             <label>
               <input
@@ -488,12 +513,14 @@ export function GmailQueue({
                   setSelected([])
                 }}
               />{' '}
-              Show completed
+              {tr('gmail:show_completed_200034')}{' '}
             </label>
             <Button variant="outline" onClick={() => void queue.refetch()}>
-              Refresh queue
+              {tr('gmail:refresh_queue_50c3cf')}
             </Button>
-            <span>{selected.length} selected on this page</span>
+            <span>
+              {selected.length} {tr('gmail:selected_on_this_page_66d6f6')}{' '}
+            </span>
             <Button
               disabled={!selected.length || action.isPending}
               onClick={() => {
@@ -510,27 +537,29 @@ export function GmailQueue({
                   })
               }}
             >
-              Approve selected
+              {tr('gmail:approve_selected_de38bf')}
             </Button>
           </div>
           {!queue.data.length ? (
             <EmptyState
-              title="No Gmail candidates"
-              detail="Run synchronization from Settings, or switch between pending and completed records."
+              title={tr('gmail:no_gmail_candidates_dad629')}
+              detail={tr(
+                'gmail:run_synchronization_from_settings_or_switch_betw_7f4521',
+              )}
             />
           ) : (
             <div className="table-scroll">
               <table>
                 <thead>
                   <tr>
-                    <th>Select</th>
-                    <th>Date</th>
-                    <th>Description / parser</th>
-                    <th>Account</th>
-                    <th>Category</th>
-                    <th className="text-right">Amount</th>
-                    <th>Review status</th>
-                    <th>Action</th>
+                    <th>{tr('gmail:select_859822')}</th>
+                    <th>{tr('gmail:date_eb9a4b')}</th>
+                    <th>{tr('gmail:description_parser_ccd1c0')}</th>
+                    <th>{tr('gmail:account_85dfa3')}</th>
+                    <th>{tr('gmail:category_a3c686')}</th>
+                    <th className="text-right">{tr('gmail:amount_43dc85')}</th>
+                    <th>{tr('gmail:review_status_0fe6b8')}</th>
+                    <th>{tr('gmail:action_97c89a')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -546,7 +575,10 @@ export function GmailQueue({
                       <tr key={b.id}>
                         <td>
                           <input
-                            aria-label={`Select ${row.candidate?.description ?? 'notification'}`}
+                            aria-label={tr('messages:message_4626e95dd5b8', {
+                              value0:
+                                row.candidate?.description ?? 'notification',
+                            })}
                             type="checkbox"
                             disabled={!eligible}
                             checked={selected.includes(b.id)}
@@ -562,10 +594,11 @@ export function GmailQueue({
                         <td>{row.candidate?.transaction_date ?? '—'}</td>
                         <td>
                           {row.candidate?.description ??
-                            'Unrecognized notification'}
+                            tr('dynamic:unrecognized_notification_2f3135')}
                           <small className="block metadata">
-                            {row.raw.parser ?? 'Parser unavailable'} ·{' '}
-                            {row.raw.parser_version}
+                            {row.raw.parser ??
+                              tr('dynamic:parser_unavailable_be5400')}{' '}
+                            · {row.raw.parser_version}
                           </small>
                         </td>
                         <td>
@@ -574,7 +607,7 @@ export function GmailQueue({
                         <td>
                           {categories.find(
                             (c) => c.id === row.candidate?.category_id,
-                          )?.name ?? 'Uncategorized'}
+                          )?.name ?? tr('dynamic:uncategorized_4ef7d7')}
                         </td>
                         <td className="text-right">
                           {row.candidate && (
@@ -585,7 +618,7 @@ export function GmailQueue({
                           )}
                         </td>
                         <td>
-                          {row.status}
+                          {ui(row.status)}
                           <small className="block metadata">
                             {row.errors.join(' · ') ||
                               row.candidate?.ambiguity ||
@@ -598,7 +631,7 @@ export function GmailQueue({
                             variant="outline"
                             onClick={() => setOpened(b.id)}
                           >
-                            Review notification
+                            {tr('gmail:review_notification_7e9b02')}
                           </Button>
                         </td>
                       </tr>
@@ -617,7 +650,7 @@ export function GmailQueue({
                 setSelected([])
               }}
             >
-              Previous
+              {tr('gmail:previous_50f942')}
             </Button>
             <Button
               variant="outline"
@@ -627,12 +660,12 @@ export function GmailQueue({
                 setSelected([])
               }}
             >
-              Next
+              {tr('gmail:next_bc9819')}
             </Button>
           </div>
         </>
       )}
-    </>
+    </div>
   )
 }
 
@@ -655,7 +688,7 @@ function CandidateEditor({
   const [type, setType] = useState(original.transaction_type)
   return (
     <details className="mb-4">
-      <summary>Edit proposed financial details</summary>
+      <summary>{tr('gmail:edit_proposed_financial_details_ae26fc')}</summary>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -674,7 +707,7 @@ function CandidateEditor({
         }}
       >
         <fieldset disabled={busy} className="filter-bar">
-          <Field label="Candidate account">
+          <Field label={tr('gmail:candidate_account_d233ee')}>
             <select
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
@@ -688,7 +721,7 @@ function CandidateEditor({
                 ))}
             </select>
           </Field>
-          <Field label="Candidate description">
+          <Field label={tr('gmail:candidate_description_e4925a')}>
             <input
               required
               maxLength={500}
@@ -696,7 +729,7 @@ function CandidateEditor({
               onChange={(e) => setDescription(e.target.value)}
             />
           </Field>
-          <Field label="Candidate date">
+          <Field label={tr('gmail:candidate_date_c88f6c')}>
             <input
               required
               type="date"
@@ -704,7 +737,7 @@ function CandidateEditor({
               onChange={(e) => setDay(e.target.value)}
             />
           </Field>
-          <Field label="Candidate amount">
+          <Field label={tr('gmail:candidate_amount_c657ad')}>
             <input
               required
               inputMode="decimal"
@@ -713,21 +746,22 @@ function CandidateEditor({
               onChange={(e) => setAmount(e.target.value)}
             />
           </Field>
-          <Field label="Candidate type">
+          <Field label={tr('gmail:candidate_type_5b4c73')}>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as typeof type)}
             >
-              <option value="EXPENSE">Expense</option>
-              <option value="INCOME">Income</option>
+              <option value="EXPENSE">{tr('gmail:expense_a0db8e')}</option>
+              <option value="INCOME">{tr('gmail:income_1c89b1')}</option>
             </select>
           </Field>
-          <Button type="submit">Save proposed details</Button>
+          <Button type="submit">
+            {tr('gmail:save_proposed_details_3ff8d2')}
+          </Button>
         </fieldset>
       </form>
       <p className="metadata">
-        Original parsed fields remain in source provenance. Categories and
-        payees are editable through Review row.
+        {tr('gmail:original_parsed_fields_remain_in_source_provenan_59e08e')}
       </p>
     </details>
   )

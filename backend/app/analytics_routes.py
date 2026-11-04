@@ -94,6 +94,16 @@ class IncomeGroup(IncomeAmounts):
     id: str | None
 
 
+class RedemptionResult(IncomeAmounts):
+    id: UUID
+    date: date
+    account: str
+    asset_id: UUID
+    symbol: str
+    principal: str
+    realized: str
+
+
 class IncomeResponse(BaseModel):
     start: date
     end: date
@@ -102,6 +112,7 @@ class IncomeResponse(BaseModel):
     events: list[IncomeEvent]
     months: list[IncomeMonth]
     breakdowns: dict[str, list[IncomeGroup]]
+    redemptions: list[RedemptionResult]
 
 
 class AllocationMember(BaseModel):

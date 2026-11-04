@@ -1,7 +1,7 @@
 # Application architecture
 
-Current release: **v0.12.0 - Interactive Demo & Portfolio Showcase**.
-See [demo architecture](DEMO.md) and [release validation](RELEASE_0_12_0.md).
+Current release: **v0.13.0 - Product Refinements & Brazilian Historical Demo**.
+See [demo architecture](DEMO.md) and [release validation](RELEASE_0_13_0.md).
 Historical phase labels below describe prior implementation checkpoints.
 
 ## Local storage and deployment
@@ -61,7 +61,7 @@ and physical deletion of ordinary transactions. See DATA_MODEL.md.
 
 ## Migration lineage and transition
 
-New SQLite files run `sqlite_0001` through `sqlite_0013` using Alembic. These contain an explicit schema and
+New SQLite files run `sqlite_0001` through `sqlite_0015` using Alembic. These contain an explicit schema and
 integrity triggers; application startup never invokes metadata.create_all(). The
 optional container runs Alembic before Uvicorn. Native startup runs Alembic explicitly.
 Old PostgreSQL revisions remain unchanged under migrations_legacy/postgresql and
@@ -241,7 +241,6 @@ existing import candidates and message identities. Gmail routes reuse ingestion 
 rules, decisions and atomic confirmation. Native polling is opt-in; no cloud worker or
 auto-posting exists. See [setup, recovery and security](GMAIL.md).
 
-
 ## v0.9 reconciliation
 
 `ingestion_matching` is shared by CSV, OFX, Gmail and historical re-evaluation.
@@ -249,7 +248,6 @@ auto-posting exists. See [setup, recovery and security](GMAIL.md).
 local audit. Statement totals reuse ledger projections; no balance cache becomes
 authoritative. Every mutation uses the existing SQLite writer unit of work.
 See [matching and concurrency contracts](RECONCILIATION.md).
-
 
 ## v0.10.0
 
@@ -286,3 +284,53 @@ reject stale tab writes. Normal mode has no demo control endpoints. React identi
 runtime before mounting financial forms; reset clears queries and remounts drafts.
 No new schema or migration is required. Public hosting is a documented design only;
 see [deployment boundary](DEMO_DEPLOYMENT.md).
+
+## Unreleased fixed-income and visual/analytical extension
+
+`fixed_income` owns immutable contract terms and explicit subscription/redemption;
+`market_valuation.PriceBook` delegates CDB accrual while preserving source/coverage
+policy. Treasury holdings retain actual dated prices. `fixed_income_reporting`
+exposes paid redemption results separately from dividend/interest income.
+`life_events` composes spending classification, purchase/refund associations and
+FXBook; it never posts. `spending_insights` and `goal_trajectory` return deterministic
+read-only facts. Shared React composition, trajectory and detail-drawer components
+use exact values and the existing TanStack Query invalidation path. See
+[fixed income](FIXED_INCOME.md) and [Life Events](LIFE_EVENTS.md).
+
+## Approved UX display integration
+
+The redesign preserves React/FastAPI/SQLite and existing posting services.
+`route-aliases.ts` adapts canonical product destinations to existing workspaces;
+it does not introduce a second router or financial persistence layer. Period,
+account, currency, selected entity and workflow context remain hash state.
+
+Read-only display adapters retain the historical performance valuation field,
+allocation rows and exact spending day/month/payee projections. Income calendar
+buckets and comparable holding groups use exact frontend BigInt arithmetic.
+Monthly Spending Insights exposes the existing same-elapsed prior-month query
+as category comparisons and exact total/percentage fields. Broader ranges retain
+an explicitly labeled preceding equal-length comparison. These read-only fields
+do not alter monthly targets, refunds or ledger classification.
+These are display projections, never independent balances, holdings or ledger
+movements. Manual-position details filter the ordered observation response by
+selected date and void status while retaining audit rows in Values.
+
+Shared dialogs, activity navigation and review inspectors reuse each existing
+mutation/confirmation API. The responsive inspector keeps component identity
+stable so viewport changes cannot erase a decision draft. See the
+[UX implementation record](UX_REDESIGN_IMPLEMENTATION.md) for current evidence.
+
+## Optional Pluggy adapter
+
+The explicitly opt-in Pluggy provider uses a bounded HTTPS transport with Decimal
+JSON parsing and short-lived server-side API-key caching. Retrieval happens outside
+SQLite writes; an atomic publication stores local observations and revisions.
+The adapter does not import ledger/ORM schemas. PluggyService maps provider evidence
+into existing bank or investment review envelopes; existing financial services
+alone confirm postings. Hosted Connect receives only its scoped token.
+
+Credentials use the supported OS-vault implementation with a separate per-database
+namespace. Normal core operation remains offline; Pluggy's own bank-data processing
+is external and acknowledged explicitly. Demo middleware denies Pluggy before
+service/vault resolution. No public webhook/tunnel or new queue is required.
+See [Pluggy scope, limits and setup](PLUGGY.md).

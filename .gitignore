@@ -72,6 +72,8 @@ coverage/
 .vite/
 playwright-report/
 test-results/
+# Local visual review evidence; do not publish new screenshots or generated galleries.
+docs/screenshots/
 
 # Local tools and OS/editor files
 .cache/

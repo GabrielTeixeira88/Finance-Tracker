@@ -2,29 +2,34 @@
 
 Versions are the primary milestone identifiers. Historical phases remain traceable
 below; they do not imply earlier releases or tags. Current application version is
-0.12.0. Interactive Demo & Portfolio Showcase is implemented locally; see
-[release validation](RELEASE_0_12_0.md) and [demo readiness](DEMO_READINESS.md).
-Gmail live OAuth and real-bank templates remain separate validation gaps.
-No public demo is deployed. v0.13 is the next refinement/stability/security gate.
+0.13.0. Product refinements, appearance/localization, fixed income, Life Events,
+read-only Pluggy integration and the Brazilian historical demo are implemented.
+See [release validation](RELEASE_0_13_0.md) for checks and explicit limitations.
+Live bank/OAuth/provider entitlements, public demo hosting and broader installation/
+backup hardening remain separate validation work; v1.0 readiness is not claimed.
+
+Next branch: `feature/v0.14.0-frontend-refinement`, created only after the v0.13
+merge/tag. Its frontend migration/refinement scope is not implemented by branch
+creation. The version remains 0.13.0 until another approved release.
 
 ## Historical mapping
 
-| Version | Previous designation | Scope |
-|---|---|---|
-| v0.1.0 | Phase 0, 1, 1.6-1.7 | Foundation, core ledger, SQLite and Wealthfolio-based UI |
-| v0.2.0 | Phase 2A and 2B | Payees, transaction review, rules and schedules |
-| v0.3.0 | Phase 3 | CSV/OFX imports and ingestion infrastructure |
-| v0.4.0 | Phase 4 | Spending & Budgets |
-| v0.5.0 | Phase 5 | Investment Foundation |
-| v0.6.0 | Phase 6 | Market Data & Portfolio Valuation |
-| v0.7.0 | Phase 7 | Investment Analytics |
-| v0.8.0 | Phase 8 | Gmail Ingestion |
-| v0.9.0 | Phase 9 | Multi-Source Reconciliation |
-| v0.10.0 | Phase 10 | Net Worth & Goals |
-| v0.11.0 | Phase 11 | Product Consolidation & UX Refinement |
-| v0.12.0 | Phase 12 | Interactive Demo & Portfolio Showcase |
-| v0.13.0 | Stability gate | Final Product Refinement, Stability, Security & Release Validation |
-| v1.0.0 | Stable release | First fully validated stable version |
+| Version | Previous designation | Scope                                                              |
+| ------- | -------------------- | ------------------------------------------------------------------ |
+| v0.1.0  | Phase 0, 1, 1.6-1.7  | Foundation, core ledger, SQLite and Wealthfolio-based UI           |
+| v0.2.0  | Phase 2A and 2B      | Payees, transaction review, rules and schedules                    |
+| v0.3.0  | Phase 3              | CSV/OFX imports and ingestion infrastructure                       |
+| v0.4.0  | Phase 4              | Spending & Budgets                                                 |
+| v0.5.0  | Phase 5              | Investment Foundation                                              |
+| v0.6.0  | Phase 6              | Market Data & Portfolio Valuation                                  |
+| v0.7.0  | Phase 7              | Investment Analytics                                               |
+| v0.8.0  | Phase 8              | Gmail Ingestion                                                    |
+| v0.9.0  | Phase 9              | Multi-Source Reconciliation                                        |
+| v0.10.0 | Phase 10             | Net Worth & Goals                                                  |
+| v0.11.0 | Phase 11             | Product Consolidation & UX Refinement                              |
+| v0.12.0 | Phase 12             | Interactive Demo & Portfolio Showcase                              |
+| v0.13.0 | Stability gate       | Final Product Refinement, Stability, Security & Release Validation |
+| v1.0.0  | Stable release       | First fully validated stable version                               |
 
 Phase 2A and 2B belong together to v0.2.0; never use separate patch milestones.
 v1.0.0 requires validated stability, not a milestone counter reaching a number.
@@ -100,10 +105,14 @@ v1.0.0 requires validated stability, not a milestone counter reaching a number.
   prices/benchmarks, simulated Gmail/import/reconciliation evidence, assets/debts
   and goals; guided interviewer tours, architecture overview and disposable session
   isolation for any separately approved public demo.
-- **v0.13.0 - Final Product Refinement, Stability, Security & Release Validation.** Detailed scope will be finalized after reviewing the populated demo and collecting
-  concrete UI/UX defects and functional inconsistencies. Full regression/E2E,
-  financial correctness, migrations, data integrity, backup/recovery, performance,
-  security/privacy hardening, installation/deployment validation and blocking fixes.
+- **v0.13.0 - Product Refinements & Brazilian Historical Demo (completed).**
+  Appearance/localization, shared motion and financial UI improvements; native
+  Brazilian fixed income, Life Events, read-only Pluggy and the official-observation
+  Brazil scenario. Regression, migrations, privacy and production audits are recorded
+  in RELEASE_0_13_0.md. Broader installation/recovery certification remains future work.
+- **v0.14.0 - Frontend Refinement (next, not implemented).** Prepare the larger
+  frontend migration from the validated v0.13 baseline; preserve financial/API
+  behavior. Its branch alone does not approve or implement design changes.
 - **v1.0.0 - Stable Release.** Final acceptance, no unresolved critical defects,
   verified installation/demo experience and documented limitations. Readiness must
   be demonstrated; a version counter alone never triggers stable promotion.
@@ -131,7 +140,6 @@ in private local SQLite, including planned Gmail and multi-source matching. Clou
 sync/authentication, Redis, Celery and AI are not implicit dependencies. PostgreSQL
 remains a possible reviewed deployment migration, not a runtime requirement.
 
-
 ## v0.9 implementation reference review
 
 Actual Budget's public `accounts/reconciliation.ts`, `Reconcile.tsx` and
@@ -148,10 +156,8 @@ Wealthfolio reference import-table source and approved Finance Tracker shell wer
 reviewed; the global visual hierarchy is preserved. No third-party source was copied
 for this phase. Existing attribution/licenses remain intact.
 
-The current release is v0.12.0 Interactive Demo & Portfolio Showcase; see
-[release validation](RELEASE_0_12_0.md) and [demo readiness](DEMO_READINESS.md).
-v0.13 has not started. Public deployment is not implemented.
-
+The current release is v0.13.0; see [release validation](RELEASE_0_13_0.md).
+Public deployment is not implemented.
 
 ### v0.10 reference investigation
 
@@ -170,3 +176,17 @@ progress from hypothetical scenarios; its simulation engine was not adopted.
 [YNAB targets](https://support.ynab.com/how-to-use-targets-rk5kkI9ks) was requested
 but its support-page body was inaccessible to the browser tool; no implementation
 claims or copied algorithms are based on it. Existing license notices are unchanged.
+
+### Expanded v0.13 scope
+
+The requested refinement now includes native Brazilian fixed income, persisted
+Life Events, deterministic spending narratives, portfolio/income composition and
+goal glide paths. It does not add AI, allocation targets/rebalancing, retirement/FIRE
+or tax-aware funding. Release validation is recorded in RELEASE_0_13_0.md. See the source/visual parity
+audit for remaining geometry differences; exact reference parity is not claimed.
+
+The 2026-10-30 authorization additionally enables Pluggy/MeuPluggy read-only API
+support: secure credentials, hosted connection/renewal, local resource observations,
+account/asset mapping and explicit existing ingestion confirmation. This replaces
+the earlier Pluggy exclusion, without adding payment initiation or automatic ledger
+posting. Live institution/entitlement validation remains user-dependent; see PLUGGY.md.

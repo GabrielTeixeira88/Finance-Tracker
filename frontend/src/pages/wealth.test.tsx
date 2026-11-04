@@ -11,7 +11,8 @@ vi.mock('@/components/portfolio-value-chart', () => ({
     <div aria-label={label} />
   ),
 }))
-function wrap(node: React.ReactNode) {
+function wrap(node: React.ReactNode, hash = '#/dashboard?view=net-worth') {
+  window.history.replaceState(null, '', hash)
   return render(
     <QueryClientProvider
       client={
@@ -199,8 +200,8 @@ it('exposes functional Net Worth and Goals navigation without changing other sec
       <p>Workspace</p>
     </AppShell>,
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Net Worth' }))
-  expect(navigate).toHaveBeenCalledWith('Net Worth', undefined)
+  await userEvent.click(screen.getByRole('button', { name: 'Dashboard' }))
+  expect(navigate).toHaveBeenCalledWith('Budget', undefined)
   await userEvent.click(screen.getByRole('button', { name: 'Goals' }))
   expect(navigate).toHaveBeenCalledWith('Goals', undefined)
 })
@@ -262,7 +263,49 @@ it('keeps projection inputs usable while clearing and typing a new assumption', 
   )
 })
 
-it('distinguishes actual goal progress from reached milestones', async () => {
+it('keeps funding collapsed by default and exposes existing account allocations on demand', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async (url: string) =>
+        new Response(
+          JSON.stringify(
+            url === '/api/goal-allocations'
+              ? [
+                  {
+                    account_id: 'a',
+                    name: 'Savings',
+                    currency: 'BRL',
+                    balance: '48000',
+                    allocated: '25000',
+                    unallocated: '23000',
+                    overallocated: false,
+                  },
+                ]
+              : [],
+          ),
+        ),
+    ),
+  )
+  wrap(<Goals accounts={[]} />)
+  const summary = await screen.findByText('Funding overview', {
+    selector: 'summary',
+  })
+  expect(summary.closest('details')).not.toHaveAttribute('open')
+  expect(await screen.findByRole('table', { hidden: true })).not.toBeVisible()
+  expect(screen.queryByText('Goal - Status')).toBeNull()
+  await userEvent.click(summary)
+  expect(
+    await screen.findByRole('table', { name: 'Funding overview' }),
+  ).toBeVisible()
+  expect(screen.getByText('R$48,000.00')).toBeVisible()
+  expect(screen.getByText('R$25,000.00')).toBeVisible()
+  expect(screen.getByText('R$23,000.00')).toBeVisible()
+  await userEvent.click(summary)
+  expect(screen.getByRole('table', { hidden: true })).not.toBeVisible()
+})
+
+it('distinguishes actual goal progress from reached milestones in goal details', async () => {
   const detail = {
     goal: {
       id: 'progress-goal',
@@ -292,13 +335,105 @@ it('distinguishes actual goal progress from reached milestones', async () => {
     'fetch',
     vi.fn(
       async (url: string) =>
-        new Response(JSON.stringify(url === '/api/goals' ? [detail] : [])),
+        new Response(
+          JSON.stringify(
+            url === '/api/goals'
+              ? [detail]
+              : url.startsWith('/api/goals/progress-goal')
+                ? detail
+                : [],
+          ),
+        ),
     ),
   )
   wrap(<Goals accounts={[]} />)
-  expect(await screen.findByText('48% saved')).toBeVisible()
-  expect(screen.getByText('Milestones reached: 25%')).toBeVisible()
   expect(
-    screen.getByRole('progressbar', { name: 'Synthetic progress progress' }),
-  ).toHaveAttribute('aria-valuetext', '48%')
+    await screen.findByRole('img', { name: 'Synthetic progress: 48.0%' }),
+  ).toBeVisible()
+  expect(screen.queryByText('Goal - Status')).toBeNull()
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Synthetic progress' }),
+  )
+  await screen.findByRole('heading', {
+    name: 'Synthetic progress',
+  })
+  expect(screen.getByText('Milestones reached: 25.0%')).toBeVisible()
+  expect(
+    screen.getByRole('progressbar', { name: 'Synthetic progress' }),
+  ).toHaveAttribute('aria-valuetext', '48.0%')
+})
+
+it('manual position details exclude future and voided observations while retaining their audit rows', async () => {
+  const position = {
+    id: 'p',
+    name: 'Synthetic property',
+    kind: 'ASSET',
+    category: 'PROPERTY',
+    currency: 'BRL',
+    liquidity: 'ILLIQUID',
+    start_date: '2025-01-01',
+    end_date: null,
+    acquisition_cost: null,
+    disposal_proceeds: null,
+    associated_asset_id: null,
+    notes: 'Fictional',
+    terms: '',
+  }
+  const observations = [
+    {
+      id: 'old',
+      effective_date: '2026-08-31',
+      amount: '100.123456',
+      notes: 'Synthetic',
+      voided_at: null,
+      void_reason: null,
+    },
+    {
+      id: 'void',
+      effective_date: '2026-09-01',
+      amount: '500',
+      notes: 'Synthetic correction',
+      voided_at: '2026-09-03',
+      void_reason: 'Superseded',
+    },
+    {
+      id: 'future',
+      effective_date: '2026-10-01',
+      amount: '999999',
+      notes: 'Synthetic future observation',
+      voided_at: null,
+      void_reason: null,
+    },
+  ]
+  const fetch = vi.fn(
+    async (url: string) =>
+      new Response(
+        JSON.stringify(
+          url.endsWith('/observations')
+            ? observations
+            : url === '/api/manual-positions'
+              ? [position]
+              : report,
+        ),
+      ),
+  )
+  vi.stubGlobal('fetch', fetch)
+  wrap(
+    <NetWorthWorkspace navigate={vi.fn()} initialEnd="2026-09-30" />,
+    '#/dashboard?view=net-worth&position=p&end=2026-09-30',
+  )
+  expect(await screen.findByText('R$100.12')).toBeVisible()
+  expect(screen.queryByText('R$999,999.00')).not.toBeInTheDocument()
+  expect(
+    screen.getByText(
+      'At least two dated observations are needed to chart history.',
+    ),
+  ).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: 'Values' }))
+  expect(await screen.findByText('2026-10-01')).toBeVisible()
+  expect(screen.getByText('Voided: Superseded')).toBeVisible()
+  expect(fetch).not.toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({ method: 'POST' }),
+  )
 })

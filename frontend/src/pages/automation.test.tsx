@@ -45,6 +45,11 @@ const occurrence = {
 }
 
 function setup(settings = true) {
+  window.history.replaceState(
+    null,
+    '',
+    settings ? '#/settings' : '#/activities',
+  )
   const fetch = vi.fn(async (path: string, options?: RequestInit) => {
     let data: unknown = []
     if (path.endsWith('/preview'))
@@ -186,7 +191,7 @@ it('provides an explicit accept action for learned suggestions', async () => {
 
 it('keeps schedules within Transactions and never posts projections on navigation', async () => {
   const fetch = setup(false)
-  await userEvent.click(screen.getByRole('button', { name: 'Scheduled' }))
+  await userEvent.selectOptions(screen.getByLabelText('Tools'), 'scheduled')
   const table = await screen.findByRole('table', {
     name: 'Scheduled occurrences',
   })
@@ -211,7 +216,7 @@ it('keeps schedules within Transactions and never posts projections on navigatio
       ),
     ),
   ).toEqual({ amount: '199.123456', transaction_date: '2026-10-04' })
-  await userEvent.click(screen.getByRole('button', { name: 'All Activity' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Transactions' }))
   expect(
     screen.getByRole('button', { name: '+ Add Transaction' }),
   ).toBeInTheDocument()

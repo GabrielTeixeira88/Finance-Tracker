@@ -6,6 +6,7 @@ import { Settings } from './management'
 import { GmailQueue } from './gmail'
 
 function setup(connected = false, failure = false) {
+  window.history.replaceState(null, '', '#/settings')
   const state = {
     status: connected ? 'CONNECTED' : 'DISCONNECTED',
     mailbox: null,

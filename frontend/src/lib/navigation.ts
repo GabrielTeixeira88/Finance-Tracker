@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { canonicalRoute, workspaceRoute } from './route-aliases'
 import type { Page } from '@/components/app-shell'
 
 const paths: Record<Page, string> = {
@@ -30,10 +31,11 @@ function snapshot() {
 }
 export function readRoute(hash = snapshot()) {
   const [path, search = ''] = hash.replace(/^#\/?/, '').split('?')
-  const params = new URLSearchParams(search)
+  const resolved = workspaceRoute(path, new URLSearchParams(search))
+  const { params } = resolved
   const page =
-    (Object.entries(paths).find(([, slug]) => slug === path)?.[0] as
-      Page | undefined) ?? 'Overview'
+    (Object.entries(paths).find(([, slug]) => slug === resolved.path)?.[0] as
+      Page | undefined) ?? 'Budget'
   return { page, accountId: params.get('account') ?? undefined, params }
 }
 function write(hash: string, replace = false) {
@@ -47,7 +49,10 @@ export function navigateTo(
 ) {
   const params = new URLSearchParams(values)
   if (accountId) params.set('account', accountId)
-  write(`#/${paths[page]}${params.size ? `?${params}` : ''}`)
+  const canonical = canonicalRoute(paths[page], params)
+  write(
+    `#/${canonical.path}${canonical.params.size ? `?${canonical.params}` : ''}`,
+  )
 }
 export function useRoute() {
   return readRoute(useSyncExternalStore(subscribe, snapshot, () => ''))
@@ -62,7 +67,12 @@ export function rememberLedgerFilters(values: Record<string, string>) {
   )
   if (route.accountId) params.set('account', route.accountId)
   params.set('view', 'activity')
-  window.history.replaceState(null, '', `#/${paths[route.page]}?${params}`)
+  const canonical = canonicalRoute(paths[route.page], params)
+  window.history.replaceState(
+    null,
+    '',
+    `#/${canonical.path}?${canonical.params}`,
+  )
 }
 
 /** Section state belongs to the destination; history restores it on Back. */

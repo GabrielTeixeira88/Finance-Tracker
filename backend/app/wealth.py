@@ -8,7 +8,13 @@ from sqlalchemy import select
 
 from app import ledger, market_valuation
 from app.models import FinancialAccount, Transaction
-from app.wealth_models import Goal, GoalEntry, ManualPosition, PositionObservation
+from app.wealth_models import (
+    Goal,
+    GoalAccountFunding,
+    GoalEntry,
+    ManualPosition,
+    PositionObservation,
+)
 
 ZERO = Decimal(0)
 
@@ -284,6 +290,26 @@ def allocation_map(session, day, book=None):
 def goal_progress(session, goal, day, book=None):
     if day < goal.start_date:
         return ZERO, []
+    funding = (
+        book.funding.get(goal.id)
+        if book
+        else session.scalar(select(GoalAccountFunding).where(GoalAccountFunding.goal_id == goal.id))
+    )
+    if funding:
+        if day < funding.effective_date or (goal.archived_date and goal.archived_date <= day):
+            return ZERO, []
+        if book:
+            point = book.investments.get((funding.account_id, day))
+        else:
+            point = market_valuation.history(
+                session, day, day, account_id=funding.account_id, serialize=False
+            )["points"][0]
+        value = point["value"] if point else None
+        return (
+            (max(value, ZERO), [])
+            if value is not None
+            else (ZERO, ["Investment funding has missing dated market coverage"])
+        )
     if goal.mode == "MANUAL":
         return sum(
             (
@@ -308,6 +334,17 @@ def check_goal(session, goal):
     valid_day(goal.start_date)
     if goal.deadline and goal.deadline < goal.start_date:
         raise HTTPException(422, "Deadline must follow the goal start")
+    funding = session.scalar(
+        select(GoalAccountFunding).where(GoalAccountFunding.goal_id == goal.id)
+    )
+    if funding and (
+        goal.mode != "ACCOUNT"
+        or session.get(FinancialAccount, funding.account_id).currency != goal.currency
+        or goal.start_date > funding.effective_date
+    ):
+        raise HTTPException(
+            409, "Preserve the reserved investment account's currency, mode and funding date"
+        )
     for e in goal_entries(session, goal):
         if not e.voided_at and e.effective_date < goal.start_date:
             raise HTTPException(409, "Start date cannot exclude existing progress")
@@ -338,6 +375,11 @@ def validate_progress(session, goal):
 
 def add_goal_entry(session, goal, data):
     valid_day(data.effective_date)
+    if session.scalar(select(GoalAccountFunding).where(GoalAccountFunding.goal_id == goal.id)):
+        raise HTTPException(
+            409,
+            "This goal tracks its reserved investment account; fund or redeem that account instead",
+        )
     if goal.status in {"ARCHIVED", "COMPLETED"} or data.effective_date < goal.start_date:
         raise HTTPException(409, "Reopen the goal or choose a date after its start")
     if goal.mode == "ACCOUNT":
@@ -374,6 +416,9 @@ def goal_detail(session, goal, day, monthly=ZERO):
         )
         import calendar
 
+        closed_month = day.day == calendar.monthrange(day.year, day.month)[1]
+        if months and closed_month:
+            months -= 1
         if (
             months
             and goal.deadline.day < calendar.monthrange(goal.deadline.year, goal.deadline.month)[1]
@@ -391,7 +436,7 @@ def goal_detail(session, goal, day, monthly=ZERO):
         )
         completion = None
         if count is not None and count <= 600:
-            y, m = divmod(day.year * 12 + day.month - 1 + max(count - 1, 0), 12)
+            y, m = divmod(day.year * 12 + day.month - 1 + max(count - 1, 0) + closed_month, 12)
             completion = date(y, m + 1, calendar.monthrange(y, m + 1)[1])
         if not remaining:
             completion = day
@@ -415,14 +460,24 @@ def goal_detail(session, goal, day, monthly=ZERO):
             )
             if goal.archived_date and goal.archived_date <= day:
                 dates = sorted(set(dates) | {goal.archived_date})
+        funding = session.scalar(
+            select(GoalAccountFunding).where(GoalAccountFunding.goal_id == goal.id)
+        )
+        if funding:
+            # Daily valuation includes accrual without daily ledger/goal postings.
+            dates = [
+                goal.start_date + timedelta(days=n) for n in range((day - goal.start_date).days + 1)
+            ]
         book = GoalBook(session, dates)
-        return dict(
+        result = dict(
             goal=goal,
             saved=None if warnings else saved,
             allocated=saved,
             remaining=None if warnings else remaining,
             warnings=warnings,
             entries=goal_entries(session, goal),
+            funding_account_id=funding.account_id if funding else None,
+            funding_basis="GROSS_ACCOUNT_VALUE" if funding else "RECORDED_ALLOCATIONS",
             progress=(saved / goal.target if goal.target else Decimal(1)) if not warnings else None,
             milestones=[
                 n
@@ -445,10 +500,20 @@ def goal_detail(session, goal, day, monthly=ZERO):
                 for d in dates
             ],
             projection_method=(
-                "Hypothetical equal end-of-month contributions, beginning this month; "
+                "Hypothetical equal contributions at future month ends after the as-of date; "
                 "no interest or investment return. Maximum horizon 50 years."
             ),
         )
+        from app.goal_trajectory import schedule_pace, trajectory
+
+        result["as_of"] = day
+        result["schedule_pace"] = schedule_pace(goal, day, saved, warnings)
+        result["trajectory"] = trajectory(goal, day, saved, warnings, result["history"], monthly)
+        return result
+
+
+def investment_goal_funding(session):
+    return session.scalars(select(GoalAccountFunding))
 
 
 class GoalBook:
@@ -462,6 +527,34 @@ class GoalBook:
         ):
             self.entries[row.goal_id].append(row)
         self.balances = ledger.balance_series(session, days)
+        self.funding = {f.goal_id: f for f in investment_goal_funding(session)}
+        self.investments = {}
+        if days:
+            for funding in self.funding.values():
+                points = market_valuation.history(
+                    session, min(days), max(days), account_id=funding.account_id, serialize=False
+                )["points"]
+                self.investments.update({(funding.account_id, p["date"]): p for p in points})
+
+
+def reserve_investment_account(session, goal, account_id, effective_date):
+    """Explicit exclusive reservation; only metadata, never a financial posting."""
+    account = ledger.posting_account(session, account_id)
+    valid_day(effective_date)
+    if goal.mode != "ACCOUNT" or account.type != "INVESTMENT" or account.currency != goal.currency:
+        raise HTTPException(422, "Reserve a same-currency investment account for an account goal")
+    if effective_date < goal.start_date or goal_entries(session, goal):
+        raise HTTPException(409, "Whole-account funding cannot overlap recorded allocations")
+    if session.scalar(
+        select(GoalAccountFunding).where(
+            (GoalAccountFunding.account_id == account_id) | (GoalAccountFunding.goal_id == goal.id)
+        )
+    ):
+        raise HTTPException(409, "Investment account is already reserved")
+    row = GoalAccountFunding(goal_id=goal.id, account_id=account_id, effective_date=effective_date)
+    session.add(row)
+    session.flush()
+    return row
 
 
 def savings_allocations(session, day):
@@ -487,6 +580,23 @@ def savings_allocations(session, day):
                     allocated=allocated,
                     unallocated=available - allocated,
                     overallocated=allocated > available,
+                )
+            )
+        for funding in session.scalars(select(GoalAccountFunding)):
+            goal = session.get(Goal, funding.goal_id)
+            if funding.effective_date > day or (goal.archived_date and goal.archived_date <= day):
+                continue
+            account = session.get(FinancialAccount, funding.account_id)
+            value, warnings = goal_progress(session, goal, day)
+            rows.append(
+                dict(
+                    account_id=account.id,
+                    name=account.name,
+                    currency=account.currency,
+                    balance=None if warnings else value,
+                    allocated=None if warnings else value,
+                    unallocated=None if warnings else ZERO,
+                    overallocated=False,
                 )
             )
         return rows

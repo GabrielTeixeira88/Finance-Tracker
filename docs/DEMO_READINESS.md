@@ -1,5 +1,15 @@
 # v0.12 demo validation and readiness
 
+Current demo startup now uses the Brazil historical portfolio only; see
+[current setup](DEMO.md) and [historical sources/results](REAL_MARKET_DEMO.md).
+The household measurements below are the preserved release audit and regression
+fixture, not the currently offered demo dataset.
+
+This is the released v0.12 audit. The expanded unreleased fixtures, migration and
+UI validation are documented in [the v0.13 audit](WEALTHFOLIO_PARITY_v0.13.md) and
+[current screenshots](screenshots/parity-v013/index.html). Keep the measurements
+below as historical evidence; they are not benchmarks for the expanded dataset.
+
 Validated locally on **2026-10-21**, Windows, Python 3.13, Node 22 and headless Edge.
 The v0.12.0 implementation passed the local release audit. No public deployment
 was performed. See [release evidence](RELEASE_0_12_0.md); Git refs identify publishing status.

@@ -52,6 +52,8 @@ export const goalDetailSchema = z.object({
   allocated: money,
   remaining: money.nullable(),
   warnings: z.array(z.string()),
+  funding_account_id: z.string().nullable().optional(),
+  funding_basis: z.string().optional(),
   entries: z.array(
     observationSchema.extend({
       account_id: z.string().nullable(),
@@ -64,8 +66,42 @@ export const goalDetailSchema = z.object({
   projected_completion: z.string().nullable(),
   overdue: z.boolean(),
   near_deadline: z.boolean().default(false),
+  as_of: z.string().optional(),
+  schedule_pace: z
+    .object({
+      status: z.enum([
+        'ON_TRACK',
+        'AT_RISK',
+        'OFF_TRACK',
+        'ACHIEVED',
+        'PAUSED',
+        'ARCHIVED',
+        'UNAVAILABLE',
+        'NO_DEADLINE',
+        'NOT_STARTED',
+      ]),
+      required_to_date: money.nullable(),
+      basis: z.string(),
+    })
+    .optional(),
   history: z.array(z.object({ date: z.string(), value: money.nullable() })),
   projection_method: z.string(),
+  trajectory: z
+    .object({
+      status: z.string(),
+      monthly: money,
+      projected_end: money.nullable(),
+      shortfall: money.nullable(),
+      points: z.array(
+        z.object({
+          date: z.string(),
+          actual: money.nullable(),
+          required: money.nullable(),
+          projected: money.nullable(),
+        }),
+      ),
+    })
+    .optional(),
 })
 export type GoalDetail = z.infer<typeof goalDetailSchema>
 export const wealthSchema = z.object({
@@ -136,9 +172,9 @@ export const getAllocations = async () =>
         account_id: z.string(),
         name: z.string(),
         currency: z.string(),
-        balance: money,
-        allocated: money,
-        unallocated: money,
+        balance: money.nullable(),
+        allocated: money.nullable(),
+        unallocated: money.nullable(),
         overallocated: z.boolean(),
       }),
     )

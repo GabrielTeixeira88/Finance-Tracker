@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     google_oauth_client_id: str = ""
     google_oauth_client_secret: SecretStr = SecretStr("")
     gmail_local_origins: str = "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8000"
+    pluggy_local_origins: str = "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8000"
 
     @property
     def resolved_database_path(self) -> Path:

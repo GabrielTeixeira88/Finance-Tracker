@@ -1,3 +1,5 @@
+import { t as tr, ui } from '@/lib/i18n'
+import { exactFormData } from '@/lib/localized-number'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
@@ -44,11 +46,12 @@ export default function Schedules(props: {
     queryKey: ['demo'],
     queryFn: ({ signal }) => getDemo(signal),
   })
-  if (demo.isPending) return <LoadingState text="Loading schedules…" />
+  if (demo.isPending)
+    return <LoadingState text={tr('schedules:loading_schedules__8ef1ac')} />
   if (demo.isError)
     return (
       <ErrorState
-        text="Unable to load schedule context"
+        text={tr('schedules:unable_to_load_schedule_context_b71a60')}
         retry={() => void demo.refetch()}
       />
     )
@@ -94,8 +97,10 @@ function ScheduleWorkspace({
   return (
     <>
       <PageHeader
-        title="Scheduled transactions"
-        description="Expected events, separate from your actual ledger."
+        title={tr('schedules:scheduled_transactions_a81cc8')}
+        description={tr(
+          'schedules:expected_events_separate_from_your_actual_ledger_38fdba',
+        )}
       >
         <Button
           onClick={() => {
@@ -103,41 +108,53 @@ function ScheduleWorkspace({
             setCreating(!creating)
           }}
         >
-          {creating ? 'Close schedule form' : 'Create schedule'}
+          {creating
+            ? tr('dynamic:close_schedule_form_3dbb2a')
+            : tr('dynamic:create_schedule_cf7973')}
         </Button>
       </PageHeader>
       {demo && (
         <p className="metadata">
-          Synthetic demo calendar: {asOf}. No events are posted automatically.
+          {' '}
+          {tr('schedules:synthetic_demo_calendar__d6e438')} {asOf}{' '}
+          {tr('schedules:_no_events_are_posted_automatically__d5e727')}{' '}
         </p>
       )}
       <section className="panel">
-        <h2>Next 30 days · Expected cash flow</h2>
+        <h2>{tr('schedules:next_30_days_expected_cash_flow_2da609')}</h2>
         <p className="metadata">
-          Uncompleted occurrences only. Approximate amounts are estimates, not
-          balances.
+          {tr(
+            'schedules:uncompleted_occurrences_only_approximate_amounts_4cde6a',
+          )}
         </p>
         {projected.isPending ? (
-          <LoadingState text="Loading projections…" />
+          <LoadingState text={tr('schedules:loading_projections__a68566')} />
         ) : projected.isError ? (
           <ErrorState
-            text="Unable to load projections"
+            text={tr('schedules:unable_to_load_projections_d9e104')}
             retry={() => void projected.refetch()}
           />
         ) : !projected.data.totals.length ? (
-          <EmptyState title="No expected cash flow in this period" />
+          <EmptyState
+            title={tr('schedules:no_expected_cash_flow_in_this_period_db878f')}
+          />
         ) : (
           projected.data.totals.map((t) => (
             <div className="filter-bar" key={t.currency}>
               <span>
-                Expected income <Money value={t.income} currency={t.currency} />
+                {' '}
+                {tr('schedules:expected_income_adfcba')}{' '}
+                <Money value={t.income} currency={t.currency} />
               </span>
               <span>
-                Expected expenses{' '}
+                {' '}
+                {tr('schedules:expected_expenses_ec13e9')}{' '}
                 <Money value={t.expenses} currency={t.currency} />
               </span>
               <span>
-                Expected net <Money value={t.net} currency={t.currency} />
+                {' '}
+                {tr('schedules:expected_net_152b5f')}{' '}
+                <Money value={t.net} currency={t.currency} />
               </span>
             </div>
           ))
@@ -159,20 +176,22 @@ function ScheduleWorkspace({
       )}
       {write.isError && <ErrorState text={write.error.message} />}
       <section className="panel">
-        <h2>Schedules</h2>
+        <h2>{tr('schedules:schedules_26d9d0')}</h2>
         {schedules.isPending ? (
-          <LoadingState text="Loading schedules…" />
+          <LoadingState text={tr('schedules:loading_schedules__8ef1ac')} />
         ) : schedules.isError ? (
           <ErrorState
-            text="Unable to load schedules"
+            text={tr('schedules:unable_to_load_schedules_a5890a')}
             retry={() => void schedules.refetch()}
           />
         ) : (
           <>
             {!schedules.data.length && (
               <EmptyState
-                title="No schedules yet"
-                detail="Add an expected salary, bill, or one-time event."
+                title={tr('schedules:no_schedules_yet_137b1c')}
+                detail={tr(
+                  'schedules:add_an_expected_salary_bill_or_one_time_event__646580',
+                )}
               />
             )}
             {schedules.data.map((s) => (
@@ -180,8 +199,12 @@ function ScheduleWorkspace({
                 <div>
                   <strong>{s.name}</strong>
                   <p className="metadata">
-                    {label(s.frequency)} · {s.enabled ? 'Enabled' : 'Disabled'}{' '}
-                    · Next outstanding: {s.next_due_date ?? 'None'} ·{' '}
+                    {label(s.frequency)} ·{' '}
+                    {s.enabled
+                      ? tr('dynamic:enabled_df174a')
+                      : tr('dynamic:disabled_f4f447')}{' '}
+                    {tr('schedules:_next_outstanding__3513a2')}{' '}
+                    {s.next_due_date ?? tr('dynamic:none_6eef66')} ·{' '}
                     {accounts.find((a) => a.id === s.account_id)?.name}
                   </p>
                   <p>
@@ -189,24 +212,28 @@ function ScheduleWorkspace({
                       s.description}{' '}
                     ·{' '}
                     {categories.find((c) => c.id === s.category_id)?.name ??
-                      'Uncategorized'}
+                      tr('dynamic:uncategorized_4ef7d7')}
                   </p>
                   <Money value={s.amount} currency={s.currency} />
                   {s.amount_is_approximate && (
-                    <span className="metadata"> approximate</span>
+                    <span className="metadata">
+                      {tr('schedules:approximate_8ffc18')}
+                    </span>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     size="sm"
                     variant="outline"
-                    aria-label={`Edit ${s.name}`}
+                    aria-label={tr('messages:message_f8d9f06aa37b', {
+                      value0: s.name,
+                    })}
                     onClick={() => {
                       setCreating(false)
                       setEditing(s)
                     }}
                   >
-                    Edit
+                    {tr('schedules:edit_530164')}
                   </Button>
                   <Button
                     size="sm"
@@ -220,7 +247,9 @@ function ScheduleWorkspace({
                       })
                     }
                   >
-                    {s.enabled ? 'Disable' : 'Enable'}
+                    {s.enabled
+                      ? tr('dynamic:disable_9a7d4e')
+                      : tr('dynamic:enable_20063a')}
                   </Button>
                   <Button
                     size="sm"
@@ -238,7 +267,7 @@ function ScheduleWorkspace({
                         })
                     }}
                   >
-                    Delete
+                    {tr('schedules:delete_f6fdbe')}
                   </Button>
                 </div>
               </div>
@@ -247,9 +276,9 @@ function ScheduleWorkspace({
         )}
       </section>
       <section className="panel">
-        <h2>Expected occurrences</h2>
+        <h2>{tr('schedules:expected_occurrences_d93277')}</h2>
         <div className="filter-bar">
-          <Field label="Schedule range from">
+          <Field label={tr('schedules:schedule_range_from_c86903')}>
             <input
               type="date"
               required
@@ -260,7 +289,7 @@ function ScheduleWorkspace({
               }}
             />
           </Field>
-          <Field label="Schedule range to">
+          <Field label={tr('schedules:schedule_range_to_327f89')}>
             <input
               type="date"
               required
@@ -273,9 +302,11 @@ function ScheduleWorkspace({
           </Field>
         </div>
         {!start || !end || start > end ? (
-          <ErrorState text="Choose a valid date range" />
+          <ErrorState text={tr('schedules:choose_a_valid_date_range_6cec40')} />
         ) : upcoming.isPending ? (
-          <LoadingState text="Calculating expected occurrences…" />
+          <LoadingState
+            text={tr('schedules:calculating_expected_occurrences__707d41')}
+          />
         ) : upcoming.isError ? (
           <ErrorState
             text={upcoming.error.message}
@@ -284,22 +315,28 @@ function ScheduleWorkspace({
         ) : (
           <>
             {!upcoming.data.occurrences.length && (
-              <EmptyState title="No active occurrences in this range" />
+              <EmptyState
+                title={tr(
+                  'schedules:no_active_occurrences_in_this_range_92705c',
+                )}
+              />
             )}
             <div
               className="table-scroll"
               role="region"
-              aria-label="Scheduled occurrences"
+              aria-label={tr('schedules:scheduled_occurrences_53a2eb')}
               tabIndex={0}
             >
-              <table aria-label="Scheduled occurrences">
+              <table aria-label={tr('schedules:scheduled_occurrences_53a2eb')}>
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Event / Account</th>
-                    <th>Status</th>
-                    <th className="amount-cell">Expected amount</th>
-                    <th>Actions</th>
+                    <th>{tr('schedules:date_eb9a4b')}</th>
+                    <th>{tr('schedules:event_account_962712')}</th>
+                    <th>{tr('schedules:status_bae7d5')}</th>
+                    <th className="amount-cell">
+                      {tr('schedules:expected_amount_d01293')}
+                    </th>
+                    <th>{tr('schedules:actions_c3cd63')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -312,14 +349,16 @@ function ScheduleWorkspace({
                           {accounts.find((a) => a.id === o.account_id)?.name} ·{' '}
                           {label(o.frequency)} ·{' '}
                           {categories.find((c) => c.id === o.category_id)
-                            ?.name ?? 'Uncategorized'}
+                            ?.name ?? tr('dynamic:uncategorized_4ef7d7')}
                         </small>
                       </th>
                       <td>{label(o.status)}</td>
                       <td className="amount-cell">
                         <Money value={o.amount} currency={o.currency} />
                         {o.amount_is_approximate && (
-                          <small className="metadata block">Estimate</small>
+                          <small className="metadata block">
+                            {tr('schedules:estimate_235223')}
+                          </small>
                         )}
                       </td>
                       <td>
@@ -331,7 +370,9 @@ function ScheduleWorkspace({
                             onClick={() => {
                               if (
                                 window.confirm(
-                                  'Unlink this completion? The real ledger transaction will remain unchanged.',
+                                  tr(
+                                    'dynamic:unlink_this_completion_the_real_ledger_transacti_32f3b4',
+                                  ),
                                 )
                               )
                                 write.mutate({
@@ -340,7 +381,7 @@ function ScheduleWorkspace({
                                 })
                             }}
                           >
-                            Unlink completion
+                            {tr('schedules:unlink_completion_bac4fe')}
                           </Button>
                         ) : (
                           <Button
@@ -348,7 +389,7 @@ function ScheduleWorkspace({
                             variant="outline"
                             onClick={() => setSelected(o)}
                           >
-                            Inspect occurrence
+                            {tr('schedules:inspect_occurrence_03b3b6')}
                           </Button>
                         )}
                       </td>
@@ -391,16 +432,20 @@ function ScheduleEditor({
   const [error, setError] = useState('')
   return (
     <section className="editor-surface">
-      <h2>{schedule ? 'Edit schedule' : 'New schedule'}</h2>
+      <h2>
+        {schedule
+          ? tr('dynamic:edit_schedule_9850bc')
+          : tr('dynamic:new_schedule_3e70c3')}
+      </h2>
       <form
         onSubmit={(event) => {
           event.preventDefault()
           setError('')
-          const form = new FormData(event.currentTarget)
+          const form = exactFormData(event.currentTarget)
           const value = (key: string) => String(form.get(key) ?? '').trim()
           try {
             const account = accounts.find((a) => a.id === value('account_id'))
-            if (!account) throw new Error('Choose an account.')
+            if (!account) throw new Error(ui('Choose an account.'))
             const data = {
               name: value('name'),
               description: value('description'),
@@ -428,12 +473,16 @@ function ScheduleEditor({
               { onSuccess: onSaved },
             )
           } catch (e) {
-            setError(e instanceof Error ? e.message : 'Invalid schedule')
+            setError(
+              e instanceof Error
+                ? e.message
+                : tr('dynamic:invalid_schedule_09938d'),
+            )
           }
         }}
       >
         <fieldset disabled={write.isPending} className="form-grid">
-          <Field label="Schedule name">
+          <Field label={tr('schedules:schedule_name_fb63dc')}>
             <input
               name="name"
               required
@@ -441,7 +490,7 @@ function ScheduleEditor({
               defaultValue={schedule?.name}
             />
           </Field>
-          <Field label="Expected description">
+          <Field label={tr('schedules:expected_description_a2910e')}>
             <input
               name="description"
               required
@@ -449,13 +498,13 @@ function ScheduleEditor({
               defaultValue={schedule?.description}
             />
           </Field>
-          <Field label="Schedule account">
+          <Field label={tr('schedules:schedule_account_c162d3')}>
             <select
               name="account_id"
               required
               defaultValue={schedule?.account_id ?? ''}
             >
-              <option value="">Choose account</option>
+              <option value="">{tr('schedules:choose_account_9ccef0')}</option>
               {accounts
                 .filter((a) => a.active || a.id === schedule?.account_id)
                 .map((a) => (
@@ -465,16 +514,16 @@ function ScheduleEditor({
                 ))}
             </select>
           </Field>
-          <Field label="Schedule type">
+          <Field label={tr('schedules:schedule_type_de593f')}>
             <select
               name="transaction_type"
               defaultValue={schedule?.transaction_type ?? 'EXPENSE'}
             >
-              <option value="EXPENSE">Expense</option>
-              <option value="INCOME">Income</option>
+              <option value="EXPENSE">{tr('schedules:expense_a0db8e')}</option>
+              <option value="INCOME">{tr('schedules:income_1c89b1')}</option>
             </select>
           </Field>
-          <Field label="Expected amount">
+          <Field label={tr('schedules:expected_amount_d01293')}>
             <input
               name="amount"
               inputMode="decimal"
@@ -482,7 +531,7 @@ function ScheduleEditor({
               defaultValue={schedule?.amount}
             />
           </Field>
-          <Field label="Frequency">
+          <Field label={tr('schedules:frequency_89836a')}>
             <select
               name="frequency"
               defaultValue={schedule?.frequency ?? 'MONTHLY'}
@@ -494,7 +543,7 @@ function ScheduleEditor({
               ))}
             </select>
           </Field>
-          <Field label="Start date">
+          <Field label={tr('schedules:start_date_ff99f5')}>
             <input
               name="start_date"
               type="date"
@@ -502,7 +551,7 @@ function ScheduleEditor({
               defaultValue={schedule?.start_date ?? asOf}
             />
           </Field>
-          <Field label="End date (optional)">
+          <Field label={tr('schedules:end_date_optional__41752f')}>
             <input
               name="end_date"
               type="date"
@@ -516,12 +565,12 @@ function ScheduleEditor({
                 : null
             }
           />
-          <Field label="Schedule category">
+          <Field label={tr('schedules:schedule_category_5ef993')}>
             <select
               name="category_id"
               defaultValue={schedule?.category_id ?? ''}
             >
-              <option value="">Uncategorized</option>
+              <option value="">{tr('schedules:uncategorized_4ef7d7')}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -529,7 +578,7 @@ function ScheduleEditor({
               ))}
             </select>
           </Field>
-          <Field label="Approximate amount">
+          <Field label={tr('schedules:approximate_amount_0bcc87')}>
             <input
               type="checkbox"
               checked={approx}
@@ -537,7 +586,7 @@ function ScheduleEditor({
             />
           </Field>
           {approx && (
-            <Field label="Allowed amount difference">
+            <Field label={tr('schedules:allowed_amount_difference_f99d10')}>
               <input
                 name="amount_tolerance"
                 inputMode="decimal"
@@ -546,7 +595,7 @@ function ScheduleEditor({
               />
             </Field>
           )}
-          <Field label="Schedule enabled">
+          <Field label={tr('schedules:schedule_enabled_8dd5f0')}>
             <input
               name="enabled"
               type="checkbox"
@@ -555,17 +604,16 @@ function ScheduleEditor({
           </Field>
         </fieldset>
         <p className="metadata">
-          Month-end dates retain their original anchor. Approximate amounts
-          never post automatically. Matching requires the same account,
-          currency, type and payee (or exact description), within the configured
-          date/amount tolerance.
+          {tr(
+            'schedules:month_end_dates_retain_their_original_anchor_app_502c2d',
+          )}
         </p>
         {(error || write.isError) && (
           <ErrorState text={error || write.error!.message} />
         )}
         <div className="flex gap-2 mt-4">
           <Button type="submit" disabled={write.isPending}>
-            Save schedule
+            {tr('schedules:save_schedule_f22020')}
           </Button>
           <Button
             type="button"
@@ -573,7 +621,7 @@ function ScheduleEditor({
             disabled={write.isPending}
             onClick={onSaved}
           >
-            Cancel
+            {tr('schedules:cancel_77dfd2')}
           </Button>
         </div>
       </form>
@@ -600,9 +648,9 @@ function OccurrenceEditor({
       <h2>
         {row.name} · {row.due_date}
       </h2>
-      <h3>Match existing transaction</h3>
+      <h3>{tr('schedules:match_existing_transaction_1098dd')}</h3>
       {candidates.isPending ? (
-        <LoadingState text="Finding candidates…" />
+        <LoadingState text={tr('schedules:finding_candidates__16782c')} />
       ) : candidates.isError ? (
         <ErrorState
           text={candidates.error.message}
@@ -611,22 +659,27 @@ function OccurrenceEditor({
       ) : (
         <>
           <p className="metadata">
-            Date window: ±{candidates.data.date_tolerance_days} days. Allowed
-            difference:{' '}
+            {' '}
+            {tr('schedules:date_window__efbf4e')}{' '}
+            {candidates.data.date_tolerance_days}{' '}
+            {tr('schedules:days_allowed_difference__533f3f')}{' '}
             <Money
               value={candidates.data.amount_tolerance}
               currency={row.currency}
-            />
-            . Nothing is matched automatically.
+            />{' '}
+            {tr('schedules:_nothing_is_matched_automatically__109c27')}{' '}
           </p>
           {candidates.data.ambiguous && (
             <p role="status">
-              Multiple plausible matches. Inspect and explicitly choose the
-              correct transaction.
+              {tr(
+                'schedules:multiple_plausible_matches_inspect_and_explicitl_e68901',
+              )}
             </p>
           )}
           {!candidates.data.candidates.length && (
-            <EmptyState title="No matching transactions" />
+            <EmptyState
+              title={tr('schedules:no_matching_transactions_084a31')}
+            />
           )}
           {candidates.data.candidates.map((t) => (
             <div className="automation-row" key={t.id}>
@@ -640,7 +693,9 @@ function OccurrenceEditor({
                 onClick={() => {
                   if (
                     window.confirm(
-                      'Associate this existing transaction? No ledger movement will be created.',
+                      tr(
+                        'dynamic:associate_this_existing_transaction_no_ledger_mo_335f3e',
+                      ),
                     )
                   )
                     write.mutate(
@@ -652,22 +707,25 @@ function OccurrenceEditor({
                     )
                 }}
               >
-                Confirm match
+                {tr('schedules:confirm_match_9bf512')}
               </Button>
             </div>
           ))}
         </>
       )}
-      <h3 className="mt-4">Create actual transaction</h3>
+      <h3 className="mt-4">
+        {tr('schedules:create_actual_transaction_a91919')}
+      </h3>
       <p className="metadata">
-        Only use this when the event has occurred and is not already recorded.
-        Confirm the actual amount, especially for estimates.
+        {tr(
+          'schedules:only_use_this_when_the_event_has_occurred_and_is_d79679',
+        )}
       </p>
       <form
         onSubmit={(e) => {
           e.preventDefault()
           setError('')
-          const form = new FormData(e.currentTarget)
+          const form = exactFormData(e.currentTarget)
           try {
             const data = {
               amount: moneyInput.parse(String(form.get('actual_amount'))),
@@ -675,7 +733,9 @@ function OccurrenceEditor({
             }
             if (
               window.confirm(
-                'Post this actual transaction and complete the occurrence? This changes the account balance.',
+                tr(
+                  'dynamic:post_this_actual_transaction_and_complete_the_oc_896a27',
+                ),
               )
             )
               write.mutate(
@@ -688,7 +748,7 @@ function OccurrenceEditor({
         }}
       >
         <fieldset disabled={write.isPending} className="filter-bar">
-          <Field label="Actual amount">
+          <Field label={tr('schedules:actual_amount_9f2a38')}>
             <input
               name="actual_amount"
               inputMode="decimal"
@@ -696,7 +756,7 @@ function OccurrenceEditor({
               defaultValue={row.amount_is_approximate ? '' : row.amount}
             />
           </Field>
-          <Field label="Actual date">
+          <Field label={tr('schedules:actual_date_3f7c9f')}>
             <input
               name="actual_date"
               type="date"
@@ -704,7 +764,9 @@ function OccurrenceEditor({
               defaultValue={row.due_date}
             />
           </Field>
-          <Button type="submit">Post actual transaction</Button>
+          <Button type="submit">
+            {tr('schedules:post_actual_transaction_698af5')}
+          </Button>
         </fieldset>
       </form>
       {(error || write.isError) && (
@@ -716,7 +778,7 @@ function OccurrenceEditor({
         variant="outline"
         onClick={onClose}
       >
-        Close occurrence
+        {tr('schedules:close_occurrence_4dc34c')}
       </Button>
     </section>
   )

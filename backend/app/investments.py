@@ -124,7 +124,7 @@ def validate_cash(session, account_id):
                 )
 
 
-def post(session, data):
+def post(session, data, *, fixed_income=False):
     existing = session.scalar(
         select(InvestmentActivity).where(InvestmentActivity.request_id == data.request_id)
     )
@@ -141,6 +141,13 @@ def post(session, data):
         asset = ledger.require(session, Asset, data.asset_id)
         if asset.currency != data.currency:
             raise HTTPException(422, "Cross-currency investment activities are unsupported")
+        if asset.asset_type == "BOND" and not fixed_income:
+            from app.fixed_income_models import FixedIncomeContract
+
+            if session.scalar(
+                select(FixedIncomeContract).where(FixedIncomeContract.asset_id == asset.id)
+            ):
+                raise HTTPException(422, "Use the fixed-income subscription/redemption workflow")
     row = InvestmentActivity(
         **data.model_dump(),
         sequence=(session.scalar(select(func.max(InvestmentActivity.sequence))) or 0) + 1,
@@ -156,6 +163,15 @@ def post(session, data):
 
 def void(session, activity_id):
     row = ledger.require(session, InvestmentActivity, activity_id)
+    if row.asset_id:
+        from app.fixed_income_models import FixedIncomeContract
+
+        if session.scalar(
+            select(FixedIncomeContract).where(FixedIncomeContract.asset_id == row.asset_id)
+        ):
+            raise HTTPException(
+                422, "Fixed-income correction audit is not supported; history is retained"
+            )
     if row.voided_at is None:
         row.voided_at = datetime.now(UTC)
         session.flush()
