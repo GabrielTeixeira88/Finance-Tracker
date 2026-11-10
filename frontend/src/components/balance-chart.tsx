@@ -1,3 +1,4 @@
+import { financialCurve } from '@/lib/chart-presentation'
 import { useChartMotion } from '@/lib/motion'
 import { formatDate } from '@/lib/money'
 import { t as tr } from '@/lib/i18n'
@@ -85,7 +86,8 @@ export function BalanceChart({
             }}
           />
           <Area
-            type="stepAfter"
+            type={financialCurve('ledger')}
+            connectNulls={false}
             dataKey="coordinate"
             stroke="var(--net-worth-chart)"
             strokeWidth={1.8}

@@ -70,11 +70,11 @@ function mount(missing = false) {
 }
 it('uses one historical response for exact ending value, chart and period metrics', async () => {
   const fetch = mount()
-  expect(await screen.findByText('R$1,250.12')).toBeInTheDocument()
+  expect(await screen.findByText('R$ 1.250,12')).toBeInTheDocument()
   expect(screen.getByTestId('historical-chart')).toHaveTextContent(
     '1250.123456',
   )
-  expect(screen.getByLabelText('R$50.123456 BRL')).toBeInTheDocument()
+  expect(screen.getByLabelText('R$ 50,12 BRL')).toBeInTheDocument()
   expect(fetch.mock.calls).toHaveLength(1)
   await userEvent.click(screen.getByRole('button', { name: '1M' }))
   await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
@@ -88,5 +88,5 @@ it('keeps missing historical ending value and return unavailable', async () => {
   mount(true)
   expect(await screen.findByText('Unavailable')).toBeInTheDocument()
   expect(screen.getByRole('status')).toHaveTextContent('coverage is incomplete')
-  expect(screen.queryByText('R$0.00')).not.toBeInTheDocument()
+  expect(screen.queryByText('R$ 0,00')).not.toBeInTheDocument()
 })

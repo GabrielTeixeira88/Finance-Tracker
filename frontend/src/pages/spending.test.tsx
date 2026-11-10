@@ -10,8 +10,10 @@ import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import { SpendingWorkspace } from './spending'
 import type { Account } from '@/lib/api'
-import { budgetFixture as fixture } from '@/test/fixtures/synthetic/budget'
-
+import {
+  editorFixture,
+  spendingFixture,
+} from '@/test/fixtures/synthetic/spending-workspace'
 const accounts: Account[] = [
   {
     id: 'a',
@@ -23,23 +25,38 @@ const accounts: Account[] = [
     institution: null,
   },
 ]
-const categories = [{ id: 'c', name: 'Synthetic Groceries' }]
-
+const categories = [
+  {
+    id: 'c',
+    name: 'Synthetic Groceries',
+    icon: 'ShoppingCart',
+    color: '#5989AB',
+  },
+]
 function setup(
   options: {
     empty?: boolean
     fail?: boolean
     pending?: boolean
     budgetSetup?: boolean
+    view?: 'budget' | 'insights'
+    stage?: string
+    start?: string
+    end?: string
   } = {},
 ) {
   window.history.replaceState(
     null,
     '',
-    '#/dashboard?view=spending&start=2026-09-01&end=2026-09-30' +
-      (options.budgetSetup ? '&detail=budget&setup=true' : ''),
+    '#/dashboard?view=spending&start=' +
+      (options.start ?? '2026-09-01') +
+      '&end=' +
+      (options.end ?? '2026-09-30') +
+      '&month=2026-09' +
+      (options.view ? '&detail=' + options.view : '') +
+      (options.budgetSetup ? '&detail=budget&setup=true' : '') +
+      (options.stage ? '&stage=' + options.stage : ''),
   )
-  const navigate = vi.fn()
   const fetch = vi.fn(async (path: string, init?: RequestInit) => {
     if (options.pending) return new Promise<Response>(() => {})
     if (options.fail)
@@ -47,33 +64,31 @@ function setup(
         status: 503,
       })
     if (init?.method) return new Response('{}')
-    if (path.startsWith('/api/transactions')) return new Response('[]')
-    const data = fixture()
-    if (path.startsWith('/api/spending/summary'))
-      return new Response(
-        JSON.stringify({
-          income: data.summary.income,
-          expenses: data.summary.expenses,
-          daily: options.empty ? [] : data.daily,
-          categories: options.empty
-            ? []
-            : data.categories.map((row) => ({
-                category_id: row.category_id,
-                spent: row.spent,
-              })),
-        }),
-      )
-    const month = new URL(path, 'http://local').searchParams.get('month')!
-    data.month = month
-    data.date_from = `${month}-01`
-    data.date_to = `${month}-30`
-    if (options.empty) {
-      data.categories = []
-      data.groups = []
-      data.daily = []
-      data.payees = []
-    }
-    return new Response(JSON.stringify(data))
+    if (
+      path.startsWith('/api/transactions') ||
+      path.startsWith('/api/life-events')
+    )
+      return new Response('[]')
+    if (path.startsWith('/api/spending/workspace'))
+      return new Response(JSON.stringify(spendingFixture(options.empty)))
+    const data = editorFixture(options.empty),
+      month =
+        new URL(path, 'http://local').searchParams.get('month') ?? '2026-09'
+    data.report.month = month
+    data.report.date_from = month + '-01'
+    data.report.date_to = new Date(
+      Number(month.slice(0, 4)),
+      Number(month.slice(5)),
+      0,
+      12,
+    )
+      .toISOString()
+      .slice(0, 10)
+    return new Response(
+      JSON.stringify(
+        path.startsWith('/api/budgets/workspace') ? data : data.report,
+      ),
+    )
   })
   vi.stubGlobal('fetch', fetch)
   vi.spyOn(window, 'confirm').mockReturnValue(true)
@@ -88,71 +103,68 @@ function setup(
       <SpendingWorkspace
         accounts={accounts}
         categories={categories}
-        onTransactions={navigate}
+        onTransactions={vi.fn()}
         initialMonth="2026-09"
       />
     </QueryClientProvider>,
   )
-  return { fetch, navigate }
+  return { fetch }
 }
-it('renders exact spending and drills into categories/days using backend filters', async () => {
-  const { navigate } = setup()
-  const categories = await screen.findAllByRole('button', {
-    name: /Synthetic Groceries/,
-  })
-  expect(categories).toHaveLength(1)
-  const category = categories[0]
-  expect(category).toHaveTextContent('R$650.123456')
-  await userEvent.click(category)
-  expect(navigate).toHaveBeenLastCalledWith({
-    currency: 'BRL',
-    spending_only: 'true',
-    date_from: '2026-09-01',
-    date_to: '2026-09-30',
-    category_id: 'c',
-  })
-  await userEvent.click(screen.getByRole('button', { name: /2026-09-10:/ }))
-  expect(navigate).toHaveBeenLastCalledWith({
-    currency: 'BRL',
-    spending_only: 'true',
-    date_from: '2026-09-10',
-    date_to: '2026-09-10',
-  })
-  await userEvent.click(screen.getByRole('button', { name: /Manage/ }))
-  const row = screen.getByRole('row', { name: /Synthetic Groceries/ })
-  expect(row).toHaveTextContent('Over target')
-  expect(row).toHaveTextContent('Rollover R$100.00')
-})
-it('keeps the selected month across views and supports year boundaries', async () => {
-  const { fetch } = setup()
+async function openTarget() {
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Expand group' }),
+  )
+  await userEvent.click(screen.getByRole('button', { name: 'Row options' }))
+  await userEvent.click(
+    await screen.findByRole('menuitem', {
+      name: 'Target details & appearance',
+    }),
+  )
+  return screen.findByRole('form', { name: 'Target editor' })
+}
+it('renders exact source spending rows and uses canonical category/date ledger filters', async () => {
+  setup()
   await screen.findByText('Where it went')
-  fireEvent.change(screen.getByLabelText('Budget month'), {
-    target: { value: '2026-01' },
-  })
+  await userEvent.click(screen.getByRole('button', { name: /Essentials/ }))
+  const link = screen.getByRole('link', { name: /Synthetic Groceries/ })
+  expect(link).toHaveTextContent('R$ 650,12')
+  expect(link).toHaveAttribute('href', expect.stringContaining('category_id=c'))
+  expect(link).toHaveAttribute(
+    'href',
+    expect.stringContaining('date_to=2026-09-30'),
+  )
+  await userEvent.click(screen.getByText('Exact chart values'))
+  const day = screen.getByRole('link', { name: '2026-09-10' })
+  expect(day).toHaveAttribute(
+    'href',
+    expect.stringContaining('date_from=2026-09-10'),
+  )
+  expect(within(day.closest('tr')!).getByText('R$ 650,12')).toBeInTheDocument()
+})
+it('keeps month context in source controls and crosses year boundaries', async () => {
+  const { fetch } = setup({ view: 'budget' })
+  const month = await screen.findByLabelText('Select month')
+  fireEvent.change(month, { target: { value: '2026-01' } })
   await userEvent.click(
     await screen.findByRole('button', { name: 'Previous month' }),
   )
   await waitFor(() =>
     expect(
-      fetch.mock.calls.some(([url]) => url.includes('month=2025-12')),
+      fetch.mock.calls.some(([path]) => path.includes('month=2025-12')),
     ).toBe(true),
   )
-  await userEvent.click(screen.getByRole('button', { name: /Insights/ }))
-  await userEvent.click(screen.getByLabelText('Choose dates'))
-  expect(screen.getByLabelText('Budget month')).toHaveValue('2025-12')
-  await userEvent.click(screen.getByRole('button', { name: 'Next month' }))
-  expect(screen.getByLabelText('Budget month')).toHaveValue('2026-01')
-})
-it('saves a month override with exact amount, group order and optional signed rollover', async () => {
-  const { fetch } = setup()
-  await screen.findByText('Where it went')
-  await userEvent.click(screen.getByRole('button', { name: /Manage/ }))
+  expect(await screen.findByLabelText('Select month')).toHaveValue('2025-12')
   await userEvent.click(
-    screen.getByRole('button', { name: 'Edit target Synthetic Groceries' }),
+    await screen.findByRole('button', { name: 'Next month' }),
   )
-  await userEvent.clear(screen.getByLabelText('Target amount (BRL)'))
+  expect(await screen.findByLabelText('Select month')).toHaveValue('2026-01')
+})
+it('retains exact advanced month overrides, order, active state and signed-rollover choice', async () => {
+  const { fetch } = setup({ view: 'budget' })
+  const form = await openTarget()
+  await userEvent.clear(within(form).getByLabelText('Target amount (BRL)'))
   await userEvent.type(
-    screen.getByLabelText('Target amount (BRL)'),
+    within(form).getByLabelText('Target amount (BRL)'),
     '9007199254740993.123456',
   )
   await userEvent.selectOptions(
@@ -165,91 +177,105 @@ it('saves a month override with exact amount, group order and optional signed ro
   await userEvent.click(screen.getByRole('button', { name: 'Save target' }))
   await waitFor(() =>
     expect(
-      fetch.mock.calls.some(
-        ([url, init]) =>
-          url === '/api/budgets/targets' &&
-          JSON.parse(String(init?.body)).amount === '9007199254740993.123456',
-      ),
-    ).toBe(true),
+      fetch.mock.calls.find(([path]) => path === '/api/budgets/targets'),
+    ).toBeDefined(),
   )
-  const data = JSON.parse(
+  const payload = JSON.parse(
     String(
-      fetch.mock.calls.find(([url]) => url === '/api/budgets/targets')![1]!
-        .body,
+      fetch.mock.calls.find(([path]) => path === '/api/budgets/targets')![1]
+        ?.body,
     ),
   )
-  expect(data).toMatchObject({
+  expect(payload).toMatchObject({
+    amount: '9007199254740993.123456',
     scope: 'month',
     month: '2026-09',
     group_id: 'g',
     rollover_enabled: false,
+    active: true,
   })
 })
-it('creates a target, edits a group and confirms copying only targets', async () => {
-  const { fetch } = setup()
-  await screen.findByText('Where it went')
-  await userEvent.click(screen.getByRole('button', { name: /Manage/ }))
-  await userEvent.click(screen.getByRole('button', { name: 'Add target' }))
-  await userEvent.type(screen.getByLabelText('Target amount (BRL)'), '700')
+it('creates a target and confirms previous-month copying without posting cash', async () => {
+  const { fetch } = setup({ view: 'budget' })
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Add target' }),
+  )
+  await userEvent.type(
+    await screen.findByLabelText('Target amount (BRL)'),
+    '700',
+  )
   await userEvent.click(screen.getByRole('button', { name: 'Save target' }))
   await waitFor(() =>
     expect(
       screen.queryByRole('form', { name: 'Target editor' }),
     ).not.toBeInTheDocument(),
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Groups' }))
-  await userEvent.selectOptions(screen.getByLabelText('Edit group'), 'g')
-  await userEvent.clear(screen.getByLabelText('Group name'))
-  await userEvent.type(
-    screen.getByLabelText('Group name'),
-    'Synthetic essential spending',
-  )
-  await userEvent.click(screen.getByRole('button', { name: 'Save group' }))
-  await waitFor(() =>
-    expect(
-      fetch.mock.calls.some(
-        ([url, init]) =>
-          url === '/api/budgets/groups/g' && init?.method === 'PUT',
-      ),
-    ).toBe(true),
-  )
   await userEvent.click(
-    screen.getByLabelText('Replace existing month overrides'),
+    await screen.findByLabelText('Replace existing overrides'),
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Copy targets' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Copy plan' }))
   expect(window.confirm).toHaveBeenCalled()
   await waitFor(() =>
     expect(
       fetch.mock.calls.some(
-        ([url, init]) =>
-          url === '/api/budgets/copy-month' &&
+        ([path, init]) =>
+          path === '/api/budgets/copy-month' &&
           JSON.parse(String(init?.body)).replace_existing,
       ),
     ).toBe(true),
   )
+  expect(
+    fetch.mock.calls.every(
+      ([path, init]) => !init?.method || path.startsWith('/api/budgets/'),
+    ),
+  ).toBe(true)
 })
-it('exposes insights with payee drill-down and exact cash-flow history', async () => {
-  const { navigate } = setup()
-  await screen.findByText('Where it went')
-  await userEvent.click(screen.getByRole('button', { name: /Insights/ }))
-  await userEvent.click(screen.getByRole('button', { name: 'What changed' }))
-  expect(window.location.hash).toContain('stage=changed')
-  const table = screen.getByRole('table')
-  expect(within(table).getByText('R$349.876544')).toBeInTheDocument()
+it('edits source group name, appearance and ordering through the existing group API', async () => {
+  const { fetch } = setup({ budgetSetup: true })
   await userEvent.click(
-    screen.getByRole('button', { name: /Synthetic Market/ }),
+    await screen.findByRole('button', { name: 'Edit Essentials' }),
   )
-  expect(navigate).toHaveBeenLastCalledWith(
-    expect.objectContaining({ payee_id: 'p', spending_only: 'true' }),
+  const dialog = screen.getByRole('dialog')
+  await userEvent.clear(within(dialog).getByLabelText('Name'))
+  await userEvent.type(
+    within(dialog).getByLabelText('Name'),
+    'Essential spending',
   )
+  fireEvent.change(within(dialog).getByLabelText('Group order'), {
+    target: { value: '3' },
+  })
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
+  await waitFor(() =>
+    expect(
+      fetch.mock.calls.find(([path]) => path === '/api/budgets/groups/g'),
+    ).toBeDefined(),
+  )
+  expect(
+    JSON.parse(
+      String(
+        fetch.mock.calls.find(([path]) => path === '/api/budgets/groups/g')![1]
+          ?.body,
+      ),
+    ),
+  ).toMatchObject({ name: 'Essential spending', sort_order: 3 })
 })
-it('shows compact useful empty states', async () => {
+it('exposes source change tables, exact comparisons and preserved payee drilldown', async () => {
+  setup({ view: 'insights', stage: 'changed' })
+  await screen.findByRole('heading', { name: /Category details/i })
+  const table = screen.getByRole('table')
+  expect(within(table).getByText('2026-08-02 — 2026-08-31')).toBeInTheDocument()
+  expect(within(table).getByText('R$ 650,12')).toBeInTheDocument()
+  expect(within(table).getByText('R$ 400,00')).toBeInTheDocument()
+  await userEvent.click(screen.getByText('Payee spending'))
+  expect(
+    screen.getByRole('link', { name: /Synthetic Market/ }),
+  ).toHaveAttribute('href', expect.stringContaining('payee_id=p'))
+})
+it('shows useful empty states without fake financial content', async () => {
   setup({ empty: true })
   expect(
-    await screen.findByText('No spending in this period'),
+    await screen.findByText(/No categorized spending/i),
   ).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: /Manage/ }))
-  expect(screen.getByText('No monthly targets yet')).toBeInTheDocument()
 })
 it('shows recoverable report errors', async () => {
   setup({ fail: true })
@@ -258,45 +284,59 @@ it('shows recoverable report errors', async () => {
   )
   expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
 })
-it('shows loading without empty financial values', () => {
+it('shows loading without zero financial values', () => {
   setup({ pending: true })
   expect(screen.getByRole('status')).toHaveTextContent('Calculating spending')
   expect(screen.queryByText('Where it went')).not.toBeInTheDocument()
 })
-
-it('exposes exact bar values on keyboard focus and dismisses the tooltip with Escape', async () => {
+it('preserves exact keyboard-accessible chart values and scoped ledger links', async () => {
   setup()
-  const day = await screen.findByRole('button', { name: /2026-09-10:/ })
-  fireEvent.focus(day)
-  expect(screen.getByRole('tooltip')).toHaveTextContent('R$650.123456')
-  expect(day).toHaveAttribute('aria-describedby', 'spending-chart-tooltip')
-  fireEvent.keyDown(day, { key: 'Escape' })
-  expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
-})
-
-it('keeps existing target edits one-month scoped even when opened from ongoing budget setup', async () => {
-  setup({ budgetSetup: true })
-  await userEvent.click(
-    await screen.findByRole('button', {
-      name: 'Edit target Synthetic Groceries',
-    }),
+  await screen.findByText('Exact chart values')
+  const summary = screen.getByText('Exact chart values')
+  summary.focus()
+  fireEvent.keyDown(summary, { key: 'Enter' })
+  fireEvent.click(summary)
+  const link = screen.getByRole('link', { name: '2026-09-10' })
+  link.focus()
+  expect(link).toHaveFocus()
+  expect(link).toHaveAttribute(
+    'href',
+    expect.stringContaining('date_to=2026-09-10'),
   )
-  expect(screen.getByLabelText('Target applies to')).toHaveValue('month')
-  await userEvent.click(screen.getByRole('button', { name: 'Close details' }))
-  await userEvent.click(screen.getByRole('button', { name: 'Add target' }))
-  expect(screen.getByLabelText('Target applies to')).toHaveValue('default')
 })
-
-it('filters the spending plan without changing ledger data or losing its route context', async () => {
-  const { fetch } = setup()
-  await screen.findByText('Where it went')
-  await userEvent.click(screen.getByRole('button', { name: /Insights/ }))
+it('retains one-month scope for existing advanced edits, and default scope for new setup targets', async () => {
+  setup({ budgetSetup: true })
+  await openTarget()
+  expect(screen.getByLabelText('Target applies to')).toHaveValue('month')
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Add target' }))
+  expect(await screen.findByLabelText('Target applies to')).toHaveValue(
+    'default',
+  )
+})
+it('filters the source spending plan in URL state without a ledger mutation', async () => {
+  const { fetch } = setup({ view: 'insights' })
   await userEvent.click(
-    await screen.findByRole('button', { name: /^Over target/ }),
+    await screen.findByRole('button', { name: 'Over target' }),
   )
   expect(window.location.hash).toContain('plan_filter=over')
-  const plan = screen.getByRole('table', { name: 'Spending plan' })
-  expect(within(plan).getByText('Synthetic Groceries')).toBeVisible()
-  expect(within(plan).queryByText('Uncategorized')).not.toBeInTheDocument()
-  expect(fetch.mock.calls.every(([, options]) => !options?.method)).toBe(true)
+  const table = screen.getByRole('table')
+  expect(within(table).getByText('Synthetic Groceries')).toBeVisible()
+  expect(fetch.mock.calls.every(([, init]) => !init?.method)).toBe(true)
+})
+it('keeps budget comparison amounts and drilldowns on the labeled calendar month for a custom period', async () => {
+  setup({ view: 'insights', start: '2026-09-01', end: '2026-09-15' })
+  await screen.findByText(/whole-month 2026-09 targets/)
+  const table = screen.getByRole('table')
+  expect(within(table).getAllByText('R$ 650,12').length).toBeGreaterThan(0)
+  await userEvent.click(within(table).getByText('Synthetic Groceries'))
+  expect(window.location.hash).toContain('date_from=2026-09-01')
+  expect(window.location.hash).toContain('date_to=2026-09-30')
+  expect(window.location.hash).toContain('category_id=c')
+})
+it('renders source signal and stage cards using real spending comparisons', async () => {
+  setup()
+  expect(await screen.findByText('Worth a look')).toBeInTheDocument()
+  expect(screen.getAllByText(/62,53%/).length).toBeGreaterThan(0)
+  expect(screen.getByRole('link', { name: /Where I am/ })).toBeInTheDocument()
 })

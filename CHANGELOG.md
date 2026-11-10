@@ -6,7 +6,37 @@ of independently published releases or tags. See [the roadmap](docs/ROADMAP.md).
 
 ## [Unreleased]
 
-No v0.14 implementation yet.
+No additional milestone changes recorded.
+
+## [0.14.0] - 2026-11-10
+
+Finalized source milestone; no GitHub Release or version tag is created.
+
+### Added
+
+- Source-adapted Dashboard, Holdings/Activities, Spending/Budgets/Insights,
+  Goals/Planner, Performance/Portfolio Insights/Income and grouped Settings.
+- Local allocation targets/drift (Stage A), account-group metadata, whitelisted
+  exports and maintenance-only personal backup/restore.
+- A unified BRL demo with official fixed-income observations, fictional securities,
+  paid income, seven goals and additive editable examples.
+
+### Stabilization
+
+- Application-wide isolated browser inventory, viewport/locale captures and source
+  provenance verification; see [audit](docs/AUDIT_V014.md).
+- Corrected appearance landmarks, export dataset translations, Dashboard gutters
+  and stale validation contracts; added non-posting demo schedule/classifications.
+- Corrected mobile security-detail tab overflow, full provenance-hash wrapping and
+  manual-asset enum display; retained exact API identities and financial values.
+- Patched the Vitest development toolchain to 4.1.12. Production dependency audit
+  is clear; remaining moderate lint-tool advisories are recorded in the audit.
+- Owner-approved AGPL-3.0-only for original code, distinct third-party terms and
+  accessible legal/source notices. Uncertain goal-cover illustrations are excluded.
+- The remaining ten moderate development-only entries (one minimatch advisory)
+  are explicitly accepted for this merge; the vulnerability is not declared fixed.
+- Previously completed tests/audits are retained as historical evidence. No suites
+  were rerun for finalization, at the owner's request.
 
 ## [0.13.0] - 2026-11-04
 

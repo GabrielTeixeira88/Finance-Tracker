@@ -90,7 +90,7 @@ it('shows normalized payees, preserved raw descriptions, review state and exact 
     within(entry).getByText('UBER *TRIP HELP.UBER.COM'),
   ).toBeInTheDocument()
   expect(within(entry).getByText('Needs review')).toBeInTheDocument()
-  expect(within(entry).getByText('−R$35.123456')).toHaveClass('negative')
+  expect(within(entry).getByText('\u2212R$ 35,12')).toHaveClass('negative')
   expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled()
 })
 
@@ -273,7 +273,7 @@ it('keeps transfer amounts neutral and limits edits/bulk actions to linked revie
     },
   ])
   await screen.findByText('Savings transfer')
-  expect(screen.getByText('R$35.123456')).toHaveClass('neutral')
+  expect(screen.getByText('R$ 35,12')).toHaveClass('neutral')
   await userEvent.click(screen.getByLabelText('Select Savings transfer'))
   expect(screen.getByRole('option', { name: 'Assign category' })).toBeDisabled()
   expect(screen.getByRole('option', { name: 'Assign payee' })).toBeDisabled()

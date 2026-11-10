@@ -1,5 +1,5 @@
 from datetime import date
-from decimal import localcontext
+from decimal import Decimal, localcontext
 from typing import Literal
 from uuid import UUID
 
@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import Field
 from sqlalchemy import select
 
-from app import ledger, wealth
+from app import goal_workspace, ledger, wealth
 from app.investments import wire
 from app.routes import DB
 from app.schemas import Currency, Input, Name, OpeningMoney
@@ -60,10 +60,42 @@ class GoalInput(Input):
     start_date: date
     deadline: date | None = None
     notes: str = Field(default="", max_length=2000)
+    goal_type: Literal["education", "home", "car", "wedding", "custom_save_up"] = "custom_save_up"
+    monthly: OpeningMoney = Decimal(0)
 
 
 class GoalStatus(Input):
     status: Literal["ACTIVE", "PAUSED", "COMPLETED", "ARCHIVED"]
+    effective_date: date | None = None
+
+
+class GoalPlanInput(Input):
+    target: OpeningMoney
+    deadline: date | None = None
+    monthly: OpeningMoney
+    goal_type: Literal["education", "home", "car", "wedding", "custom_save_up"] = "custom_save_up"
+
+
+class GoalFundingRow(Input):
+    account_id: UUID
+    amount: OpeningMoney
+
+
+class GoalFundingInput(Input):
+    effective_date: date
+    allocations: list[GoalFundingRow] = Field(default_factory=list, max_length=100)
+    investment_account_id: UUID | None = None
+
+
+class GoalDeleteInput(Input):
+    effective_date: date | None = None
+
+
+class GoalMetadataInput(Input):
+    name: Name
+    notes: str = Field(default="", max_length=2000)
+    status: Literal["ACTIVE", "PAUSED", "COMPLETED", "ARCHIVED"]
+    effective_date: date | None = None
 
 
 class GoalEntryInput(ObservationInput):
@@ -72,7 +104,11 @@ class GoalEntryInput(ObservationInput):
 
 
 @router.get("/net-worth/history")
-def history(db: DB, start: date, end: date, currency: Currency = "BRL"):
+def history(db: DB, start: date, end: date, currency: Currency = "BRL", details: bool = False):
+    if details:
+        from app.net_worth_view import history_view
+
+        return wire(history_view(db, start, end, currency))
     return wire(wealth.net_worth(db, start, end, currency))
 
 
@@ -171,18 +207,20 @@ def goals(db: DB, as_of: date | None = None):
         [
             wealth.goal_detail(db, g, as_of or date.today())
             for g in db.scalars(select(Goal).order_by(Goal.name))
+            if not goal_workspace.deleted(db, g)
         ]
     )
 
 
 @router.post("/goals", status_code=201)
 def create_goal(data: GoalInput, db: DB):
-    record = Goal(**data.model_dump(), status="ACTIVE")
+    record = Goal(**data.model_dump(exclude={"goal_type", "monthly"}), status="ACTIVE")
     wealth.valid_day(record.start_date)
     if record.deadline and record.deadline < record.start_date:
         raise HTTPException(422, "Deadline precedes goal start")
     db.add(record)
     db.flush()
+    goal_workspace.save_plan(db, record, data.goal_type, data.monthly)
     return wire(record)
 
 
@@ -196,13 +234,16 @@ def goal(
     record_id: UUID,
     db: DB,
     as_of: date | None = None,
-    monthly: str = Query(default="0", pattern=r"^\d{1,18}(\.\d{1,6})?$"),
+    monthly: str | None = Query(default=None, pattern=r"^\d{1,18}(\.\d{1,6})?$"),
 ):
     from decimal import Decimal
 
     return wire(
         wealth.goal_detail(
-            db, ledger.require(db, Goal, record_id), as_of or date.today(), Decimal(monthly)
+            db,
+            ledger.require(db, Goal, record_id),
+            as_of or date.today(),
+            Decimal(monthly) if monthly is not None else None,
         )
     )
 
@@ -210,11 +251,19 @@ def goal(
 @router.patch("/goals/{record_id}")
 def edit_goal(record_id: UUID, data: GoalInput, db: DB):
     record = ledger.require(db, Goal, record_id)
+    goal_workspace.require_editable(db, record)
     if (record.mode, record.currency) != (data.mode, data.currency):
         raise HTTPException(409, "Tracking mode and currency are immutable")
-    for key, value in data.model_dump().items():
+    for key, value in data.model_dump(exclude={"goal_type", "monthly"}).items():
         setattr(record, key, value)
     wealth.check_goal(db, record)
+    if {"goal_type", "monthly"} & data.model_fields_set:
+        goal_workspace.save_plan(
+            db,
+            record,
+            data.goal_type if "goal_type" in data.model_fields_set else None,
+            data.monthly if "monthly" in data.model_fields_set else None,
+        )
     db.flush()
     return wire(record)
 
@@ -222,16 +271,88 @@ def edit_goal(record_id: UUID, data: GoalInput, db: DB):
 @router.post("/goals/{record_id}/status")
 def goal_status(record_id: UUID, data: GoalStatus, db: DB):
     record = ledger.require(db, Goal, record_id)
-    if record.status == "ARCHIVED":
-        raise HTTPException(
-            409, "Archived goals retain their historical release date; create a new goal"
+    return wire(
+        goal_workspace.transition(db, record, data.status, data.effective_date or date.today())
+    )
+
+
+@router.delete("/goals/{record_id}")
+def delete_goal(record_id: UUID, data: GoalDeleteInput, db: DB):
+    record = ledger.require(db, Goal, record_id)
+    return wire(
+        goal_workspace.transition(db, record, "DELETED", data.effective_date or date.today())
+    )
+
+
+@router.post("/goals/{record_id}/preview")
+def preview_goal(record_id: UUID, data: GoalPlanInput, db: DB, as_of: date | None = None):
+    return wire(
+        goal_workspace.preview(
+            db,
+            ledger.require(db, Goal, record_id),
+            as_of or date.today(),
+            data.target,
+            data.deadline,
+            data.monthly,
         )
-    record.status = data.status
-    record.archived_date = date.today() if data.status == "ARCHIVED" else None
-    with localcontext() as ctx:
-        ctx.prec = 60
-        wealth.validate_progress(db, record)
+    )
+
+
+@router.put("/goals/{record_id}/plan")
+def save_goal_plan(record_id: UUID, data: GoalPlanInput, db: DB):
+    record = ledger.require(db, Goal, record_id)
+    goal_workspace.require_editable(db, record)
+    record.target, record.deadline = data.target, data.deadline
+    wealth.check_goal(db, record)
+    return wire(goal_workspace.save_plan(db, record, data.goal_type, data.monthly))
+
+
+@router.patch("/goals/{record_id}/metadata")
+def save_goal_metadata(record_id: UUID, data: GoalMetadataInput, db: DB):
+    record = ledger.require(db, Goal, record_id)
+    goal_workspace.require_editable(db, record)
+    record.name, record.notes = data.name, data.notes
+    goal_workspace.transition(db, record, data.status, data.effective_date or date.today())
     return wire(record)
+
+
+@router.put("/goals/{record_id}/funding")
+def save_goal_funding(record_id: UUID, data: GoalFundingInput, db: DB):
+    record = ledger.require(db, Goal, record_id)
+    goal_workspace.require_editable(db, record)
+    if data.investment_account_id:
+        if data.allocations:
+            raise HTTPException(422, "Choose whole investment funding or fixed cash allocations")
+        return wire(
+            wealth.reserve_investment_account(
+                db, record, data.investment_account_id, data.effective_date
+            )
+        )
+    if record.mode != "ACCOUNT" or not data.allocations:
+        raise HTTPException(422, "Choose fixed allocations for an account-funded goal")
+    ids = [row.account_id for row in data.allocations]
+    if len(ids) != len(set(ids)):
+        raise HTTPException(422, "Select each account once")
+    for row in wealth.goal_entries(db, record):
+        if (
+            row.account_id in ids
+            and row.effective_date == data.effective_date
+            and not row.voided_at
+        ):
+            wealth.void_record(row, "Explicit goal funding editor correction")
+    with localcontext() as context:
+        context.prec = 60
+        for allocation in data.allocations:
+            wealth.add_goal_entry(
+                db,
+                record,
+                GoalEntryInput(
+                    effective_date=data.effective_date,
+                    amount=allocation.amount,
+                    account_id=allocation.account_id,
+                ),
+            )
+    return wire(wealth.goal_detail(db, record, data.effective_date))
 
 
 @router.post("/goals/{record_id}/entries", status_code=201)
@@ -244,6 +365,7 @@ def goal_entry(record_id: UUID, data: GoalEntryInput, db: DB):
 @router.post("/goal-entries/{record_id}/void")
 def void_entry(record_id: UUID, data: VoidInput, db: DB):
     record = ledger.require(db, GoalEntry, record_id)
+    goal_workspace.require_editable(db, ledger.require(db, Goal, record.goal_id))
     wealth.void_record(record, data.reason)
     with localcontext() as ctx:
         ctx.prec = 60

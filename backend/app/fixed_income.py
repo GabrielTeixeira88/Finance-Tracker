@@ -414,12 +414,22 @@ def contract_history(session, contract, start, end):
                 else None
             )
             principal = p["cost_basis"] if p else ZERO
+            estimate = (
+                tax_estimate(principal, value, (day - contract.settlement_date).days)
+                if value is not None
+                else None
+            )
             points.append(
                 {
                     "date": day,
                     "principal": principal,
                     "value": value,
                     "gross_interest": value - principal if value is not None else None,
+                    "estimated_net_earnings": estimate["estimated_net"] - principal
+                    if estimate
+                    else None,
+                    "income_tax": estimate["income_tax"] if estimate else None,
+                    "iof": estimate["iof"] if estimate else None,
                     "cdi_return_percent": (benchmark - ONE) * 100
                     if benchmark is not None
                     else None,

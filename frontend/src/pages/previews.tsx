@@ -28,8 +28,7 @@ export default function Preview({
   page: PreviewPage
   navigate: Navigate
 }) {
-  const { demo, period, setPeriod, result, series, setCurrency } =
-    useHistory('1Y')
+  const { demo, period, setPeriod, result, series } = useHistory('1Y')
   const illustrative = page === 'Performance'
   const fixture = demo.data?.enabled ? demo.data.preview : null
   return (
@@ -79,20 +78,6 @@ export default function Preview({
           {!illustrative && (
             <div className="preview-controls">
               <DateRangeTabs value={period} onChange={setPeriod} />
-              {series && result.data.series.length > 1 && (
-                <label className="field">
-                  {' '}
-                  {tr('previews:currency_e070de')}{' '}
-                  <select
-                    value={series.currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                  >
-                    {result.data.series.map((s) => (
-                      <option key={s.currency}>{s.currency}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
             </div>
           )}
           {page === 'Performance' && fixture && (

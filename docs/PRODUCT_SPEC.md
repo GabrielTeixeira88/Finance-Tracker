@@ -11,7 +11,8 @@ insights and goal glide paths. No public deployment is introduced. See
 
 Supported behavior and limitations are defined in [fixed income](FIXED_INCOME.md),
 [Life Events/planning](LIFE_EVENTS.md) and the [page parity audit](WEALTHFOLIO_PARITY_v0.13.md).
-Allocation targets, rebalancing, AI, retirement/FIRE and tax-aware goal funding remain excluded.
+Stage A allocation targets/tolerance/drift are implemented in v0.14. Rebalancing worksheets/trade planning, AI, retirement/FIRE and
+tax-aware goal funding remain excluded or explicitly postponed.
 
 Separately authorized on 2026-10-30: optional Pluggy/MeuPluggy read-only connections,
 local provider evidence and reviewed bank/investment ingestion. Pluggy processes
@@ -26,7 +27,7 @@ holdings filtering; goal remaining values and advanced budget target disclosure.
 Existing financial engines and Reports' preview boundary remain unchanged.
 See [the audit](UX_AUDIT_v0.11.md) for evidence and remaining presentation debt.
 
-Current release scope: **v0.13.0 - Product Refinements & Brazilian Historical Demo**. Next: **v0.14.0 - Frontend Refinement** (not implemented). See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_13_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
+Current finalized source milestone: **v0.14.0 - Frontend Integration and Stabilization**. No v0.14 tag or GitHub Release is created; see [finalization](FINALIZATION_V014.md). See [net-worth and goals contracts](NET_WORTH_GOALS.md), [release audit](RELEASE_0_13_0.md) and [version mapping](ROADMAP.md). Historical phase labels below describe prior implementation checkpoints.
 
 Finance Tracker is a single-user, offline-capable local finance application. Financial
 records stay in a local SQLite database. No authentication, cloud persistence, telemetry,
@@ -227,3 +228,40 @@ requires authorized local setup. The retired household remains a regression fixt
 Reports remains a preview. See [demo guide](DEMO.md), [walkthrough](PORTFOLIO_WALKTHROUGH.md)
 and [validation boundaries](DEMO_READINESS.md). v0.13.0 refines the local showcase; cross-platform and live-provider validation
 remain explicit limitations in the release report.
+
+
+## Unreleased v0.14 Performance and Insights
+
+Performance retains exact TWR/XIRR and adds read-only annualized TWR, log-return
+volatility and flow-adjusted drawdown. Users can compare existing accounts and
+cached price-only references, inspect exact data/gain-loss reconciliation, explore
+cash-inclusive classifications and view observed daily holding changes. Income
+continues to distinguish paid distributions from outstanding fixed-income accrual.
+
+Allocation targets are local planning definitions with exact percentages, labeled
+scope and absolute/hybrid tolerance bands. Drift is a read-only comparison, not a
+trade recommendation. Incomplete valuations remain unavailable. There is no
+rebalancing worksheet, full FX/trading attribution, ETF look-through or named
+portfolio engine. The existing unified demo now has an additive fictional target;
+its official and simulated observations remain distinct and no new cash is posted.
+See [the current coverage and validation](PERFORMANCE_INSIGHTS_V014.md).
+
+## Settings consolidation (unreleased v0.14)
+
+Settings now groups General/Appearance, Accounts/Account groups/Spending,
+Securities/Classifications/Backup & export, optional connections and About.
+General is the sole reporting-currency control; financial-page selectors remain
+absent. Existing original-currency record forms and monthly target semantics remain.
+Local backups and maintenance-only confirmed restore are implemented separately from
+demo reset. Category hierarchy, event-type catalogs, audited FX edits, generic quote
+imports/corrections, provider priority engines, contribution limits, planned income
+and manual starting rollover are postponed by the latest user decision.
+[Coverage and safeguards](SETTINGS_V014.md).
+
+## Current stabilization evidence
+
+See [v0.14 application audit](AUDIT_V014.md) for the implemented screen inventory,
+source comparisons and remaining release gates. The unified demo includes official
+fixed-income observations and distinctly labeled simulated securities in one BRL
+household ledger. Category hierarchies, planned income, manual starting rollover,
+full attribution, ETF look-through and rebalancing engines remain postponed.

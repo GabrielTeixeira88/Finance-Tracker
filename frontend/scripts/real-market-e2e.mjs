@@ -1,3 +1,4 @@
+import { selectDemoFixture } from './demo-fixture-selection.mjs'
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { mkdir, writeFile } from 'node:fs/promises'
@@ -9,16 +10,9 @@ export async function checkRealMarket(page, origin, output) {
   await page.goto(origin)
   const initialRuntime = await (await fetch(`${origin}/api/runtime`)).json()
   const legacyFixture = initialRuntime.scenario === 'synthetic'
-  if (legacyFixture) {
-    await page.locator('.demo-menu > summary').click()
-    await page.getByLabel('Demo scenario').selectOption('real-market-br')
-  } else {
-    assert.deepEqual(
-      initialRuntime.scenarios.map((s) => s.id),
-      ['real-market-br'],
-    )
-    assert.equal(await page.getByLabel('Demo scenario').count(), 0)
-  }
+  if (legacyFixture) await selectDemoFixture(page, origin, 'real-market-br')
+  assert.equal(await page.getByLabel('Demo scenario').count(), 0)
+  await page.goto(origin + '/#/investments')
   await page
     .getByText(/Historical simulation: actual market observations/)
     .waitFor()
@@ -152,6 +146,7 @@ export async function checkRealMarket(page, origin, output) {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.locator('.demo-menu > summary').click()
   await page.getByRole('button', { name: 'Reset demo', exact: true }).click()
+  await page.goto(origin + '/#/investments')
   await page
     .getByText(/Historical simulation: actual market observations/)
     .waitFor()
@@ -161,8 +156,7 @@ export async function checkRealMarket(page, origin, output) {
     evidence,
   )
   if (legacyFixture) {
-    await page.locator('.demo-menu > summary').click()
-    await page.getByLabel('Demo scenario').selectOption('synthetic')
+    await selectDemoFixture(page, origin, 'synthetic')
     await page.waitForLoadState('networkidle')
     assert.equal(
       (await (await fetch(`${origin}/api/runtime`)).json()).scenario,

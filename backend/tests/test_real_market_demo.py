@@ -149,7 +149,7 @@ def test_caixinha_lots_treasury_portfolio_networth_and_goal(market):
     assert detail["history"][0]["value"] == 1000
     assert detail["history"][-1]["value"] == Decimal(c["gross_value"])
     before = investments.wire(wealth.net_worth(market, END, END, "BRL"))
-    assert Decimal(before["points"][0]["value"]) == Decimal("149890.182600")
+    assert Decimal(before["points"][0]["value"]) == Decimal("527890.182600")
     assert wealth.goal_progress(market, goal, date(2024, 12, 1))[0] == 0
 
 
@@ -511,15 +511,20 @@ def test_official_verifier_compares_dated_observations_without_overwriting():
         verify(corrected)
 
 
-def test_public_demo_defaults_to_brazil_and_cannot_select_legacy_holdings(tmp_path, monkeypatch):
+def test_explicit_historical_fixture_cannot_select_legacy_holdings(tmp_path, monkeypatch):
     monkeypatch.setattr("app.demo.real_market.load_etfs", lambda: None)
     monkeypatch.setattr("app.demo.real_market_snapshot.LOCAL_ETF", tmp_path / "no-export.json")
     normal = tmp_path / "normal.db"
-    app = create_demo_app(normal, tmp_path / "demo")
+    app = create_demo_app(normal, tmp_path / "demo", scenario="real-market-br")
     with TestClient(app, base_url="http://127.0.0.1:8001") as client:
         runtime = client.get("/api/runtime").json()
         assert runtime["scenario"] == "real-market-br"
-        assert [r["id"] for r in runtime["scenarios"]] == ["real-market-br"]
+        assert [r["id"] for r in runtime["scenarios"]] == [
+            "real-market-br",
+            "etf-showcase",
+            "income-showcase",
+            "income-portfolio",
+        ]
         accounts = client.get("/api/accounts").json()
         assert {r["name"] for r in accounts} == {
             "Checking",
@@ -588,3 +593,27 @@ def test_household_history_populates_spending_and_shared_goals_without_foreign_i
         market.scalars(select(FinancialAccount.id).where(FinancialAccount.type == "INVESTMENT"))
     )
     assert all(r.account_id not in investment_ids for r in expenses)
+
+
+def test_house_and_car_are_dated_assets_without_cash_postings(market):
+    from app.wealth_models import ManualPosition, PositionObservation
+
+    positions = list(market.scalars(select(ManualPosition)))
+    assert {(p.name, p.kind, p.category, p.currency) for p in positions} == {
+        ("House", "ASSET", "REAL_ESTATE", "BRL"),
+        ("Car", "ASSET", "VEHICLE", "BRL"),
+    }
+    observations = list(market.scalars(select(PositionObservation)))
+    assert len(observations) == 8
+    first = wealth.net_worth(market, START, START, "BRL")
+    last = wealth.net_worth(market, END, END, "BRL")
+
+    def manual(report):
+        return sum((c["value"] for c in report["components"] if c["source"] == "ASSET"), Decimal(0))
+
+    assert manual(first) == Decimal("345000")
+    assert manual(last) == Decimal("378000")
+    assert not any(t.description in {"House", "Car"} for t in market.scalars(select(Transaction)))
+    original = [(o.id, o.amount) for o in observations]
+    assert seed(market) is False
+    assert [(o.id, o.amount) for o in market.scalars(select(PositionObservation))] == original

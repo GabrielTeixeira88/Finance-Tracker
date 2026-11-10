@@ -1,0 +1,80 @@
+import { netWorthViewSchema } from '@/lib/net-worth-view'
+export const syntheticReport = () =>
+  netWorthViewSchema.parse({
+    currency: 'BRL',
+    start: '2025-01-01',
+    end: '2025-01-31',
+    value: '8000',
+    assets: '10000',
+    liabilities: '2000',
+    known_value: '8000',
+    complete: true,
+    change: '500',
+    debt_to_assets: '0.2',
+    liquid_share: '0.5',
+    method: 'Synthetic test',
+    categories: [
+      {
+        category: 'CHECKING',
+        kind: 'ASSET',
+        value: '5000',
+        known_value: '5000',
+        complete: true,
+      },
+      {
+        category: 'SAVINGS',
+        kind: 'ASSET',
+        value: '5000',
+        known_value: '5000',
+        complete: true,
+      },
+      {
+        category: 'MORTGAGE',
+        kind: 'LIABILITY',
+        value: '2000',
+        known_value: '2000',
+        complete: true,
+      },
+    ],
+    points: [
+      {
+        date: '2025-01-01',
+        value: '7500',
+        known_value: '7500',
+        complete: true,
+        assets: '10000',
+        liabilities: '2500',
+        breakdown: {
+          'ASSET:CHECKING': '5000',
+          'ASSET:SAVINGS': '5000',
+          'LIABILITY:MORTGAGE': '2500',
+        },
+      },
+      {
+        date: '2025-01-31',
+        value: '8000',
+        known_value: '8000',
+        complete: true,
+        assets: '10000',
+        liabilities: '2000',
+        breakdown: {
+          'ASSET:CHECKING': '5000',
+          'ASSET:SAVINGS': '5000',
+          'LIABILITY:MORTGAGE': '2000',
+        },
+      },
+    ],
+    components: [
+      {
+        id: 'fake-account',
+        name: 'Fictional checking',
+        source: 'ACCOUNT',
+        category: 'CHECKING',
+        currency: 'BRL',
+        native_value: '5000',
+        value: '5000',
+        liquidity: 'LIQUID',
+        missing: [],
+      },
+    ],
+  })

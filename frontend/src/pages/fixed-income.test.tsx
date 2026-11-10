@@ -94,8 +94,8 @@ function mount(row = position) {
 
 it('renders API amounts and keeps preview separate from explicit redemption confirmation', async () => {
   const fetch = mount()
-  expect(await screen.findByText(/8,100.12/)).toBeVisible()
-  expect(screen.getAllByText(/110% CDI/)[0]).toBeVisible()
+  expect(await screen.findByText(/8\.100,12/)).toBeVisible()
+  expect(screen.getAllByText(/110,00% CDI/)[0]).toBeVisible()
   await userEvent.click(
     screen.getAllByRole('button', { name: 'Synthetic CDB' })[0],
   )

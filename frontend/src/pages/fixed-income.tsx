@@ -15,7 +15,12 @@ import {
 import { CompositionChart } from '@/components/composition-chart'
 import { FixedIncomeChart } from '@/components/fixed-income-chart'
 import { t } from '@/lib/i18n'
-import { decimalUnits, formatDate, formatExactPercent } from '@/lib/money'
+import {
+  decimalUnits,
+  formatDate,
+  formatExactPercent,
+  formatDecimal,
+} from '@/lib/money'
 import { exactFormData } from '@/lib/localized-number'
 import {
   getFixedHistory,
@@ -277,7 +282,7 @@ function FixedDetail({
               c.index_name ?? t('fixed_income:fixed_rate'),
             ],
             [t('fixed_income:source'), state(c.index_source)],
-            [t('fixed_income:quantity'), p.quantity],
+            [t('fixed_income:quantity'), formatDecimal(p.quantity)],
             [t('fixed_income:purchase_price'), amount(c.acquisition_price)],
             [
               t('fixed_income:fgc'),

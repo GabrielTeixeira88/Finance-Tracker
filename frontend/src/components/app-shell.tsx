@@ -159,6 +159,9 @@ export function AppShell({
     return () => window.removeEventListener('keydown', findPage)
   }, [])
   const preferences = usePreferences()
+  const orderedPrimary = preferences.sidebarOrder.map((label) =>
+    primary.find((item) => item.label === label)!,
+  )
   const theme = document.documentElement.dataset.theme ?? preferences.mode
   const setTheme = (mode: 'light' | 'dark') => setPreferences({ mode })
   useEffect(() => {
@@ -211,7 +214,7 @@ export function AppShell({
           aria-label={tr('app_shell:main_navigation_efd197')}
           className="primary-nav"
         >
-          {primary.map(({ page: item, label, view, icon: Icon }) => (
+          {orderedPrimary.map(({ page: item, label, view, icon: Icon }) => (
             <button
               key={label}
               className="nav-item"

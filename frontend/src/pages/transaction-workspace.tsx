@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import { useSection } from '@/lib/navigation'
 import { ActivityNavigation } from '@/components/activity-navigation'
 import { type Account, type Category } from '@/lib/api'
@@ -6,6 +7,13 @@ import Schedules from './schedules'
 import ImportWorkspace from './import-workspace'
 import { GmailQueue } from './gmail'
 import Reconciliation from './reconciliation'
+const ImportPage = lazy(
+  () => import('@/features/activities/import/import-page'),
+)
+
+const ActivitiesPage = lazy(
+  () => import('@/features/activities/activities-page'),
+)
 
 export default function TransactionWorkspace(props: {
   accounts: Account[]
@@ -29,6 +37,9 @@ export default function TransactionWorkspace(props: {
     items.map(([key]) => key),
     'activity',
   )
+  if (!props.account && view === 'activity')
+    return <ActivitiesPage {...props} />
+  if (!props.account && view === 'imports') return <ImportPage {...props} />
   return (
     <>
       <ActivityNavigation

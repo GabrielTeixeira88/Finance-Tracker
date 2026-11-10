@@ -1,3 +1,4 @@
+import { isSimulatedInvestmentScenario } from '@/lib/demo-runtime'
 import { t as tr, ui } from '@/lib/i18n'
 import { useState } from 'react'
 import {
@@ -6,7 +7,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { useDemoRuntime } from '@/lib/demo-runtime'
-import { navigateTo } from '@/lib/navigation'
+import { navigateTo, useRoute } from '@/lib/navigation'
 import { request } from '@/lib/api'
 import type { Page } from './app-shell'
 import { Button } from './ui/button'
@@ -102,18 +103,13 @@ function tourStops(): {
 
 export function DemoExperience() {
   const stops = tourStops()
-  const { runtime, reset, selectScenario } = useDemoRuntime()
+  const { runtime, reset } = useDemoRuntime()
   const [step, setStep] = useState<number | null>(null)
   const [scenarios, setScenarios] = useState(false)
   const pending = useIsMutating()
   const action = useMutation({
     mutationFn: async () => {
       await reset?.()
-    },
-  })
-  const scenarioAction = useMutation({
-    mutationFn: async (scenario: string) => {
-      await selectScenario?.(scenario)
     },
   })
   if (!runtime) return null
@@ -137,32 +133,13 @@ export function DemoExperience() {
             <span className="metadata">
               {runtime.profile} {runtime.end_date}
             </span>
-            {runtime.scenarios && runtime.scenarios.length > 1 && (
-              <label className="metadata">
-                {tr('real_market:scenario')}
-                <select
-                  aria-label={tr('real_market:scenario')}
-                  value={runtime.scenario ?? 'synthetic'}
-                  disabled={pending > 0 || scenarioAction.isPending}
-                  onChange={(event) =>
-                    scenarioAction.mutate(event.target.value)
-                  }
-                >
-                  {runtime.scenarios.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
             <div className="ml-auto flex flex-wrap gap-2">
-              {runtime.scenario !== 'real-market-br' && (
+              {(runtime.scenario ?? 'synthetic') === 'synthetic' && (
                 <Button variant="ghost" size="sm" onClick={() => go(0)}>
                   {tr('demo_experience:guided_tour_5a0d30')}
                 </Button>
               )}
-              {runtime.scenario !== 'real-market-br' && (
+              {(runtime.scenario ?? 'synthetic') === 'synthetic' && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -195,15 +172,6 @@ export function DemoExperience() {
         </div>
       </details>
       {action.isError && <ErrorState text={action.error.message} />}
-      {scenarioAction.isError && (
-        <ErrorState text={scenarioAction.error.message} />
-      )}
-      {runtime.scenario === 'real-market-br' && (
-        <p className="metadata" role="status">
-          {tr('real_market:disclosure')}
-        </p>
-      )}
-      {runtime.scenario === 'real-market-br' && <RealMarketDemo />}
       {step !== null && (
         <div className="demo-tour" aria-live="polite">
           <div>
@@ -237,8 +205,44 @@ export function DemoExperience() {
           </div>
         </div>
       )}
-      {scenarios && runtime.scenario !== 'real-market-br' && <DemoScenarios />}
+      {scenarios && (runtime.scenario ?? 'synthetic') === 'synthetic' && (
+        <DemoScenarios />
+      )}
     </aside>
+  )
+}
+
+/** Keep historical provenance after the financial page, with unchanged route scope. */
+export function HistoricalDemoFooter() {
+  const { page, params } = useRoute()
+  const { runtime } = useDemoRuntime()
+  if (
+    runtime?.scenario !== 'unified' &&
+    isSimulatedInvestmentScenario(runtime?.scenario) &&
+    page === 'Investments' &&
+    params.get('view') === 'Income'
+  )
+    return (
+      <footer className="demo-market-footer mt-8">
+        <SimulatedDemoNotice />
+      </footer>
+    )
+  if (
+    !['real-market-br', 'unified'].includes(runtime?.scenario ?? '') ||
+    !['Investments', 'Performance'].includes(page)
+  )
+    return null
+  return (
+    <footer className="demo-market-footer mt-8">
+      <p className="metadata" role="status">
+        {tr(
+          runtime?.scenario === 'unified'
+            ? 'demo_context:unified_disclosure'
+            : 'real_market:disclosure',
+        )}
+      </p>
+      <RealMarketDemo />
+    </footer>
   )
 }
 
@@ -256,7 +260,11 @@ export function DemoScenarios({ settings = false }: { settings?: boolean }) {
       })
     },
   })
-  if (runtime?.scenario === 'real-market-br') return null
+  if (
+    ['real-market-br', 'unified'].includes(runtime?.scenario ?? '') ||
+    isSimulatedInvestmentScenario(runtime?.scenario)
+  )
+    return null
   return (
     <section className="demo-scenarios">
       {settings && (
@@ -309,5 +317,15 @@ export function DemoScenarios({ settings = false }: { settings?: boolean }) {
       </div>
       {action.isError && <ErrorState text={action.error.message} />}
     </section>
+  )
+}
+
+function SimulatedDemoNotice() {
+  const { runtime } = useDemoRuntime()
+  if (!runtime) return null
+  return (
+    <p className="metadata" role="status">
+      {tr('charts:simulated')}
+    </p>
   )
 }

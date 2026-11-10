@@ -61,6 +61,8 @@ class PerformanceResponse(BaseModel):
     absolute_gain: Metric
     twr: Metric
     xirr: Metric
+    annualized_twr: Metric | None = None
+    risk: dict[str, Metric] = Field(default_factory=dict)
     points: list[ReturnPoint]
     valuation: dict
     flows: list[dict]
@@ -113,6 +115,7 @@ class IncomeResponse(BaseModel):
     months: list[IncomeMonth]
     breakdowns: dict[str, list[IncomeGroup]]
     redemptions: list[RedemptionResult]
+    reporting: dict | None = None
 
 
 class AllocationMember(BaseModel):
@@ -139,6 +142,7 @@ class AllocationResponse(BaseModel):
     groups: dict[str, list[AllocationGroup]]
     concentration: dict[str, str | None]
     rows: list[dict]
+    summary: dict = Field(default_factory=dict)
     metadata_policy: str
 
 
@@ -154,6 +158,22 @@ def performance(
     return investment_analytics.performance(db, start, end, currency, account_ids, benchmark_id)
 
 
+@router.get("/dashboard")
+def dashboard(
+    db: DB,
+    end: date,
+    start: date | None = None,
+    currency: Currency | None = None,
+    account_ids: Scope = None,
+):
+    from app.dashboard_view import investment_dashboard
+    from app.market_valuation import preferences
+
+    return investment_dashboard(
+        db, start, end, currency or preferences(db)["reporting_currency"], account_ids
+    )
+
+
 @router.get("/income", response_model=IncomeResponse)
 def income(
     db: DB,
@@ -161,13 +181,21 @@ def income(
     end: date,
     account_ids: Scope = None,
     asset_id: UUID | None = None,
+    currency: Currency | None = None,
 ):
-    return investment_analytics.income(db, start, end, account_ids, asset_id)
+    return investment_analytics.income(db, start, end, account_ids, asset_id, currency)
 
 
 @router.get("/allocation", response_model=AllocationResponse)
 def allocation(db: DB, as_of: date, currency: Currency = "BRL", account_ids: Scope = None):
     return investment_analytics.allocation(db, as_of, currency, account_ids)
+
+
+@router.get("/income/accrual")
+def income_accrual(db: DB, start: date, end: date, account_ids: Scope = None):
+    from app.income_accrual import accrual_income
+
+    return accrual_income(db, start, end, account_ids)
 
 
 @router.get("/insights")

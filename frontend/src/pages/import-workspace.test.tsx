@@ -144,9 +144,16 @@ function setup(failure = false, invalid = false, possible = false) {
 }
 
 async function chooseFile() {
-  await userEvent.selectOptions(screen.getByLabelText('Tools'), 'imports')
+  await userEvent.click(
+    await screen.findByRole(
+      'button',
+      { name: 'Add Activities' },
+      { timeout: 10000 },
+    ),
+  )
+  await userEvent.click(await screen.findByRole('button', { name: /^Import$/ }))
   await userEvent.upload(
-    screen.getByLabelText('Statement file'),
+    await screen.findByLabelText('Statement file'),
     new File(
       ['date,description,amount\n2026-10-01,Synthetic shop,-32.50'],
       'synthetic.csv',

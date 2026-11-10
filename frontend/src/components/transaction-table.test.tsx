@@ -49,8 +49,8 @@ it('renders income and expense amounts with consistent signs, semantics and colu
   )
   const income = screen.getByRole('row', { name: /Salary/ })
   const expense = screen.getByRole('row', { name: /Groceries/ })
-  expect(within(income).getByText('+R$1,000.00')).toHaveClass('positive')
-  expect(within(expense).getByText('−R$200.00')).toHaveClass('negative')
+  expect(within(income).getByText('+R$ 1.000,00')).toHaveClass('positive')
+  expect(within(expense).getByText('\u2212R$ 200,00')).toHaveClass('negative')
   expect(within(income).getByText('Checking')).toBeInTheDocument()
   expect(within(income).getByText('Synthetic category')).toBeInTheDocument()
   expect(
@@ -83,8 +83,8 @@ it('renders transfers neutrally with a link identifier and direction, never as e
       categories={[]}
     />,
   )
-  expect(screen.getByText('R$500.00')).toHaveClass('neutral')
-  expect(screen.getByText('R$500.00')).not.toHaveClass('negative')
+  expect(screen.getByText('R$ 500,00')).toHaveClass('neutral')
+  expect(screen.getByText('R$ 500,00')).not.toHaveClass('negative')
   expect(screen.getByText('transfer')).toBeInTheDocument()
   expect(screen.getByText(/Sent · syntheti/)).toBeInTheDocument()
   expect(screen.queryByText('−R$500.00')).not.toBeInTheDocument()

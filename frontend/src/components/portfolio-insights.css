@@ -1,0 +1,460 @@
+/* SPDX-License-Identifier: AGPL-3.0-only
+ * Source-adapted Wealthfolio 92b4647 Insights widget geometry; local semantic tokens. */
+.portfolio-insights-overview {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.insight-basis-note {
+  margin: -6px 0 0;
+  font-size: 11px;
+}
+.insight-widget {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 20px;
+}
+.insight-widget > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+  margin-bottom: 12px;
+}
+.insight-widget > header h2 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin: 0;
+}
+.insight-donut {
+  min-height: 232px;
+  padding-bottom: 12px;
+  position: relative;
+}
+.insight-donut > .insight-exact:not([open]) {
+  position: absolute;
+  bottom: 10px;
+  inset-inline-start: 20px;
+}
+.insight-treemap-tile {
+  fill-opacity: 0.45;
+}
+[data-theme='light'] .insight-treemap-tile {
+  fill-opacity: 0.8;
+}
+.insight-arc {
+  position: relative;
+}
+.insight-arc-label {
+  position: absolute;
+  top: 108px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  max-width: 80%;
+  white-space: nowrap;
+}
+.insight-arc-label > span:first-child {
+  color: var(--muted-foreground);
+  max-width: 160px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.insight-arc-label .money {
+  font-weight: 700;
+}
+.insight-arc-label small {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.insight-exact {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.insight-exact summary {
+  cursor: pointer;
+  padding-top: 8px;
+}
+.insight-exact button {
+  display: flex;
+  width: 100%;
+  gap: 6px;
+  align-items: center;
+  text-align: start;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.insight-exact button > span:first-of-type {
+  flex: 1;
+}
+.insight-exact i,
+.insight-breakdown-rows summary > i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 8px;
+}
+.insight-back,
+.insight-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: var(--muted);
+}
+.insight-composition > .metadata {
+  margin: -4px 0 12px;
+  font-size: 11px;
+}
+.insight-composition .recharts-treemap-depth-1 {
+  cursor: pointer;
+}
+.insight-lenses {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  margin-bottom: 18px;
+}
+.insight-lenses button {
+  white-space: nowrap;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  color: var(--muted-foreground);
+}
+.insight-lenses button[aria-pressed='true'] {
+  background: var(--muted);
+  color: var(--foreground);
+}
+.insight-segments {
+  display: flex;
+  gap: 3px;
+  height: 32px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  border-radius: 7px;
+}
+.insight-segments button {
+  flex-basis: 0;
+  min-width: 0;
+  transition: opacity 0.15s;
+}
+.insight-segments button:hover {
+  opacity: 0.7;
+}
+.insight-breakdown-rows > details {
+  border-bottom: 1px solid var(--border);
+}
+.insight-breakdown-rows summary {
+  display: grid;
+  grid-template-columns: 14px 8px minmax(80px, 1fr) 85px minmax(115px, 0.3fr);
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.insight-breakdown-rows summary > .money {
+  text-align: right;
+}
+.insight-breakdown-rows summary small {
+  color: var(--muted-foreground);
+}
+.insight-breakdown-rows details[open] .insight-chevron {
+  transform: rotate(90deg);
+}
+.insight-members {
+  padding: 0 0 8px 26px;
+}
+.insight-holding {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 13px;
+}
+.insight-holding > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.insight-holding small {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.insight-detail-link,
+.insight-child {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0 12px 26px;
+  font-size: 12px;
+  align-items: center;
+}
+.insight-child {
+  justify-content: space-between;
+  width: 100%;
+}
+.insight-explorer > .metadata {
+  margin-top: 14px;
+  font-size: 11px;
+}
+.insight-concentration {
+  display: flex;
+  gap: 36px;
+  padding: 14px 0;
+}
+.insight-concentration > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.insight-concentration small {
+  color: var(--muted-foreground);
+}
+.insight-concentration strong {
+  font-size: 20px;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+.insight-leaders button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(100px, 1fr) 100px minmax(120px, 0.3fr);
+  text-align: right;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.insight-leaders button > span:first-child {
+  text-align: left;
+}
+.insight-coverage {
+  background: var(--muted);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+}
+.insight-coverage small {
+  display: block;
+}
+.insight-detail-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 20px;
+}
+.insight-detail-summary > .money {
+  font-size: 26px;
+  letter-spacing: -0.04em;
+}
+.insight-detail-summary > span:last-child {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+@media (max-width: 600px) {
+  .insight-widget {
+    padding: 14px;
+  }
+  .insight-breakdown-rows summary {
+    grid-template-columns: 14px 8px minmax(50px, 1fr) 62px;
+    gap: 8px;
+  }
+  .insight-breakdown-rows summary > .money {
+    grid-column: 3 / -1;
+  }
+  .insight-leaders button {
+    grid-template-columns: 1fr 70px;
+    gap: 5px;
+  }
+  .insight-leaders button > .money {
+    grid-column: 1 / -1;
+  }
+  .insight-holding {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .insight-segments button {
+    transition: none;
+  }
+}
+
+/* Source grid: 12/6/2 columns, 16px gutters, independent summary widgets. */
+.insights-customize-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 28px;
+  margin-bottom: 12px;
+}
+.insights-customize-toolbar button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: var(--muted);
+}
+.insights-customize-toolbar .insights-save {
+  background: var(--foreground);
+  color: var(--background);
+}
+.insights-grid-widget {
+  padding-bottom: 16px;
+  min-width: 0;
+}
+.insight-widget-natural {
+  min-width: 0;
+}
+.insight-widget-fill {
+  height: 100%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.insight-widget-fill > .insight-widget-natural > .insight-widget,
+.insight-widget-fill > .insight-widget-natural > .insight-value-widget {
+  border: 0;
+  background: transparent;
+}
+.insight-widget-picker > div {
+  flex-wrap: wrap;
+}
+.insight-value-widget {
+  min-height: 88px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.insight-value-widget > span:first-child,
+.insight-value-widget small {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.insight-value-widget strong {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+[data-widget-id='value'] .insight-value-widget strong {
+  font-size: 24px;
+}
+.insights-grid-widget > .insight-widget-natural > .insight-widget {
+  min-height: 218px;
+}
+.insights-widget-edit-controls {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted-foreground);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  z-index: 4;
+}
+.insights-workspace
+  > .investment-toolbar.insights-overview-toolbar
+  > .range-tabs {
+  margin-inline-end: auto;
+}
+.insights-customize-action {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.insights-overview-toolbar {
+  margin-bottom: 0;
+}
+.insights-widget-edit-controls button,
+.insights-drag-handle {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 22px;
+}
+.insights-drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+.insights-dashboard.is-editing .insights-grid-widget {
+  outline: 1px dashed var(--muted-foreground);
+  outline-offset: -3px;
+  border-radius: 10px;
+}
+.insights-dashboard .react-grid-placeholder {
+  background: var(--muted-foreground);
+  opacity: 0.12;
+  border-radius: 10px;
+}
+.insights-dashboard:not(.is-editing) .react-resizable-handle {
+  display: none;
+}
+.insight-widget-picker {
+  border: 1px solid var(--border);
+  padding: 14px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  background: var(--card);
+}
+.insight-widget-picker > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 12px;
+}
+.insight-widget-picker > div > label:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.insights-size-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.insights-size-label input {
+  width: 52px;
+  padding: 4px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .insights-dashboard .react-grid-item {
+    transition: none !important;
+  }
+}

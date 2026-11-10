@@ -23,26 +23,26 @@ export function formatMoneyParts(
     fractionDigits?: number
   } = {},
 ) {
-  const formatter = new Intl.NumberFormat(options.locale ?? getLocale(), {
+  // Fixed financial display convention, independent of interface language.
+  // Legacy compact/precision options remain accepted for caller compatibility.
+  const formatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency,
     currencyDisplay: options.currencyDisplay ?? 'symbol',
-    notation: options.compact ? 'compact' : 'standard',
-    ...(options.compact
-      ? { minimumFractionDigits: 0, maximumFractionDigits: 1 }
-      : options.fractionDigits !== undefined
-        ? {
-            minimumFractionDigits: options.fractionDigits,
-            maximumFractionDigits: options.fractionDigits,
-          }
-        : options.minorUnits
-          ? {}
-          : { maximumFractionDigits: 6 }),
+    notation: 'standard',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   })
   const parts = formatter.formatToParts as unknown as (
     decimal: string,
   ) => Intl.NumberFormatPart[]
-  return parts.call(formatter, value)
+  return parts.call(formatter, value).map((part) => ({
+    ...part,
+    value:
+      part.type === 'literal'
+        ? part.value.replace(/[\u00a0\u202f]/g, ' ')
+        : part.value,
+  }))
 }
 
 export function decimalUnits(value: string): bigint {
@@ -80,28 +80,24 @@ export function formatRatioPercent(
       )
 }
 
-/** Input is already percent units, not a ratio. No monetary/ratio Number coercion. */
+/** Exact string-to-display formatting; no monetary Number conversion. */
+export function formatDecimal(value: string): string {
+  const formatter = new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+  })
+  return (formatter.format as unknown as (value: string) => string)(value)
+}
+
+/** Input is already percent units, not a ratio. Precision arguments are legacy. */
 export function formatExactPercent(
-  value: string,
-  digits = 6,
-  fixed = false,
-): string {
-  const formatted = new Intl.NumberFormat(getLocale(), {
-    maximumFractionDigits: digits,
-    minimumFractionDigits: fixed ? digits : 0,
-  }).format as unknown as (value: string) => string
-  const parts = new Intl.NumberFormat(getLocale(), {
-    style: 'percent',
-  }).formatToParts(1)
-  return parts
-    .map((part) =>
-      part.type === 'integer'
-        ? formatted(value)
-        : part.type === 'group'
-          ? ''
-          : part.value,
-    )
-    .join('')
+  value: string | null,
+  digits?: number,
+  fixed?: boolean,
+): string
+export function formatExactPercent(value: string | null): string {
+  return value === null ? t('common:unavailable') : `${formatDecimal(value)}%`
 }
 
 export function formatDate(value: string): string {

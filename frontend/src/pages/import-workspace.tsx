@@ -2,7 +2,9 @@ import { CandidateInspector } from '@/components/candidate-inspector'
 import { t as tr, ui } from '@/lib/i18n'
 import { useState } from 'react'
 import { readRoute } from '@/lib/navigation'
-import { WorkflowSteps } from '@/components/section-navigation'
+import { WizardStepIndicator } from '@/features/activities/import/wizard-step-indicator'
+import { FileDropzone } from '@/features/activities/import/file-dropzone'
+import '@/features/holdings/i18n'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { Field } from '@/components/forms'
@@ -38,9 +40,13 @@ import {
 export default function ImportWorkspace({
   accounts,
   categories,
+  embedded = false,
+  initialAccount,
 }: {
   accounts: Account[]
   categories: Category[]
+  embedded?: boolean
+  initialAccount?: string
 }) {
   const client = useQueryClient()
   const [batchId, setBatchId] = useState<string | null>(() =>
@@ -48,7 +54,7 @@ export default function ImportWorkspace({
   )
   const [file, setFile] = useState<File | null>(null)
   const [accountId, setAccountId] = useState(
-    accounts.find((a) => a.active)?.id ?? '',
+    initialAccount ?? accounts.find((a) => a.active)?.id ?? '',
   )
   const [config, setConfig] = useState<CSVConfiguration>(defaultConfiguration)
   const [headers, setHeaders] = useState<string[]>([])
@@ -112,23 +118,30 @@ export default function ImportWorkspace({
   }
   return (
     <>
-      <PageHeader
-        title={tr('import_workspace:imports_e42328')}
-        description={tr(
-          'import_workspace:local_csv_and_ofx_statements_review_first_nothin_396f25',
-        )}
-      />
-      <WorkflowSteps
-        steps={['Choose file', 'Map columns', 'Review and resolve', 'Confirm']}
-        current={
+      {!embedded && (
+        <PageHeader
+          title={tr('import_workspace:imports_e42328')}
+          description={tr(
+            'import_workspace:local_csv_and_ofx_statements_review_first_nothin_396f25',
+          )}
+        />
+      )}
+      <WizardStepIndicator
+        steps={[
+          'Choose file',
+          'Map columns',
+          'Review and resolve',
+          'Confirm',
+        ].map((name, index) => ({ id: String(index), label: ui(name) }))}
+        currentStep={String(
           batch.data?.status === 'COMPLETED'
             ? 3
             : batchId
               ? 2
               : headers.length
                 ? 1
-                : 0
-        }
+                : 0,
+        )}
       />
       {(error || operation.isError) && (
         <ErrorState text={error || operation.error!.message} />
@@ -185,11 +198,13 @@ export default function ImportWorkspace({
               <h2>{tr('import_workspace:1_file_and_target_account_ea258b')}</h2>
               <div className="filter-bar">
                 <Field label={tr('import_workspace:statement_file_e29c9d')}>
-                  <input
-                    type="file"
+                  <FileDropzone
+                    file={file}
                     accept=".csv,.ofx"
-                    onChange={(e) => {
-                      setFile(e.target.files?.[0] ?? null)
+                    acceptedLabel={tr('import_workspace:statement_file_e29c9d')}
+                    isLoading={operation.isPending}
+                    onFileChange={(file) => {
+                      setFile(file)
                       setHeaders([])
                       setSample([])
                     }}

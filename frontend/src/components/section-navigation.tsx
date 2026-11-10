@@ -1,33 +1,41 @@
 import { t as tr, ui } from '@/lib/i18n'
-import { useId } from 'react'
+import { useId, type ReactNode } from 'react'
 import { SelectionIndicator } from './selection-indicator'
 export function SectionNavigation<T extends string>({
   label,
   items,
   value,
   onChange,
+  icons,
 }: {
   label: string
   items: readonly (readonly [T, string])[]
   value: T
   onChange: (value: T) => void
+  icons?: Partial<Record<T, ReactNode>>
 }) {
   const indicatorId = useId()
   return (
     <nav className="section-navigation" aria-label={label}>
-      {items.map(([key, title]) => (
-        <button
-          key={key}
-          aria-current={value === key ? 'page' : undefined}
-          aria-pressed={value === key}
-          onClick={() => onChange(key)}
-        >
-          {value === key && (
-            <SelectionIndicator id={`section-${indicatorId}`} />
-          )}
-          <span className="motion-choice-label">{ui(title)}</span>
-        </button>
-      ))}
+      {items.map(([key, title]) => {
+        const icon = icons?.[key]
+        return (
+          <button
+            key={key}
+            aria-current={value === key ? 'page' : undefined}
+            aria-pressed={value === key}
+            onClick={() => onChange(key)}
+          >
+            {value === key && (
+              <SelectionIndicator id={`section-${indicatorId}`} />
+            )}
+            <span className="motion-choice-label inline-flex items-center gap-1.5">
+              {icon}
+              {ui(title)}
+            </span>
+          </button>
+        )
+      })}
     </nav>
   )
 }

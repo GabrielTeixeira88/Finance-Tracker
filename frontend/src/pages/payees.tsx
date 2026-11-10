@@ -24,7 +24,7 @@ export function PayeeSettings() {
   return (
     <>
       <PageHeader
-        title={tr('payees:settings_c7f73b')}
+        title={tr('settings_v014:payees')}
         description={tr(
           'payees:payees_normalized_names_original_descriptions_pr_477788',
         )}

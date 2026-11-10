@@ -88,3 +88,9 @@ Thumbs.db
 Desktop.ini
 *.swp
 *.swo
+# Local database process leases and backup staging files
+*.runtime-lock
+*.staging
+*.upload
+*.restore-*
+*.backups/

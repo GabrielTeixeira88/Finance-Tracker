@@ -1,0 +1,27 @@
+{
+  "review_date": "2026-11-10",
+  "source_files": 899,
+  "upstream_fingerprints": 233,
+  "upstream_hashes_match": true,
+  "legal_index_links": 34,
+  "legal_links_exist": true,
+  "packaged_legal_assets_match": true,
+  "ofxtools_notice_byte_identical": true,
+  "lockfile_sha256": "d1fb065a23e95ec5f72fe5013e3ce6dbf4fddb072f8dd3fc1ebc9ee2f5f24b54",
+  "frontend_tests": 330,
+  "frontend_test_files": 76,
+  "production_advisories": 0,
+  "development_package_entries": 10,
+  "distinct_development_advisories": 1,
+  "root_license_unchanged": true,
+  "project_relicensing_approved": false,
+  "evidence_status": "Historical pre-approval snapshot; original hashes, results and classifications retained.",
+  "current_decision": {
+    "date": "2026-11-10",
+    "owner_authored_license": "AGPL-3.0-only",
+    "development_advisory": "Accepted for this merge; not fixed",
+    "excluded_assets": "Five goal-cover PNGs; retained inventory entries are historical only",
+    "details": "docs/FINALIZATION_V014.md",
+    "local_suites_rerun": false
+  }
+}

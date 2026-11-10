@@ -473,3 +473,76 @@ See [calculation rules](FIXED_INCOME.md) and [association/planning rules](LIFE_E
 Provider transaction IDs may change; institution/account/provider identities are
 scoped and weak matches require explicit review. Snapshot totals are never added
 to existing balances. See [Pluggy integration](PLUGGY.md).
+
+### Classification appearance (v0.14)
+
+`ClassificationAppearance` optionally references exactly one `Category` or
+`BudgetGroup`. Unique foreign keys prevent duplicate owner records; the owner
+check rejects both/neither references. Optional six-digit hexadecimal color and
+validated icon name are metadata only. Safe owner deletion cascades appearance,
+while existing transaction/target foreign keys continue protecting financial history.
+No category hierarchy or second classification system is introduced.
+
+## v0.14 goal planning and retained lifecycle (`sqlite_0019`)
+
+- `goal_plans`: one goal FK, saved type (`education`, `home`, `car`, `wedding`,
+  `custom_save_up`) and exact nonnegative monthly contribution assumption.
+- `goal_lifecycle`: ordered, dated ACTIVE/PAUSED/COMPLETED/ARCHIVED/DELETED events.
+  Existing archives are backfilled; existing rows are unchanged.
+- `goal_entry_epochs`: append-only mapping for new cash allocations after release.
+  Legacy allocations belong to epoch zero. Archive/restore never reclaims them.
+- `goal_investment_funding`: retained, dated reservations in later epochs;
+  original exclusive `goal_account_funding` rows remain intact. Services enforce
+  same-currency ownership and cross-goal temporal exclusivity atomically.
+
+These are metadata for the existing Goal aggregate, not a parallel financial ledger.
+Soft deletion retains all records and releases funding; repeated financial values
+are never stored as a new balance. Preview requests are read-only projections.
+
+## v0.14 allocation targets (`sqlite_0020`)
+
+Three additive planning tables: `allocation_targets` (name, flat dimension, currency,
+all/explicit-account scope, absolute/hybrid BPS band, current version, active flag),
+`allocation_target_weights` (target FK/version/classification, exact integer BPS,
+required flag), and `allocation_target_accounts` (target FK/version/account FK).
+Each save appends a new weights/scope revision, validates a 10,000-BPS total and
+uses an expected-version guard. Prior weights/account memberships remain retained;
+the root metadata represents the current definition, not a historical target ledger.
+Deleting a configuration is soft deletion and never changes activities or balances.
+Targets are planning metadata, not allocation reservations, trades or goal funding.
+No financial table is rewritten by the migration.
+
+Drift uses the existing cash-inclusive, dated valuation with exact Decimal/FX.
+Incomplete or nonpositive totals have unavailable weights/drift, never zero-filled
+exposures. See [the migration and scope notes](PERFORMANCE_INSIGHTS_V014.md).
+
+### Dashboard read projections (unreleased v0.14)
+
+No new financial tables or migrations. The canonical valuation reader optionally
+returns request-local per-account histories; the dashboard composes existing
+scope-aware performance and dated external flows. Detailed household history
+also exposes component values for individual-debt trends. These are derived
+read models, never independent balances. Momentum compares equal-length windows
+and retains missing coverage. See [dashboard migration](DASHBOARD_MIGRATION_V014.md).
+
+### Settings organization (unreleased v0.14)
+
+`sqlite_0021` adds `account_groups` (normalized unique name, description, timestamps)
+and `account_group_members` (group/account foreign keys, composite primary key).
+Membership changes are atomic; removing a group never removes an account or ledger
+entry. No monetary fields, ownership changes, portfolio balances or financial
+settings are duplicated. The existing MarketSettings remains canonical for reporting
+currency; no new currency conversion is written to financial records.
+
+The unified demo adds versioned fictional group metadata without altering financial
+history or saved edits. Exports retain exact strings and use explicit whitelists.
+Personal backups are local files with opaque API identifiers, separate from demo
+generations; no backup payload or credential enters these metadata tables.
+See [Settings migration](SETTINGS_V014.md).
+
+### Application audit fixtures
+
+The owned unified demo can add missing fictional `AssetClassification` metadata and
+a `Schedule` expectation using existing tables/services. A version marker prevents
+repeat insertion; existing classifications and ledger rows are preserved. This is
+not a new domain model or migration. See [audit](AUDIT_V014.md).
