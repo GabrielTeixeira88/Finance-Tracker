@@ -84,13 +84,15 @@ export function BulkTransactionActions({
   categories,
   onSaved,
   refreshing = false,
+  initialAction = 'REVIEWED',
 }: {
   rows: Transaction[]
   categories: Category[]
   onSaved: () => void
   refreshing?: boolean
+  initialAction?: 'REVIEWED' | 'NEEDS_REVIEW' | 'category' | 'payee'
 }) {
-  const [action, setAction] = useState('REVIEWED')
+  const [action, setAction] = useState<string>(initialAction)
   const [category, setCategory] = useState('')
   const [payee, setPayee] = useState('')
   const write = useWrite()

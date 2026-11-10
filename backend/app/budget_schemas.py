@@ -35,6 +35,8 @@ class TargetInput(Input):
 class GroupInput(Input):
     name: Name
     sort_order: int = Field(default=0, ge=0, le=100000)
+    color: Annotated[str, Field(pattern=r"^#[0-9a-fA-F]{6}$")] | None = None
+    icon: Annotated[str, Field(pattern=r"^[A-Za-z][A-Za-z0-9]{0,47}$")] | None = None
 
 
 class CopyMonth(Input):

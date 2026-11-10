@@ -1,3 +1,5 @@
+import '@/features/spending/i18n'
+import '@/features/goals/i18n'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import appearanceBootstrap from '../../public/appearance-init.js?raw'
 import { request, moneyInput } from './api'
@@ -19,6 +21,8 @@ import {
   setPreferenceWorkspace,
 } from './preferences'
 import { t, ui } from './i18n'
+import i18n from './i18n'
+import '@/features/holdings/i18n'
 import en from '../locales/en.json'
 import pt from '../locales/pt-BR.json'
 import es from '../locales/es-419.json'
@@ -158,17 +162,17 @@ it('resolves literal translation keys referenced by every application module', (
     ['../**/*.ts', '../**/*.tsx', '!../**/*.test.ts', '!../**/*.test.tsx'],
     { query: '?raw', import: 'default', eager: true },
   )
+  const missing: string[] = []
   for (const [file, source] of Object.entries(files)) {
     for (const match of source.matchAll(
       /\b(?:tr|t)\(\s*['"]([\w]+:[\w]+)['"]/g,
     )) {
       const [namespace, key] = match[1].split(':')
-      expect(
-        (en as Record<string, Record<string, string>>)[namespace]?.[key],
-        `${file}: ${match[1]}`,
-      ).toBeTruthy()
+      if (!i18n.getResource('en', namespace, key))
+        missing.push(`${file}: ${match[1]}`)
     }
   }
+  expect(missing).toEqual([])
 })
 
 it('localizes validation and API errors using codes, not English-message matching', async () => {
@@ -303,15 +307,15 @@ it.each(['public'])(
   },
 )
 
-it('localizes labels, exact money, dates and percentages independently of currency', () => {
+it('localizes labels and dates while financial displays retain the fixed Brazilian convention', () => {
   setPreferences({ language: 'pt-BR' })
   expect(ui('Overview')).toBe('Visão geral')
   expect(formatMoney('1234.56', 'USD')).toContain('1.234,56')
-  expect(formatRatioPercent('0.125')).toBe('12,5%')
+  expect(formatRatioPercent('0.125')).toBe('12,50%')
   expect(formatDate('2026-09-30')).toContain('set.')
   setPreferences({ language: 'es-419' })
   expect(ui('Settings')).toBe('Configuración')
-  expect(formatMoney('1234.56', 'BRL')).toContain('1,234.56')
+  expect(formatMoney('1234.56', 'BRL')).toContain('1.234,56')
   expect(t('common:unavailable')).not.toBe('common:unavailable')
 })
 

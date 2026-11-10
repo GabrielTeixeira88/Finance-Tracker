@@ -394,9 +394,7 @@ export async function checkAppearance(page, origin, output, root) {
             response.url().includes('/analytics/allocation?') &&
             response.url().includes('currency=USD'),
         )
-        await page
-          .getByLabel('Valuation currency', { exact: true })
-          .selectOption('USD')
+        await page.goto(origin + '/#/investments?currency=USD')
         const usdAllocation = await (await allocation).json()
         assert.equal(usdAllocation.currency, 'USD')
         await loaded(route)
@@ -436,9 +434,7 @@ export async function checkAppearance(page, origin, output, root) {
           quality: 85,
         })
         await page.mouse.move(0, 0)
-        await page
-          .getByLabel('Valuation currency', { exact: true })
-          .selectOption('')
+        await page.goto(origin + '/#/investments')
       }
     }
   }

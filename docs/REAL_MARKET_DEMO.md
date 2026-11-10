@@ -1,5 +1,12 @@
 # Real Market Portfolio — Brazil
 
+> Current demo lifecycle: run `uv run python -m app.demo` for the complete unified
+> household/investment demo. All data below is available together, without scenario
+> switching. Earlier scenario launch/switch instructions below describe retained
+> regression fixtures and are superseded by [DEMO.md](DEMO.md). Original fixture
+> workspaces remain archived. No personal database is changed.
+
+
 The current demo is an isolated historical simulation: **actual observations plus fictional
 holdings/contracts**. Reference window: **2024-10-01–2026-09-30**. It replaces the
 old synthetic household, international and European demo investments. This is educational replay,
@@ -22,8 +29,12 @@ validates/initializes without serving.
 
 **ETF coverage is currently unavailable unless an authorized local export is
 prepared.** No WRLD11/IVVB11 purchases, prices, returns or chart fluctuations are
-invented in that case. A persistent message identifies the displayed portfolio as
-fixed income only. Complete valuation quality for those included holdings does
+invented in that case. Investment screens (including Holdings, Insights and Performance)
+show the simulation notice, ETF coverage and expandable historical-data assumptions.
+These notices do not occupy the header of Spending, Goals, Accounts, Transactions,
+Net Worth or Settings; the small Demo menu remains available throughout the app.
+The investment notice identifies the displayed portfolio as fixed income only.
+Complete valuation quality for those included holdings does
 not imply coverage of the omitted ETFs. Their proposed trades are not silently
 booked at zero or substituted with another security.
 
@@ -169,7 +180,7 @@ duplicate progress. Generic investment-account reservation editing is not expose
 
 Portfolio gross **14,908.312300**, invested **12,295.089700**, unrealized gain
 **2,613.222600**, uninvested brokerage cash **0**. Net worth including Checking:
-**149,890.182600**, including the restored household history. Caixinha goal
+**527,890.182600**, including the restored household history. Caixinha goal
 progress: **3,865.733100 / 5,000** gross. Investment values/returns are unchanged.
 All reference-date IOF estimates are zero; short-term IOF is covered by tests.
 Period TWR/XIRR use the actual selected boundaries and dated flows; they are not
@@ -306,3 +317,22 @@ frontend lint/format, TypeScript and production build passed. The full existing
 demo browser workflow and historical scenario checks passed. Final historical
 captures use reduced motion to avoid recording partially animated charts. Existing
 SQLAlchemy fixture warnings and the frontend large-chunk build warning remain.
+
+
+## Fictional house and car (dataset revision 3)
+
+These manual assets are separate from sourced investment observations. Both are
+owned from 2024-10-01, with no new cash movement or debt. Dated fictional values:
+
+| Observation | House (BRL) | Car (BRL) |
+| --- | ---: | ---: |
+| 2024-10-01 | 300,000.00 | 45,000.00 |
+| 2025-01-01 | 310,000.00 | 43,000.00 |
+| 2026-01-01 | 330,000.00 | 40,000.00 |
+| 2026-09-30 | 340,000.00 | 38,000.00 |
+
+Historical Net Worth carries only prior manual observations. These values are
+illustrative estimates, not property/car market data. End-date assets add BRL
+378,000.00 to the existing BRL 149,890.182600 financial balances. Investments,
+cash flow and goal allocations are unchanged. Revision 3 opens a new owned,
+fingerprinted demo workspace; it does not modify revision 2 or personal data.

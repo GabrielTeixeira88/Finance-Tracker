@@ -47,6 +47,46 @@ const goalSchema = z.object({
   notes: z.string(),
 })
 export const goalDetailSchema = z.object({
+  allocations: z
+    .array(z.object({ account_id: z.string(), amount: money }))
+    .default([]),
+  can_assign_investment: z.boolean().default(false),
+  plan: z
+    .object({ goal_type: z.string(), monthly: money, expected_return: money })
+    .default({
+      goal_type: 'custom_save_up',
+      monthly: '0',
+      expected_return: '0',
+    }),
+  deleted: z.boolean().default(false),
+  lifecycle: z
+    .array(
+      z.object({
+        effective_date: z.string(),
+        status: z.string(),
+        sequence: z.number(),
+      }),
+    )
+    .default([]),
+  scenario: z
+    .object({
+      target: money,
+      deadline: z.string().nullable(),
+      monthly: money,
+      expected_return: money,
+    })
+    .optional(),
+  milestone_details: z
+    .array(
+      z.object({
+        percent: z.number(),
+        amount: money,
+        reached: z.boolean(),
+        first_observed_date: z.string().nullable(),
+        estimated_date: z.string().nullable(),
+      }),
+    )
+    .default([]),
   goal: goalSchema,
   saved: money.nullable(),
   allocated: money,

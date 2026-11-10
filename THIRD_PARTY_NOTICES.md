@@ -1,13 +1,106 @@
 # Third-party attribution
 
+## Current grant and retained terms - 2026-11-10
+
+Owner-authored Finance Tracker code is AGPL-3.0-only under the complete root
+LICENSE and NOTICE.md. Third-party copyrights and licenses remain distinct.
+Wealthfolio is a trademark of Teymz Inc.; Finance Tracker is neither an official
+product nor endorsed by its authors. Adapted application source remains AGPL,
+shared UI source retains its declared MIT terms, and ofxtools retains GPL terms.
+The upstream UI package declaration and standard MIT permission/warranty text are
+preserved as Wealthfolio-UI-PACKAGE.json and Wealthfolio-UI-MIT.txt. No previously
+unverified copyright year or author is invented. Runtime dependency notice files,
+including nested vendored licenses, are collected in RUNTIME_DEPENDENCY_NOTICES.txt.
+Published packages missing their own copyright notice are identified as such;
+metadata evidence is not a certification of every upstream ownership claim.
+
+See docs/FINALIZATION_V014.md for the approved decision and remaining cautions,
+and frontend/public/licenses/SOURCE_ACCESS.md for exact-version source access.
+Historical pass descriptions below retain their original dates and scope; current
+v0.14 licensing and illustration exclusions supersede pre-approval restrictions.
+
+## v0.14 Holdings and Activities source migration
+
+`frontend/src/features/{holdings,activities}/` adapts actual presentation components
+from Wealthfolio revision `92b4647f74ec51fbbb1a772db4f42ea91060c518`:
+Holdings tables/mobile lists, alternative holdings, liability cards, asset profile
+and detail cards, action palette, scope selection, swipeable pages, activity
+tables/mobile cards, day groups, column controls and scroll measurement hooks,
+Spending rows/cards, native editor/type picker, account-detail composition and
+import upload/step components. Quotes retain the source close-price layout while
+using the local observation contract rather than fabricated OHLC fields.
+`frontend/src/lib/row-click.ts` and its interaction regression tests adapt the
+same revision's row-control, portal and text-selection guards.
+Copyright remains with the upstream authors and contributors. The source files
+retain AGPL-3.0-only identification and the upstream license remains at
+`frontend/public/licenses/Wealthfolio-AGPL-3.0.txt`.
+
+Shared UI primitives and source translation resources are under
+`frontend/src/vendor/wealthfolio/`; the UI package metadata declares MIT.
+The root upstream AGPL license and corresponding-source notices are retained.
+`SOURCE.json` records the exact upstream file paths, original SHA-256 hashes and
+adaptation boundaries. Local changes replace platform/Rust adapters, binary
+floating-point money and financial-filter persistence, preserving the layouts.
+They use exact API strings, local hash routes, appearance-only persistence,
+history-safe posting/corrections and explicit unavailable states. The postponed
+financial engines are not advertised as working controls. No upstream logo,
+photographs or security branding assets are bundled.
+
+New shared-control dependencies use their published licenses: Base UI, TanStack
+Table/Virtual, Phosphor React, cmdk, Sonner and Embla Carousel (MIT), date-fns (MIT),
+Lucide React (ISC, with the additional notices included by that package), and
+tw-animate-css (MIT; Copyright 2025 Wombosvideo).
+Copies of package notices are preserved in `frontend/public/licenses/`.
+Embla's notice was verified against its official
+[v8.6.0 license](https://github.com/davidjerleke/embla-carousel/blob/v8.6.0/LICENSE).
+See `docs/HOLDINGS_ACTIVITIES_V014.md` for completed and outstanding migration work.
+
+## v0.14 chart presentation adaptation (unreleased)
+
+`frontend/src/lib/chart-presentation.ts` and
+`frontend/src/components/portfolio-value-chart.tsx` adapt curve, area-gradient,
+stroke and hover conventions from Wealthfolio pinned commit
+`92b4647f74ec51fbbb1a772db4f42ea91060c518`,
+`apps/frontend/src/components/history-chart.tsx` (AGPL-3.0-only).
+Copyright remains with its authors/contributors; the preserved license is
+`frontend/public/licenses/Wealthfolio-AGPL-3.0.txt`. Local data adapters, exact
+coordinates and null gaps replace upstream money conversion/null bridging.
+The optional ETF showcase generator is original fictional data; it contains no
+third-party ETF observations, marks or graphics.
+
+## v0.14 Net Worth source adaptation (unreleased)
+
+Upstream: https://github.com/wealthfolio/wealthfolio, pinned commit
+`92b4647f74ec51fbbb1a772db4f42ea91060c518` (inspected November 4, 2026).
+Copyright belongs to the Wealthfolio authors and contributors. Adapted files retain
+AGPL-3.0-only identification; the license remains in
+`frontend/public/licenses/Wealthfolio-AGPL-3.0.txt`.
+
+| Finance Tracker | Upstream under `apps/frontend/src/` |
+| --- | --- |
+| `frontend/src/components/dashboard-card.tsx` | `components/dashboard-card.tsx` |
+| `frontend/src/components/net-worth-overview.tsx`, `frontend/src/pages/wealth.tsx`, `frontend/src/pages/net-worth-v014.css` | `pages/net-worth/net-worth-content.tsx`, `components/{breakdown-table,composition-bar,category-detail-sheet,velocity-card,net-worth-attention}.tsx`, `pages/dashboard/balance.tsx` |
+| `frontend/src/components/net-worth-chart.tsx` | `pages/net-worth/net-worth-chart.tsx`, `components/category-trend-chart.tsx` |
+| `frontend/src/components/net-worth-investments.tsx` | `pages/holdings/components/allocation-detail-sheet.tsx` |
+| `frontend/src/lib/net-worth-view.ts`, `backend/app/net_worth_view.py` | Presentation concepts from `pages/net-worth/components/utils.ts`; financial projections independently implemented with exact arithmetic |
+| `frontend/src/lib/net-worth-period.ts` | Interval semantics from `pages/dashboard/use-dashboard-period.ts` and `packages/ui/src/components/financial/interval-selector.tsx` |
+
+Adaptations replace upstream package hooks, Rust commands, floating-point money,
+native haptics and persistent financial filters with local API adapters, Decimal/
+BigInt projections, explicit unavailable states and URL-based selection. The
+application's existing themes, financial methods, navigation and manual-position
+workflows remain authoritative. No upstream branding or proprietary graphics are
+shipped. Official screenshots are local ignored comparison evidence only. See
+`docs/NET_WORTH_V014.md` for scope, deviations and verification. Existing AGPL
+corresponding-source obligations continue to apply to the adapted frontend.
+
 ## Source Serif 4 appearance option
 
 Source Serif 4 is bundled locally through `@fontsource/source-serif-4` 5.3.1 under
 SIL Open Font License 1.1. The unmodified notice is preserved in
 `frontend/public/licenses/source-serif-4-OFL.txt`. The app uses Latin normal
-400/500/600/700 faces, with no external font requests. Manrope, IBM Plex Sans,
-Public Sans and DM Sans are no longer bundled; their earlier attribution/license
-notices remain below for the historical adaptations and captures.
+400/500/600/700 faces, with no external font requests. Current optional font families and their licenses
+are listed below; Public Sans is not bundled.
 
 ## Official historical Brazil demo observations
 
@@ -57,9 +150,12 @@ these terms. This is not a relicensing of Wealthfolio under Finance Tracker's na
 Any redistribution or network deployment of the combined adapted frontend must
 retain the applicable AGPL notices and corresponding-source obligations.
 
-No upstream logos, product marks, illustrations, investment engines, or complete
-source components were copied into the application. Product documentation and
-screenshots now show Finance Tracker only; source attribution is retained here.
+The Phase 1.7 scope above is historical. It must not be read as a statement that
+the current application contains no copied components or illustrations: v0.14
+copies/adapts frontend components and translation catalogs and retains five goal
+cover illustrations, as recorded below. No upstream branding or Rust financial
+engine is intentionally shipped. Copyright remains with the respective authors;
+adaptation and exact local financial services do not erase upstream obligations.
 
 ## JetBrains Mono
 
@@ -76,6 +172,8 @@ metric-display, font/theme/language selectors, i18n setup and holdings compositi
 This pass adds independently implemented exact-string/BigInt chart geometry,
 preference controls and authored translations. It does not copy upstream source
 components or translation catalogs. Existing adapted files retain the notices above.
+This description applies to that historical v0.13 pass; the later v0.14 source
+migrations and copied catalogs are documented separately below.
 Official screenshots were inspected as references; no upstream branded assets are
 bundled in the application. No new project-wide relicensing is asserted.
 
@@ -175,3 +273,164 @@ Geist (`@fontsource/geist`) is bundled under SIL Open Font License 1.1;
 see `frontend/public/licenses/geist-OFL.txt`. Manrope, IBM Plex Sans and DM Sans
 are restored as user-selectable families under their preserved OFL notices.
 All fonts are served locally. Existing adapted-source attribution is unchanged.
+
+### v0.14 Portfolio Insights (unreleased)
+
+The AGPL-3.0-only adaptations in `portfolio-insights-overview.tsx`,
+`insights-dashboard.tsx`, `portfolio-insights.css`, `lib/portfolio-insights.ts` and
+`lib/insights-layout.ts` reference Wealthfolio revision
+`92b4647f74ec51fbbb1a772db4f42ea91060c518`: Insights `overview-page`, `value-strip`,
+`insights-dashboard`, `insights-layout`, `portfolio-explorer`,
+`holdings-highlight-cards`, and Holdings `drillable-donut-chart`,
+`composition-chart` plus the shared `donut-chart`. Exact local API adapters replace
+upstream monetary Number calculations and platform/settings dependencies. No Rust
+financial engine, branding, proprietary graphics or reference screenshots are bundled.
+
+`react-grid-layout` 2.2.4 and its `react-resizable` and `react-draggable` runtime
+dependencies use MIT licenses. Preserved notices are in
+`frontend/public/licenses/react-grid-layout-MIT.txt`, `react-resizable-MIT.txt` and
+`react-draggable-MIT.txt`. Versions are locked in `frontend/package-lock.json`.
+
+### v0.14 Investment Income (unreleased)
+
+`components/income-dashboard.tsx`, `income-currency-mix.tsx`, `income-chart.tsx`, `income-dashboard.css` and
+`lib/income-dashboard.ts` adapt the AGPL-3.0-only Income page/history-chart structures
+and interactions from Wealthfolio `92b4647f74ec51fbbb1a772db4f42ea91060c518`.
+The local adapters retain exact decimal-string values, original currencies and
+existing investment activities. Brazilian accrual presentation reuses Finance
+Tracker's own contract services and does not port an upstream financial engine.
+No reference screenshots, branding or proprietary assets are shipped in the app.
+
+### v0.14 Spending, Budgets and Life Events (unreleased)
+
+`frontend/src/features/spending/` adapts the Spending dashboard, full supported
+Budget editor, category list/treemap/table, period/date selectors, three Insights
+stages, money-flow Sankey, event timeline/calendar and event detail components
+from Wealthfolio commit `92b4647f74ec51fbbb1a772db4f42ea91060c518` (AGPL-3.0-only).
+The original source files and SHA-256 hashes are recorded in
+`frontend/src/vendor/wealthfolio/SOURCE.json`, under `spending_files`.
+
+Finance Tracker adapters replace provider hooks, platform navigation and monetary
+Number calculations with its existing FastAPI APIs, local hash routes and exact
+decimal strings/BigInt arithmetic. Source chart coordinates are dimensionless;
+labels retain exact original amounts. Category hierarchy, group buffers/rollover,
+planned income targets and manually entered starting balances are intentionally
+excluded according to the approved scope. Financial posting remains local.
+No Rust services, AI features, proprietary assets, branding or reference screenshots
+are shipped with the application.
+
+The source Calendar, MonthYearPicker and Item shared UI components retain their
+upstream package's MIT notices. The added `react-day-picker` dependency and
+`@date-fns/tz` transitive dependency are MIT licensed; copies are preserved in
+`frontend/public/licenses/react-day-picker-LICENSE.txt` and
+`frontend/public/licenses/date-fns-tz-LICENSE.txt`. Exact versions are locked.
+
+### v0.14 Goals and Savings Planner (unreleased)
+
+`frontend/src/features/goals/` adapts the Goals dashboard/cards, template creation,
+detail/edit/funding workspace, Save Up detail/projection/milestones and lever inputs
+from Wealthfolio `92b4647f74ec51fbbb1a772db4f42ea91060c518` (AGPL-3.0-only).
+The `wfGoals` locale resources retain upstream text, with supported local aliases.
+The source inventory and SHA-256 hashes are under `goals_files` in
+`frontend/src/vendor/wealthfolio/SOURCE.json`. Local API/exact-money adapters and
+zero-return planning replace upstream financial and platform dependencies.
+
+Five upstream illustrations (car, home, education, wedding, custom_save_up) were
+previously evaluated for goal covers. They are now EXCLUDED from the distribution
+pending independent rights clearance. Goal cards use neutral surfaces. Their
+original paths/hashes remain in SOURCE.json and the historical inventory as
+provenance evidence, not as a claim that the images are bundled or cleared.
+No retirement/Risk Lab or return-forecasting engine is copied.
+
+Shared DatePickerInput, Calendar RAC, DateField RAC and Textarea source retains
+the UI package's MIT license. `react-aria-components`, `@internationalized/date`
+and their Adobe React Aria/Stately/Internationalized runtime packages are
+Apache-2.0 licensed. Preserved license copies are in
+`frontend/public/licenses/react-aria-components-LICENSE.txt` and
+`internationalized-date-LICENSE.txt`; exact versions are locked. Existing locally
+served Merriweather font files retain their OFL notice. No font CDN is used.
+
+
+### v0.14 Performance, Portfolio Insights and allocation targets (unreleased)
+
+The source chart leaves, comparison/chart-card and metric-strip structures,
+Top Movers card/rows, treemap palette, target rails and default grid proportions
+adapt Wealthfolio commit `92b4647f74ec51fbbb1a772db4f42ea91060c518`
+(AGPL-3.0-only). Original paths, SHA-256 fingerprints, adaptation notes and inspected
+backend conventions are recorded in
+`frontend/src/vendor/wealthfolio/SOURCE.json` (`performance_insights_files`).
+The unchanged, uncompiled allocation worksheet UI is retained under
+`frontend/src/vendor/wealthfolio/reference/` for the explicitly postponed Stage B;
+it is not routed or represented as functioning software.
+
+The shared `packages/ui/src/components/ui/chart.tsx` source declares MIT, with the
+existing package license retained in `frontend/public/licenses`. Its context,
+tooltip and legend are adapted to local exact-string formatting. Source application
+translations retain attribution in the same inventory. No branding, market data or
+new proprietary graphics are copied. Local adapters preserve Decimal/string money,
+null gaps, reduced motion, date coverage and existing FastAPI/SQLite authority.
+
+### v0.14 Investments and Net Worth dashboard completion
+
+Source remains pinned to `92b4647f74ec51fbbb1a772db4f42ea91060c518`.
+`frontend/src/features/dashboard/` adapts dashboard content, balance, account rows,
+Top Holdings, savings goals, history chart, Momentum and category sheet/trend.
+`history-chart-scale.ts` retains the source algorithm unchanged, applied only to
+dimensionless coordinates. The Net Worth breakdown uses the source responsive
+subgrid tracks and keyboard/hover behavior. The existing AGPL application and MIT
+shared-UI licenses apply. The period selector uses the licensed shared animated
+toggle/calendar. Original paths and SHA256 fingerprints are recorded under
+`dashboard_files` in `frontend/src/vendor/wealthfolio/SOURCE.json`.
+
+Exact local strings, read-only FastAPI projections, unavailable values and URL
+filters replace floating-point money and platform hooks. Monetary NumberFlow
+interpolation is deliberately replaced by exact formatted labels. Native haptics,
+device sync and broker synchronization are not copied. No branding, proprietary
+assets or restricted price data are included.
+
+### v0.14 Settings and configuration
+
+Settings layout/sidebar/header, control grouping, account/portfolio/security list
+composition, Spending overview and Export/Backup/About structure are adapted from
+the pinned `92b4647f74ec51fbbb1a772db4f42ea91060c518` application source under
+AGPL-3.0-only. Original files and fingerprints appear under `settings_files` in
+`frontend/src/vendor/wealthfolio/SOURCE.json`; adapted files identify their sources.
+Existing bundled MIT UI and OFL font notices remain unchanged. The official Settings
+screenshot is ignored local comparison evidence, never a shipped product asset.
+Local exact-money adapters, metadata groups, export whitelist and maintenance-only
+backup service are Finance Tracker implementations, not copied Rust services. No
+branding, cloud services, AI modules or proprietary assets are included.
+
+### Historical pre-approval distribution review
+
+The application audit verified all 233 original-source fingerprints against pinned
+revision `92b4647f74ec51fbbb1a772db4f42ea91060c518`. This is a provenance check,
+not a legal compliance certification. The root all-rights-reserved notice does not
+settle redistribution of the adapted AGPL frontend. The user requested a separate
+licensing review before publication; no license grant or notice is changed here.
+See [the release gate](docs/AUDIT_V014.md#licensing-release-gate).
+
+### Licensing investigation, 2026-11-10
+
+The [compatibility review](docs/LICENSING_COMPATIBILITY_V014.md) and
+[file-level inventory](docs/licensing/SOURCE_FILE_INVENTORY.md) distinguish
+copied/adapted application source, UI-package metadata, original-code candidates,
+retained references, fonts and illustrations. The source manifest is an evidence
+record, not a blanket license grant or proof of independent authorship.
+At the investigation snapshot, the UI-specific complete notice, illustration
+rights and combined-work grant/source access were open questions. The current
+grant above, preserved UI metadata/standard MIT text and image exclusion address
+the approved source-only distribution. The earlier investigation is retained;
+it does not override the current owner-approved grant or certify unknown rights.
+
+The backend directly imports `ofxtools` 1.1.1, copyright Christopher Singley.
+Its installed metadata declares GPL-3.0-only; its actual release license text
+permits GPL version 3 or later. Both pieces of evidence are preserved without
+rewriting upstream terms. The unchanged release notice is at
+`frontend/public/licenses/ofxtools-COPYRIGHT.txt`; the standard GPLv3 text is at
+`frontend/public/licenses/GPL-3.0.txt`. The latter was obtained from the official
+SPDX license-text mirror after the GNU direct download timed out.
+The [release-source license](https://github.com/csingley/ofxtools/blob/894cfe94fa5d0820c24c9435687b296895a36f81/LICENSE)
+and the installed notice match. This dependency requires a combined-backend
+licensing review independently of the frontend/backend HTTP boundary. Its source
+and license must remain available as required by the applicable GPL terms.

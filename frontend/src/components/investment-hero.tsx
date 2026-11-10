@@ -90,15 +90,6 @@ export function InvestmentHero({
             </div>
           )}
         </div>
-        <select
-          aria-label={t('market_data:valuation_currency_83a461')}
-          value={currency}
-          onChange={(e) => change({ currency: e.target.value })}
-        >
-          {[...new Set([currency, 'BRL', 'USD', 'EUR', 'JPY'])].map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
       </div>
       {query.isPending ? (
         <LoadingState />

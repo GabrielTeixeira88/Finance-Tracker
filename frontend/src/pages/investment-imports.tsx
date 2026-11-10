@@ -1,3 +1,7 @@
+import { formatDecimal } from '@/lib/money'
+import '@/features/holdings/i18n'
+import { FileDropzone } from '@/features/activities/import/file-dropzone'
+import { WizardStepIndicator } from '@/features/activities/import/wizard-step-indicator'
 import { CandidateInspector } from '@/components/candidate-inspector'
 import { t as tr, ui } from '@/lib/i18n'
 import { useState } from 'react'
@@ -82,11 +86,17 @@ const profileSchema = z.object({
 })
 export default function BrokerageImports({
   accounts,
+  embedded = false,
+  initialAccount,
 }: {
   accounts: Account[]
+  embedded?: boolean
+  initialAccount?: string
 }) {
   const [account, setAccount] = useState(
-    accounts.find((a) => a.type === 'INVESTMENT' && a.active)?.id || '',
+    initialAccount ||
+      accounts.find((a) => a.type === 'INVESTMENT' && a.active)?.id ||
+      '',
   )
   const [mapping, setMapping] = useState<Mapping>(() =>
     mappingSchema.parse({ columns: initialColumns }),
@@ -174,18 +184,37 @@ export default function BrokerageImports({
     )
   return (
     <section className={`candidate-review ${focused ? 'has-inspector' : ''}`}>
-      <SectionHeader
-        title={tr(
-          batch?.source_type === 'PLUGGY_INVESTMENT'
-            ? 'pluggy:investment_review'
-            : 'investment_imports:brokerage_csv_imports_e1171b',
-        )}
-        detail={tr(
-          batch?.source_type === 'PLUGGY_INVESTMENT'
-            ? 'pluggy:investment_review_scope'
-            : 'investment_imports:local_files_explicit_review_no_activities_or_cas_eeeda2',
-        )}
+      <WizardStepIndicator
+        steps={[
+          'Choose file',
+          'Map columns',
+          'Review and resolve',
+          'Confirm',
+        ].map((name, index) => ({ id: String(index), label: ui(name) }))}
+        currentStep={
+          confirmed || batch?.status === 'COMPLETED'
+            ? '3'
+            : batch
+              ? '2'
+              : file
+                ? '1'
+                : '0'
+        }
       />
+      {!embedded && (
+        <SectionHeader
+          title={tr(
+            batch?.source_type === 'PLUGGY_INVESTMENT'
+              ? 'pluggy:investment_review'
+              : 'investment_imports:brokerage_csv_imports_e1171b',
+          )}
+          detail={tr(
+            batch?.source_type === 'PLUGGY_INVESTMENT'
+              ? 'pluggy:investment_review_scope'
+              : 'investment_imports:local_files_explicit_review_no_activities_or_cas_eeeda2',
+          )}
+        />
+      )}
       {(error || profiles.isError || history.isError) && (
         <ErrorState
           text={
@@ -200,10 +229,14 @@ export default function BrokerageImports({
         <>
           <div className="form-grid investment-editor">
             <Field label={tr('investment_imports:brokerage_csv_file_9a461b')}>
-              <input
-                type="file"
+              <FileDropzone
+                file={file}
                 accept=".csv"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                acceptedLabel={tr(
+                  'investment_imports:brokerage_csv_file_9a461b',
+                )}
+                isLoading={write.isPending}
+                onFileChange={setFile}
               />
             </Field>
             <Field
@@ -487,7 +520,11 @@ export default function BrokerageImports({
                     <td>
                       {r.candidate?.activity_type} {r.candidate?.symbol}
                     </td>
-                    <td className="number">{r.candidate?.quantity}</td>
+                    <td className="number">
+                      {r.candidate
+                        ? formatDecimal(r.candidate.quantity)
+                        : tr('common:unavailable')}
+                    </td>
                     <td className="number">
                       {r.candidate && (
                         <Money

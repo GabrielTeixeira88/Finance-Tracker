@@ -1,3 +1,13 @@
+import { demoChartLabel } from '@/lib/demo-runtime'
+import { isSimulatedInvestmentScenario } from '@/lib/demo-runtime'
+// SPDX-License-Identifier: AGPL-3.0-only
+// Presentation adapted from Wealthfolio 92b4647 history-chart.tsx; exact local data and gaps retained.
+import {
+  financialCurve,
+  financialGradient,
+  type FinancialChartMode,
+} from '@/lib/chart-presentation'
+import { useDemoRuntime } from '@/lib/demo-runtime'
 import { useChartMotion } from '@/lib/motion'
 import { t as tr } from '@/lib/i18n'
 import { getLocale } from '@/lib/preferences'
@@ -11,7 +21,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { chartCoordinates } from '@/lib/money'
+import { chartCoordinates, formatDecimal } from '@/lib/money'
 import type { MarketHistory } from '@/lib/market-data'
 import { Money } from './primitives'
 
@@ -20,13 +30,20 @@ export function PortfolioValueChart({
   security = false,
   label,
   hero = false,
+  mode = 'market',
 }: {
   history: MarketHistory
   security?: boolean
   label?: string
   hero?: boolean
+  mode?: FinancialChartMode
 }) {
+  const demoLabel = demoChartLabel(useDemoRuntime().runtime?.scenario)
   const chartMotion = useChartMotion()
+  const fictional = isSimulatedInvestmentScenario(
+    useDemoRuntime().runtime?.scenario,
+  )
+  const manual = mode === 'manual-observations'
   const id = useId().replaceAll(':', '')
   const valid = history.points.flatMap((p) =>
     p.value === null ? [] : [{ date: p.date, balance: p.value }],
@@ -58,16 +75,14 @@ export function PortfolioValueChart({
         >
           <defs>
             <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="0%"
-                stopColor="var(--investment-chart)"
-                stopOpacity={0.13}
-              />
-              <stop
-                offset="100%"
-                stopColor="var(--investment-chart)"
-                stopOpacity={0}
-              />
+              {financialGradient.map((s) => (
+                <stop
+                  key={s.offset}
+                  offset={s.offset}
+                  stopColor="var(--investment-chart)"
+                  stopOpacity={s.opacity}
+                />
+              ))}
             </linearGradient>
           </defs>
           <XAxis
@@ -96,6 +111,8 @@ export function PortfolioValueChart({
               return active && p ? (
                 <div className="chart-tooltip">
                   <p className="metadata">{p.date}</p>
+                  {fictional && <small>{tr(demoLabel)}</small>}
+                  {manual && <small>{tr('charts:recorded')}</small>}
                   {p.value === null ? (
                     tr('dynamic:incomplete_valuation_6b0844')
                   ) : (
@@ -105,7 +122,8 @@ export function PortfolioValueChart({
                     ?.filter((m) => m.date === p.date)
                     .map((m, index) => (
                       <p key={index} className="metadata">
-                        {tr('real_market:purchase')}: {m.symbol} · {m.quantity}
+                        {tr('real_market:purchase')}: {m.symbol} ·{' '}
+                        {formatDecimal(m.quantity)}
                       </p>
                     ))}
                 </div>
@@ -113,11 +131,13 @@ export function PortfolioValueChart({
             }}
           />
           <Area
-            type={hero ? 'linear' : 'stepAfter'}
+            type={financialCurve(mode)}
             dataKey="coordinate"
             connectNulls={false}
             stroke="var(--investment-chart)"
-            strokeWidth={1.8}
+            strokeWidth={1.5}
+            dot={manual || data.length === 1 ? { r: 2, strokeWidth: 1 } : false}
+            activeDot={{ r: 4 }}
             fill={`url(#${id})`}
             {...chartMotion}
             name={label ?? 'Portfolio value'}
@@ -141,6 +161,8 @@ export function PortfolioValueChart({
         </AreaChart>
       </ResponsiveContainer>
       <figcaption className={hero ? 'sr-only' : 'metadata'}>
+        {manual && <span>{tr('charts:manual_interpolation')} </span>}
+        {fictional && <span>{tr(demoLabel)} </span>}
         {label ??
           (security
             ? tr('dynamic:eligible_security_prices_7853e0')

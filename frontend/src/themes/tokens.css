@@ -260,7 +260,7 @@
   margin: 8px 0;
   background: var(--muted-foreground);
 }
-.theme-preview main {
+.theme-preview .theme-preview-content {
   flex: 1;
   padding: 12px;
   min-width: 0;

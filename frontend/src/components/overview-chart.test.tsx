@@ -31,7 +31,7 @@ it('splits a headline into typography parts without rounding through Number', ()
     locale: 'en-US',
   })
   expect(parts.map((part) => part.value).join('')).toBe(
-    '-R$999,999,999,999,999,999.123456',
+    '-R$ 999.999.999.999.999.999,12',
   )
-  expect(parts.find((part) => part.type === 'fraction')?.value).toBe('123456')
+  expect(parts.find((part) => part.type === 'fraction')?.value).toBe('12')
 })

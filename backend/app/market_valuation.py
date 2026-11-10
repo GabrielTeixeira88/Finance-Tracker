@@ -161,6 +161,7 @@ def history(
     *,
     account_ids=None,
     serialize=True,
+    include_accounts=False,
 ):
     from app.investments import wire
 
@@ -229,6 +230,7 @@ def history(
     cash = defaultdict(lambda: ZERO)
     positions = defaultdict(lambda: ZERO)
     points = []
+    account_points = {a.id: [] for a in accounts} if include_accounts else {}
     offset = 0
     day = start
     with localcontext() as ctx:
@@ -241,8 +243,14 @@ def history(
                     positions[(aid, security)] += quantity
                 offset += 1
             totals = defaultdict(lambda: ZERO)
+            scoped_totals = (
+                {a.id: defaultdict(lambda: ZERO) for a in accounts} if include_accounts else {}
+            )
+            scoped_missing = defaultdict(list)
             for account in accounts:
                 totals[account.currency] += cash[account.id]
+                if include_accounts:
+                    scoped_totals[account.id][account.currency] += cash[account.id]
             missing = []
             carried = []
             for (_aid, security), quantity in positions.items():
@@ -252,8 +260,12 @@ def history(
                 p = book.select(security, day, historical=True)
                 if p is None:
                     missing.append(str(security))
+                    if include_accounts:
+                        scoped_missing[_aid].append(str(security))
                 else:
                     totals[asset.currency] += quantity * p.price
+                    if include_accounts:
+                        scoped_totals[_aid][asset.currency] += quantity * p.price
                     if p.price_date < day:
                         carried.append(str(security))
             known, missing_fx, conversions = convert_totals(totals, fx, target, day)
@@ -268,6 +280,16 @@ def history(
                     "fx": conversions,
                 }
             )
+            if include_accounts:
+                for account in accounts:
+                    value, gaps, _ = convert_totals(scoped_totals[account.id], fx, target, day)
+                    account_points[account.id].append(
+                        {
+                            "date": day,
+                            "value": None if scoped_missing[account.id] or gaps else value,
+                            "known_value": value,
+                        }
+                    )
             day += timedelta(days=1)
     result = {
         "start": start,
@@ -292,6 +314,8 @@ def history(
         "performance. Corporate actions require ledger correction "
         "and explicit coverage review.",
     }
+    if include_accounts:
+        result["account_histories"] = account_points
     return wire(result) if serialize else result
 
 

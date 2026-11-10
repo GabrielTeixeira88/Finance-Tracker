@@ -2,15 +2,15 @@
 
 Versions are the primary milestone identifiers. Historical phases remain traceable
 below; they do not imply earlier releases or tags. Current application version is
-0.13.0. Product refinements, appearance/localization, fixed income, Life Events,
-read-only Pluggy integration and the Brazilian historical demo are implemented.
-See [release validation](RELEASE_0_13_0.md) for checks and explicit limitations.
-Live bank/OAuth/provider entitlements, public demo hosting and broader installation/
-backup hardening remain separate validation work; v1.0 readiness is not claimed.
+0.14.0. The frontend migration, integration and stabilization are finalized in
+source. Owner-authored code is AGPL-3.0-only, with third-party terms preserved.
+See [finalization](FINALIZATION_V014.md) and the retained audit/migration records.
+No v0.14 tag, GitHub Release or deployment is implied by this milestone.
 
-Next branch: `feature/v0.14.0-frontend-refinement`, created only after the v0.13
-merge/tag. Its frontend migration/refinement scope is not implemented by branch
-creation. The version remains 0.13.0 until another approved release.
+The known development-only minimatch advisory is accepted for this merge, not
+fixed or hidden. Live bank/OAuth entitlements, public demo hosting and future
+artifact-specific source/installation obligations remain separate considerations.
+The roadmap's postponed financial engines remain postponed; v1.0 is not claimed.
 
 ## Historical mapping
 
@@ -159,6 +159,19 @@ for this phase. Existing attribution/licenses remain intact.
 The current release is v0.13.0; see [release validation](RELEASE_0_13_0.md).
 Public deployment is not implemented.
 
+### Unreleased v0.14 Spending decisions
+
+The source Spending/Budgets/Insights migration includes persisted category/group
+appearance and existing deterministic rules, refunds, target versions and Life
+Events. See [the implementation record](SPENDING_BUDGETS_V014.md).
+
+The following require a separately approved scope: category hierarchies and their
+rollups; group buffers/rollover; a configurable event-type catalog; saved/multiple
+spending-account scopes; planned income; manually entered starting rollover; and
+prorated targets for arbitrary report periods. Insights deliberately compares whole
+calendar-month targets with the same month's spending, labeled separately from
+selected-period cash flow. No transaction timestamps are invented for heatmaps.
+
 ### v0.10 reference investigation
 
 Inspected the public Wealthfolio `net_worth_service.rs`, `net_worth_model.rs`,
@@ -190,3 +203,33 @@ support: secure credentials, hosted connection/renewal, local resource observati
 account/asset mapping and explicit existing ingestion confirmation. This replaces
 the earlier Pluggy exclusion, without adding payment initiation or automatic ledger
 posting. Live institution/entitlement validation remains user-dependent; see PLUGGY.md.
+
+### v0.14 Goals decisions (approved)
+
+Add source templates and saved monthly contribution assumptions, archive restoration
+and retained soft deletion. Preserve zero-return previews, exact fixed allocations
+and Caixinha account reservation. Postpone expected-return/uncertainty forecasting,
+percentage-of-account funding and Retirement/FIRE. No AI, tax-aware funding or
+rebalancing is included. Implementation/validation: [Goals migration](GOALS_V014.md).
+
+### v0.14 Performance and Insights decisions (approved)
+
+Add read-only annualized TWR, log-return volatility and flow-adjusted maximum
+drawdown, plus Stage A local allocation targets/tolerances/drift. Reuse existing
+daily holdings projections for Top Movers and composition coloring. Preserve the
+source-adapted widget customization and existing Income paid/accrued distinction.
+
+Postpone full trading/cash/FX attribution; Stage B hypothetical rebalancing worksheet
+and trade planning/export; weighted ETF look-through; classification hierarchies;
+named portfolios/account groups. No automatic trades, liquidity recommendations,
+tax/fee optimization or Retirement/FIRE scope. Source worksheet UI is retained as
+an uncompiled licensed reference. See [Performance/Insights](PERFORMANCE_INSIGHTS_V014.md).
+
+## Settings migration status (unreleased v0.14)
+
+Source-style Settings, shared account administration, organizational account groups,
+securities/classification access, exact whitelisted exports and maintenance-only
+personal backup/restore are implemented. Broader restore/encryption/platform readiness
+is not implied. Category hierarchies, configurable event types, audited FX/quote
+changes, provider fallback engines, contribution limits, planned income and manual
+starting rollover remain postponed by user choice. See [Settings coverage](SETTINGS_V014.md).

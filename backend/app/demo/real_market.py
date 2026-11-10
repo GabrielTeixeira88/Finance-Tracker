@@ -24,7 +24,7 @@ from app.fixed_income_schemas import Subscription
 from app.investment_schemas import ActivityInput, settled
 from app.market_models import AssetPricing, MarketSettings
 from app.models import Asset, DemoFixture, PriceObservation, Record, Transaction
-from app.wealth_models import Goal
+from app.wealth_models import Goal, ManualPosition, PositionObservation
 
 STAMP = datetime(2026, 9, 30, tzinfo=UTC)
 CAIXINHA = (
@@ -305,6 +305,36 @@ def seed(session):
         session.flush()
         wealth.reserve_investment_account(session, goal, caixinha.id, goal.start_date)
         seed_goals(session, savings, START)
+        # Fictional owned assets, independently valued; never cash postings or
+        # investment observations. The house and car are owned before the replay.
+        for name, category, values in (
+            ("House", "REAL_ESTATE", ("300000", "310000", "330000", "340000")),
+            ("Car", "VEHICLE", ("45000", "43000", "40000", "38000")),
+        ):
+            position = ManualPosition(
+                name=name,
+                kind="ASSET",
+                category=category,
+                currency="BRL",
+                liquidity="ILLIQUID",
+                start_date=START,
+                notes="Fictional owned asset with illustrative manual valuations; not market data.",
+            )
+            session.add(position)
+            session.flush()
+            for day, amount in zip(
+                (START, date(2025, 1, 1), date(2026, 1, 1), END), values, strict=True
+            ):
+                session.add(
+                    PositionObservation(
+                        position_id=position.id,
+                        effective_date=day,
+                        amount=Decimal(amount),
+                        notes="Fictional manual valuation; no ledger movement.",
+                    )
+                )
+            session.flush()
+
         dates = set(session.scalars(select(Transaction.transaction_date))) | {START, END}
         if any(
             values.get(accounts["Checking"].id, Decimal(0)) < 0

@@ -1,0 +1,128 @@
+/* Source goal slider tokens from Wealthfolio 92b4647 globals.css. */
+@import '@fontsource/merriweather/400.css';
+@import '@fontsource/merriweather/700.css';
+.goals-workspace .font-serif {
+  font-family: 'Merriweather', ui-serif, Georgia, serif;
+}
+.goals-workspace .lever-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: linear-gradient(
+    to right,
+    var(--success) 0,
+    var(--success) var(--lever-pct, 0%),
+    var(--muted) var(--lever-pct, 0%),
+    var(--muted) 100%
+  );
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+.goals-workspace .lever-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--muted-foreground);
+  border: 2px solid var(--card);
+  box-shadow: 0 1px 3px #0004;
+  cursor: grab;
+}
+.goals-workspace .lever-slider::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--muted-foreground);
+  border: 2px solid var(--card);
+  box-shadow: 0 1px 3px #0004;
+  cursor: grab;
+}
+.goals-workspace .lever-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.goals-workspace .lever-slider:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+.goals-workspace :where(button, a, input):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.goals-workspace table {
+  border-collapse: collapse;
+}
+.goals-workspace :where(td, th) {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.goals-workspace td {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.goals-workspace [data-slot='input'] {
+  height: 2.5rem;
+}
+@media (max-width: 767px) {
+  .goals-workspace .goals-page-header > .p-4 > .mx-auto > div {
+    flex-wrap: wrap;
+  }
+  .goals-workspace
+    .goals-page-header
+    > .p-4
+    > .mx-auto
+    > div
+    > div:first-child {
+    min-width: 65%;
+  }
+  /* Recharts measures the outer responsive container, then renders through an
+     overflow-visible zero-width inner wrapper. A max-width on the chart itself
+     would clamp its measured pixel width to zero on mobile. */
+  .goals-workspace [data-slot='card-header'] {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .goals-workspace *,
+  .goals-workspace *::before,
+  .goals-workspace *::after {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
+  }
+}
+/* Source semantic subtle states, scoped to this migration and existing theme tokens. */
+.goals-workspace .bg-warning-subtle {
+  background: var(--warning);
+}
+.goals-workspace .text-warning-subtle-foreground {
+  color: var(--background);
+}
+.goals-workspace .bg-destructive-subtle {
+  background: color-mix(in srgb, var(--destructive) 18%, var(--card));
+}
+.goals-workspace .text-destructive-subtle-foreground {
+  color: var(--destructive);
+}
+.goals-workspace .text-success-foreground {
+  color: var(--background);
+}
+.goals-workspace .divide-x > :not(:last-child),
+.goals-workspace .divide-y > :not(:last-child) {
+  border-color: var(--border);
+}
+.goals-workspace .bg-success-subtle {
+  background: color-mix(in srgb, var(--success) 18%, var(--card));
+}
+.goals-workspace .text-success-subtle-foreground {
+  color: var(--success);
+}
+
+.goals-workspace .line-clamp-1 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}

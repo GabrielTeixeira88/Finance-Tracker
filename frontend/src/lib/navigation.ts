@@ -39,6 +39,11 @@ export function readRoute(hash = snapshot()) {
   return { page, accountId: params.get('account') ?? undefined, params }
 }
 function write(hash: string, replace = false) {
+  const before = new CustomEvent('finance-tracker:before-navigation', {
+    cancelable: true,
+    detail: { hash },
+  })
+  if (!window.dispatchEvent(before)) return
   window.history[replace ? 'replaceState' : 'pushState'](null, '', hash)
   window.dispatchEvent(new Event(changed))
 }
@@ -46,16 +51,28 @@ export function navigateTo(
   page: Page,
   accountId?: string,
   values: Record<string, string> = {},
+  replace = false,
 ) {
   const params = new URLSearchParams(values)
   if (accountId) params.set('account', accountId)
   const canonical = canonicalRoute(paths[page], params)
   write(
     `#/${canonical.path}${canonical.params.size ? `?${canonical.params}` : ''}`,
+    replace,
   )
 }
 export function useRoute() {
   return readRoute(useSyncExternalStore(subscribe, snapshot, () => ''))
+}
+
+/** Source-adapted page controls retain scope in the canonical URL. */
+export function updateRouteParams(params: URLSearchParams, replace = false) {
+  const route = readRoute()
+  const canonical = canonicalRoute(paths[route.page], params)
+  write(
+    `#/${canonical.path}${canonical.params.size ? `?${canonical.params}` : ''}`,
+    replace,
+  )
 }
 
 /** Replace typing/filter state without creating a history entry per keystroke. */

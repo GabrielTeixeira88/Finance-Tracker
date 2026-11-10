@@ -10,8 +10,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app._version import __version__
+from app.allocation_routes import router as allocation_router
 from app.analytics_routes import router as analytics_router
 from app.automation_routes import router as automation_router
+from app.backup_routes import router as backup_router
 from app.budget_routes import router as budget_router
 from app.database import get_engine, get_session
 from app.error_codes import install_error_codes
@@ -25,11 +27,27 @@ from app.market_routes import router as market_router
 from app.pluggy_routes import router as pluggy_router
 from app.reconciliation_routes import router as reconciliation_router
 from app.routes import router
+from app.settings_routes import router as settings_router
 from app.wealth_routes import router as wealth_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    from app.config import get_settings
+    from app.local_backups import runtime_lease
+
+    with runtime_lease(get_settings().resolved_database_path):
+        async with normal_lifespan(app):
+            yield
+
+
+@asynccontextmanager
+async def normal_lifespan(app: FastAPI) -> AsyncIterator[None]:
+    from app.config import get_settings
+
+    if get_settings().maintenance_mode:
+        yield
+        return
     from app.market_scheduler import start_worker
 
     stop, thread = start_worker()
@@ -73,6 +91,7 @@ install_error_codes(app)
 app.include_router(fixed_income_router)
 app.include_router(investment_router)
 app.include_router(analytics_router)
+app.include_router(allocation_router)
 app.include_router(market_router)
 app.include_router(investment_import_router)
 app.include_router(router)
@@ -84,11 +103,49 @@ app.include_router(reconciliation_router)
 app.include_router(wealth_router)
 app.include_router(life_event_router)
 app.include_router(pluggy_router)
+app.include_router(settings_router)
+app.include_router(backup_router)
+
+
+class MaintenanceGate:
+    """Maintenance never runs financial routes, workers or concurrent backup operations."""
+
+    def __init__(self, app):
+        import asyncio
+
+        self.app = app
+        self.lock = asyncio.Lock()
+
+    async def __call__(self, scope, receive, send):
+        from app.config import get_settings
+
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        path = scope["path"]
+        if (
+            get_settings().maintenance_mode
+            and path.startswith("/api/")
+            and not (
+                path in {"/api/health", "/api/runtime"} or path.startswith("/api/settings/backups")
+            )
+        ):
+            return await JSONResponse(
+                {"detail": "Database maintenance in progress"}, status_code=503
+            )(scope, receive, send)
+        if path.startswith("/api/settings/backups"):
+            async with self.lock:
+                return await self.app(scope, receive, send)
+        return await self.app(scope, receive, send)
+
+
+app.add_middleware(MaintenanceGate)
 
 
 @app.get("/api/runtime")
 def runtime():
-    return {"mode": "normal"}
+    from app.config import get_settings
+
+    return {"mode": "normal", **({"maintenance": True} if get_settings().maintenance_mode else {})}
 
 
 class HealthResponse(BaseModel):

@@ -70,8 +70,8 @@ it('shows exact API-backed values and explicit unavailable ETF coverage', async 
       selector: 'summary',
     }),
   )
-  expect(screen.getByText('R$3,865.73')).toBeVisible()
-  expect(screen.getByText('R$3,763.98')).toBeVisible()
+  expect(screen.getByText('R$ 3.865,73')).toBeVisible()
+  expect(screen.getByText('R$ 3.763,98')).toBeVisible()
   expect(fetch).toHaveBeenCalledWith(
     '/api/demo-control/market-evidence',
     expect.anything(),

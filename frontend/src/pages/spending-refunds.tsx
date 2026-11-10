@@ -1,3 +1,4 @@
+import { formatMoney } from '@/lib/money'
 import { t as tr } from '@/lib/i18n'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -157,8 +158,8 @@ export default function Refunds({
               </option>
               {expenses.data?.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.transaction_date} · {t.description} · {t.amount}{' '}
-                  {t.currency}
+                  {t.transaction_date} · {t.description} ·{' '}
+                  {formatMoney(t.amount, t.currency)}
                 </option>
               ))}
             </select>
@@ -228,8 +229,8 @@ export default function Refunds({
                 </option>
                 {credits.data?.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.transaction_date} · {t.description} · {t.amount}{' '}
-                    {t.currency}
+                    {t.transaction_date} · {t.description} ·{' '}
+                    {formatMoney(t.amount, t.currency)}
                   </option>
                 ))}
               </select>
@@ -256,7 +257,12 @@ export default function Refunds({
               <div className="insight-row" key={link.id}>
                 <span>
                   {t?.description ?? `Purchase ${link.purchase_id}`}{' '}
-                  {t && <Money value={t.amount} currency={t.currency} />}
+                  {t && (
+                    <Money
+                      value={formatMoney(t.amount, t.currency)}
+                      currency={t.currency}
+                    />
+                  )}
                   <small className="metadata block">
                     {' '}
                     {tr('spending_refunds:credit_8a45d3')} {link.refund_id}

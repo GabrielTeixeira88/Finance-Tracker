@@ -1,3 +1,7 @@
+import { ColorPicker } from '@/features/spending/components/color-picker'
+import { IconPicker } from '@/features/spending/components/icon-picker'
+import { PortalScope } from '@/vendor/wealthfolio/ui/components/ui/portal-scope'
+import '@/features/spending/i18n'
 import { t as tr, ui } from '@/lib/i18n'
 import { DecimalInput } from './decimal-input'
 import { exactFormData } from '@/lib/localized-number'
@@ -6,6 +10,8 @@ import {
   isValidElement,
   useId,
   useState,
+  lazy,
+  Suspense,
   type FormEvent,
   type ReactNode,
   type InputHTMLAttributes,
@@ -19,12 +25,19 @@ import {
   accountTypes,
   label,
   localDate,
+  getDemoDate,
   moneyInput,
   openingInput,
   type Account,
   type Category,
   type Transaction,
 } from '@/lib/api'
+
+const ActivityTypePicker = lazy(() =>
+  import('@/features/activities/activity-type-picker').then((module) => ({
+    default: module.ActivityTypePicker,
+  })),
+)
 
 export function Field({
   label: text,
@@ -261,17 +274,22 @@ export function AccountForm({
 
 export function TransactionForm({
   transaction,
+  draft,
+  initialAccount,
   kind,
   accounts,
   categories,
   onSaved,
 }: {
   transaction?: Transaction
+  draft?: Transaction
+  initialAccount?: string
   kind?: 'INCOME' | 'EXPENSE'
   accounts: Account[]
   categories: Category[]
   onSaved: () => void
 }) {
+  const initial = transaction ?? draft
   const financialChange = (form: FormData) =>
     !!transaction &&
     (decimalUnits(moneyInput.parse(value(form, 'amount'))) !==
@@ -348,13 +366,13 @@ export function TransactionForm({
           name="account_id"
           required
           disabled={!!transaction}
-          defaultValue={transaction?.account_id ?? ''}
+          defaultValue={initial?.account_id ?? initialAccount ?? ''}
         >
           <option value="" disabled>
             {tr('forms:choose_account_9ccef0')}
           </option>
           {accounts
-            .filter((a) => a.active || a.id === transaction?.account_id)
+            .filter((a) => a.active || a.id === initial?.account_id)
             .map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name} ({a.currency})
@@ -368,7 +386,7 @@ export function TransactionForm({
         <Field label={tr('forms:type_3deb74')}>
           <select
             name="transaction_type"
-            defaultValue={transaction?.transaction_type ?? 'EXPENSE'}
+            defaultValue={initial?.transaction_type ?? 'EXPENSE'}
           >
             <option value="EXPENSE">{tr('forms:expense_a0db8e')}</option>
             <option value="INCOME">{tr('forms:income_1c89b1')}</option>
@@ -380,7 +398,7 @@ export function TransactionForm({
           name="amount"
           inputMode="decimal"
           required
-          defaultValue={transaction?.amount}
+          defaultValue={initial?.amount}
         />
       </Field>
       <Field label={tr('forms:date_eb9a4b')}>
@@ -388,7 +406,9 @@ export function TransactionForm({
           name="transaction_date"
           type="date"
           required
-          defaultValue={transaction?.transaction_date ?? localDate()}
+          defaultValue={
+            initial?.transaction_date ?? getDemoDate() ?? localDate()
+          }
         />
       </Field>
       <Field label={tr('forms:description_55f8eb')}>
@@ -396,21 +416,21 @@ export function TransactionForm({
           name="description"
           required
           maxLength={500}
-          defaultValue={transaction?.description}
+          defaultValue={initial?.description}
         />
       </Field>
       <Field label={tr('forms:merchant_optional__33d4eb')}>
         <input
           name="merchant"
           maxLength={120}
-          defaultValue={transaction?.merchant ?? ''}
+          defaultValue={initial?.merchant ?? ''}
         />
       </Field>
-      <PayeePicker initial={transaction?.payee} />
+      <PayeePicker initial={initial?.payee} />
       <Field label={tr('forms:review_status_0fe6b8')}>
         <select
           name="review_status"
-          defaultValue={transaction?.review_status ?? 'AUTO'}
+          defaultValue={initial?.review_status ?? 'AUTO'}
         >
           {!transaction && (
             <option value="AUTO">
@@ -424,10 +444,7 @@ export function TransactionForm({
         </select>
       </Field>
       <Field label={tr('forms:category_a3c686')}>
-        <select
-          name="category_id"
-          defaultValue={transaction?.category_id ?? ''}
-        >
+        <select name="category_id" defaultValue={initial?.category_id ?? ''}>
           <option value="">{tr('forms:uncategorized_4ef7d7')}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
@@ -465,11 +482,13 @@ export function TransactionForm({
 export function TransferForm({
   accounts,
   onSaved,
+  initialAccount,
 }: {
   accounts: Account[]
   onSaved?: () => void
+  initialAccount?: string
 }) {
-  const [source, setSource] = useState('')
+  const [source, setSource] = useState(initialAccount ?? '')
   const selected = accounts.find((a) => a.id === source)
   return (
     <Editor
@@ -540,7 +559,12 @@ export function TransferForm({
         <input name="amount" inputMode="decimal" required />
       </Field>
       <Field label={tr('forms:date_eb9a4b')}>
-        <input name="date" type="date" required defaultValue={localDate()} />
+        <input
+          name="date"
+          type="date"
+          required
+          defaultValue={getDemoDate() ?? localDate()}
+        />
       </Field>
       <Field label={tr('forms:description_optional__388de6')}>
         <input name="description" maxLength={500} />
@@ -559,58 +583,116 @@ export function CategoryForm({
   category?: Category
   onSaved: () => void
 }) {
+  const [icon, setIcon] = useState<string | null>(category?.icon ?? null)
+  const [color, setColor] = useState<string | undefined>(
+    category?.color ?? undefined,
+  )
   return (
-    <Editor
-      title={
-        category
-          ? tr('dynamic:edit_category_c6071d')
-          : tr('dynamic:create_category_61495a')
-      }
-      path={category ? `/categories/${category.id}` : '/categories'}
-      editing={!!category}
-      onSaved={onSaved}
-      payload={(form) => ({ name: value(form, 'name') })}
-    >
-      <Field label={tr('forms:category_name_ed3dc4')}>
-        <input
-          name="name"
-          required
-          maxLength={120}
-          defaultValue={category?.name}
-        />
-      </Field>
-    </Editor>
+    <PortalScope name="holdings-migration">
+      <Editor
+        title={
+          category
+            ? tr('dynamic:edit_category_c6071d')
+            : tr('dynamic:create_category_61495a')
+        }
+        path={category ? `/categories/${category.id}` : '/categories'}
+        editing={!!category}
+        onSaved={onSaved}
+        payload={(form) => ({
+          name: value(form, 'name'),
+          icon,
+          color:
+            color?.length === 4
+              ? '#' + [...color.slice(1)].map((part) => part + part).join('')
+              : (color ?? null),
+        })}
+      >
+        <Field label={tr('forms:category_name_ed3dc4')}>
+          <input
+            name="name"
+            required
+            maxLength={120}
+            defaultValue={category?.name}
+          />
+        </Field>
+        <div className="flex items-center gap-3 py-2">
+          <IconPicker value={icon} onChange={setIcon} accent={color} />
+          <ColorPicker value={color} onChange={setColor} />
+        </div>
+      </Editor>
+    </PortalScope>
   )
 }
 
 export function TransactionComposer({
   accounts,
+  initialAccount,
+  native = false,
+  initialDraft,
   categories,
   onSaved,
 }: {
   accounts: Account[]
+  initialAccount?: string
+  native?: boolean
+  initialDraft?: Transaction
   categories: Category[]
   onSaved: () => void
 }) {
-  const [kind, setKind] = useState<'EXPENSE' | 'INCOME' | 'TRANSFER'>('EXPENSE')
+  const [kind, setKind] = useState<'EXPENSE' | 'INCOME' | 'TRANSFER'>(
+    initialDraft?.transaction_type === 'INCOME' ? 'INCOME' : 'EXPENSE',
+  )
   return (
     <div className="transaction-composer">
-      <Field label={tr('forms:transaction_type_575da7')}>
-        <select
-          value={kind}
-          onChange={(e) => setKind(e.target.value as typeof kind)}
+      {native ? (
+        <Suspense
+          fallback={<p role="status">{tr('App:loading_page__053228')}</p>}
         >
-          <option value="EXPENSE">{tr('forms:expense_a0db8e')}</option>
-          <option value="INCOME">{tr('forms:income_1c89b1')}</option>
-          <option value="TRANSFER">{tr('forms:transfer_cbb4cc')}</option>
-        </select>
-      </Field>
+          <ActivityTypePicker
+            value={
+              kind === 'INCOME'
+                ? 'DEPOSIT'
+                : kind === 'EXPENSE'
+                  ? 'WITHDRAWAL'
+                  : 'TRANSFER'
+            }
+            allowedTypes={['DEPOSIT', 'WITHDRAWAL', 'TRANSFER']}
+            labelKeys={{
+              DEPOSIT: 'forms:income_1c89b1',
+              WITHDRAWAL: 'forms:expense_a0db8e',
+              TRANSFER: 'forms:transfer_cbb4cc',
+            }}
+            onSelect={(value) => {
+              if (value === 'DEPOSIT') setKind('INCOME')
+              else if (value === 'WITHDRAWAL') setKind('EXPENSE')
+              else if (value === 'TRANSFER') setKind('TRANSFER')
+            }}
+          />
+        </Suspense>
+      ) : (
+        <Field label={tr('forms:transaction_type_575da7')}>
+          <select
+            value={kind}
+            onChange={(e) => setKind(e.target.value as typeof kind)}
+          >
+            <option value="EXPENSE">{tr('forms:expense_a0db8e')}</option>
+            <option value="INCOME">{tr('forms:income_1c89b1')}</option>
+            <option value="TRANSFER">{tr('forms:transfer_cbb4cc')}</option>
+          </select>
+        </Field>
+      )}
       {kind === 'TRANSFER' ? (
-        <TransferForm accounts={accounts} onSaved={onSaved} />
+        <TransferForm
+          accounts={accounts}
+          initialAccount={initialAccount}
+          onSaved={onSaved}
+        />
       ) : (
         <TransactionForm
           key={kind}
           kind={kind}
+          draft={initialDraft}
+          initialAccount={initialAccount}
           accounts={accounts}
           categories={categories}
           onSaved={onSaved}

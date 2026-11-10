@@ -1,3 +1,13 @@
+import { checkApplicationAudit } from './application-audit-e2e.mjs'
+import { checkSettingsMigration } from './settings-migration-e2e.mjs'
+import { checkDashboardMigration } from './dashboard-migration-e2e.mjs'
+import { checkPerformanceInsights } from './performance-insights-e2e.mjs'
+import { checkGoalsMigration } from './goals-migration-e2e.mjs'
+import { checkSpendingMigration } from './spending-migration-e2e.mjs'
+import { checkUnifiedDemo } from './unified-demo-e2e.mjs'
+import { checkHoldingsActivities } from './holdings-activities-e2e.mjs'
+import { checkNumbers } from './numbers-e2e.mjs'
+import { checkSidebarOrder } from './sidebar-order-e2e.mjs'
 // Real browser + API + migrated SQLite. Never runs against an existing server/workspace.
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
@@ -12,6 +22,10 @@ import { checkGoals } from './goals-e2e.mjs'
 import { checkTypography } from './typography-e2e.mjs'
 import { checkRealMarket } from './real-market-e2e.mjs'
 import { checkThemes } from './themes-e2e.mjs'
+import { checkChartDemo } from './chart-demo-e2e.mjs'
+import { checkPortfolioInsights } from './portfolio-insights-e2e.mjs'
+import { checkIncome } from './income-e2e.mjs'
+import { checkNetWorth } from './net-worth-e2e.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const port = process.env.DEMO_E2E_PORT || '8001'
@@ -32,21 +46,23 @@ await mkdir(path.join(root, '.tmp'), { recursive: true })
 const media = process.argv.includes('--screenshots')
 const output = path.join(
   root,
-  process.argv.includes('--real-market')
-    ? '.tmp/real-market-regression-results'
-    : process.argv.includes('--typography')
-      ? 'docs/screenshots/appearance-options'
-      : process.argv.includes('--goals')
-        ? 'docs/screenshots/goals-refinement'
-        : process.argv.includes('--parity')
-          ? 'docs/screenshots/parity-v013'
-          : process.argv.includes('--fixed-income')
-            ? 'docs/screenshots/fixed-income'
-            : process.argv.includes('--appearance')
-              ? 'docs/screenshots/v013/after'
-              : media
-                ? 'docs/screenshots/v012'
-                : '.tmp/demo-e2e-results',
+  process.argv.includes('--unified')
+    ? '.tmp/unified-demo-e2e'
+    : process.argv.includes('--real-market')
+      ? '.tmp/real-market-regression-results'
+      : process.argv.includes('--typography')
+        ? 'docs/screenshots/appearance-options'
+        : process.argv.includes('--goals')
+          ? 'docs/screenshots/goals-refinement'
+          : process.argv.includes('--parity')
+            ? 'docs/screenshots/parity-v013'
+            : process.argv.includes('--fixed-income')
+              ? 'docs/screenshots/fixed-income'
+              : process.argv.includes('--appearance')
+                ? 'docs/screenshots/v013/after'
+                : media
+                  ? 'docs/screenshots/v012'
+                  : '.tmp/demo-e2e-results',
 )
 await mkdir(output, { recursive: true })
 const python = path.join(
@@ -67,7 +83,7 @@ market.load_etfs = lambda: None
 snapshot.LOCAL_ETF = root / "no-authorized-export.json"`
     : ''
 }
-uvicorn.run(create_demo_app(get_settings().resolved_database_path, root, scenario="${process.argv.includes('--real-market-only') ? 'real-market-br' : 'synthetic'}", legacy_fixture=${process.argv.includes('--real-market-only') ? 'False' : 'True'}), host="127.0.0.1", port=${port}, access_log=False)
+uvicorn.run(create_demo_app(get_settings().resolved_database_path, root, scenario="${process.argv.includes('--unified') || process.argv.includes('--holdings-activities') || process.argv.includes('--spending-migration') || process.argv.includes('--goals-migration') || process.argv.includes('--performance-insights') || process.argv.includes('--dashboard-migration') || process.argv.includes('--settings-migration') || process.argv.includes('--app-audit') || process.argv.includes('--themes') ? 'unified' : process.argv.includes('--real-market-only') ? 'real-market-br' : 'synthetic'}", legacy_fixture=${process.argv.includes('--real-market-only') ? 'False' : 'True'}), host="127.0.0.1", port=${port}, access_log=False)
 `
 const server = spawn(python, ['-c', source], {
   cwd: path.join(root, 'backend'),
@@ -112,7 +128,18 @@ try {
       errors.push(`${response.status()} ${new URL(response.url()).pathname}`)
   })
   page.on('dialog', (dialog) => dialog.accept())
-  if (!process.argv.includes('--real-market-only')) {
+  if (
+    !process.argv.includes('--real-market-only') &&
+    !process.argv.includes('--unified') &&
+    !process.argv.includes('--holdings-activities') &&
+    !process.argv.includes('--spending-migration') &&
+    !process.argv.includes('--goals-migration') &&
+    !process.argv.includes('--performance-insights') &&
+    !process.argv.includes('--dashboard-migration') &&
+    !process.argv.includes('--settings-migration') &&
+    !process.argv.includes('--app-audit') &&
+    !process.argv.includes('--themes')
+  ) {
     await page.goto(origin)
     await page.locator('.demo-menu > summary').click()
     await page.getByRole('button', { name: 'Guided tour', exact: true }).click()
@@ -457,6 +484,8 @@ try {
       quality: 85,
     })
   }
+  if (process.argv.includes('--unified'))
+    await checkUnifiedDemo(page, origin, output)
   if (process.argv.includes('--themes')) await checkThemes(page, origin, root)
   if (process.argv.includes('--appearance'))
     await checkAppearance(page, origin, output, root)
@@ -472,6 +501,30 @@ try {
       origin,
       path.join(root, 'docs/screenshots/real-market-demo'),
     )
+  if (process.argv.includes('--numbers')) await checkNumbers(page, origin, root)
+  if (process.argv.includes('--sidebar-order'))
+    await checkSidebarOrder(page, origin, root)
+  if (process.argv.includes('--charts'))
+    await checkChartDemo(page, origin, root)
+  if (process.argv.includes('--net-worth'))
+    await checkNetWorth(page, origin, root)
+  if (process.argv.includes('--insights'))
+    await checkPortfolioInsights(page, origin, root)
+  if (process.argv.includes('--income')) await checkIncome(page, origin, root)
+  if (process.argv.includes('--spending-migration'))
+    await checkSpendingMigration(page, origin, root)
+  if (process.argv.includes('--holdings-activities'))
+    await checkHoldingsActivities(page, origin, root)
+  if (process.argv.includes('--performance-insights'))
+    await checkPerformanceInsights(page, origin, root)
+  if (process.argv.includes('--goals-migration'))
+    await checkGoalsMigration(page, origin, root)
+  if (process.argv.includes('--dashboard-migration'))
+    await checkDashboardMigration(page, origin, root)
+  if (process.argv.includes('--settings-migration'))
+    await checkSettingsMigration(page, origin, root)
+  if (process.argv.includes('--app-audit'))
+    await checkApplicationAudit(page, origin, root)
   assert.deepEqual(errors, [])
   await writeFile(
     path.join(root, '.tmp/demo-e2e-results.json'),

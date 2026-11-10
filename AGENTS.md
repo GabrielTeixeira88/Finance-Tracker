@@ -101,6 +101,12 @@
   local databases, financial data or secrets. Git publishing requires user authorization.
 
 ## Reference-first development
+For every v0.14 feature migration, follow docs/FRONTEND_V014_WORKFLOW.md and its
+pinned upstream revision. Adapt actual frontend source with thin local API adapters;
+group genuinely missing capabilities for user approval before implementing them.
+Validate the current feature before starting another; preserve the Python/SQLite
+financial authority, exact money, coverage rules, existing features and attribution.
+
 Before implementing functionality present in Wealthfolio, Actual Budget or Securo:
 1. Inspect relevant accessible source, documentation and tests.
 2. Identify behavior, data models, calculations and interactions.
@@ -142,12 +148,17 @@ Before implementing functionality present in Wealthfolio, Actual Budget or Secur
   Progressive disclosure must preserve advanced rule/target values and financial
   guards. A transaction-to-rule action creates only a draft, never a ledger posting.
 
-- Public demo startup uses only the Brazil historical portfolio in owned,
-  snapshot-fingerprinted `data/demo-v012-real-market-br-*` workspaces.
-  The retired `data/demo-v012` household is an explicit regression fixture only;
-  preserve its archived files rather than modifying normal financial data.
-  For historical scenario changes or snapshot preparation, read `docs/REAL_MARKET_DEMO.md`.
-  Keep restricted ETF exports local; separate fictional holdings from verified observations.
+- Public demo startup opens one complete BRL household/investment workspace in
+  owned, snapshot-fingerprinted `data/demo-v012-unified-1-*` storage. Spending,
+  goals, official fixed-income history and simulated security income share one ledger.
+  Read docs/DEMO.md before changing lifecycle/funding. Keep official CDI/Treasury
+  provenance and fictional SIM prices distinct; preserve production valuation guards.
+  All demo currencies are BRL; synthetic FX must not value official holdings.
+  Preserve archived scenario files. First unified launch extends a validated backup
+  of the prior owned Brazil household, retaining its edits; normal data is never adopted.
+  Legacy scenario factories exist for regression tests, not product navigation.
+  Read docs/REAL_MARKET_DEMO.md for official snapshots and restricted private exports,
+  and docs/ETF_SHOWCASE.md for the deterministic fictional security generator.
   Never start normal integration workers or access a token vault
   in demo mode. Reset is an explicit demo-only operation: validate a backup generation,
   publish atomically, reject stale generation writes and clear browser state. Never

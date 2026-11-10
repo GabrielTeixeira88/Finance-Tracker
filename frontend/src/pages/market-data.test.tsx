@@ -66,7 +66,7 @@ function setup(
 
 it('places Market Data under Settings and reports credential availability without secrets', async () => {
   setup(<Settings accounts={[]} categories={[]} />, () => status)
-  await userEvent.click(screen.getByRole('button', { name: 'Market Data' }))
+  await userEvent.click(screen.getByRole('link', { name: 'Market data' }))
   expect(
     await screen.findByRole('heading', { name: 'Market Data' }),
   ).toBeInTheDocument()
@@ -76,7 +76,7 @@ it('places Market Data under Settings and reports credential availability withou
   ).not.toBeChecked()
 })
 
-it('updates reporting preferences and refreshes explicitly rather than on read', async () => {
+it('preserves configured currency while updating provider settings and refreshing explicitly', async () => {
   const fetch = setup(<MarketDataSettings />, (path, init) =>
     init?.method === 'POST'
       ? { results: [] }
@@ -86,16 +86,14 @@ it('updates reporting preferences and refreshes explicitly rather than on read',
   )
   await screen.findByText('No synchronization yet')
   expect(fetch.mock.calls.every(([, init]) => !init?.method)).toBe(true)
-  await userEvent.selectOptions(
-    screen.getByLabelText('Reporting currency'),
-    'USD',
-  )
+  await userEvent.selectOptions(screen.getByLabelText('FX source'), 'SYNTHETIC')
   await waitFor(() =>
     expect(
       fetch.mock.calls.some(
         ([path, init]) =>
           path.endsWith('/settings') &&
-          JSON.parse(init?.body as string).reporting_currency === 'USD',
+          JSON.parse(init?.body as string).fx_provider === 'SYNTHETIC' &&
+          JSON.parse(init?.body as string).reporting_currency === 'BRL',
       ),
     ).toBe(true),
   )
@@ -129,7 +127,7 @@ it('renders exact portfolio values, keeps missing points unavailable and changes
   expect(await screen.findByText('Incomplete valuation')).toBeInTheDocument()
   await screen.findByText(/History is incomplete/)
   await userEvent.click(await screen.findByText('View portfolio chart data'))
-  expect(await screen.findByText('R$1,234.123456')).toBeInTheDocument()
+  expect(await screen.findByText('R$ 1.234,12')).toBeInTheDocument()
   expect(screen.getByText('Unavailable')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '1Y' }))
   await waitFor(() =>
@@ -145,17 +143,12 @@ it('renders exact portfolio values, keeps missing points unavailable and changes
       ),
     ).toBe(true),
   )
-  await userEvent.selectOptions(
-    screen.getByLabelText('Valuation currency'),
-    'JPY',
-  )
-  await waitFor(() =>
-    expect(
-      fetch.mock.calls.some(([path]) =>
-        path.includes('reporting_currency=JPY'),
-      ),
-    ).toBe(true),
-  )
+  expect(
+    screen.queryByRole('combobox', { name: 'Valuation currency' }),
+  ).not.toBeInTheDocument()
+  expect(
+    fetch.mock.calls.every(([path]) => !path.includes('reporting_currency=')),
+  ).toBe(true)
 })
 
 it('shows source and convention and preserves explicit manual pricing controls', async () => {
@@ -208,5 +201,5 @@ it('shows source and convention and preserves explicit manual pricing controls',
       ),
     ).toBe(true),
   )
-  expect(screen.getByText('R$41.123456')).toBeInTheDocument()
+  expect(screen.getByText('R$ 41,12')).toBeInTheDocument()
 })

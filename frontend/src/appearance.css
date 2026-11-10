@@ -301,7 +301,8 @@
   --card: hsl(30 4% 11%);
   --elevated: hsl(30 4% 13%);
   --foreground: hsl(55 10% 79%);
-  --muted-foreground: hsl(45 4% 49%);
+  /* Keep small metadata readable on the raised Classic dark surface (AA). */
+  --muted-foreground: hsl(45 4% 51%);
   --muted: hsl(30 3% 20%);
   --border: hsl(30 3% 15%);
   --theme-chart-line: hsl(72 46% 41%);

@@ -1,3 +1,4 @@
+import { isSimulatedInvestmentScenario } from '@/lib/demo-runtime'
 import { t as tr, ui } from '@/lib/i18n'
 import { setPreferenceWorkspace } from '@/lib/preferences'
 import { useEffect, useState, type ReactNode } from 'react'
@@ -7,9 +8,10 @@ import { request, setDemoGeneration } from '@/lib/api'
 import { DemoContext, type DemoRuntime } from '@/lib/demo-runtime'
 import { navigateTo } from '@/lib/navigation'
 import { ErrorState, LoadingState } from './primitives'
+import { MaintenanceSettings } from '@/features/settings/exports'
 
 const schema = z.discriminatedUnion('mode', [
-  z.object({ mode: z.literal('normal') }),
+  z.object({ mode: z.literal('normal'), maintenance: z.boolean().optional() }),
   z.object({
     mode: z.literal('local_demo'),
     profile: z.string(),
@@ -27,6 +29,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   const client = useQueryClient()
   const [runtime, setRuntime] = useState<DemoRuntime>()
   const [ready, setReady] = useState(false)
+  const [maintenance, setMaintenance] = useState(false)
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
   useEffect(() => {
@@ -35,6 +38,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       .then((value) => {
         if (!active) return
         const info = schema.parse(value)
+        setMaintenance(info.mode === 'normal' && !!info.maintenance)
         setDemoGeneration(
           info.mode === 'local_demo' ? info.generation : undefined,
           info.mode === 'local_demo' ? info.end_date : undefined,
@@ -79,7 +83,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     client.clear()
     setDemoGeneration(info.generation, info.end_date)
     setRuntime(info)
-    navigateTo('Overview')
+    navigateTo(
+      info.scenario !== 'unified' &&
+        isSimulatedInvestmentScenario(info.scenario)
+        ? 'Investments'
+        : 'Overview',
+    )
   }
   if (error)
     return (
@@ -97,6 +106,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         text={tr('demo_provider:opening_local_workspace__1684d0')}
       />
     )
+  if (maintenance) return <MaintenanceSettings />
   return (
     <DemoContext.Provider
       key={runtime?.generation ?? 'normal'}

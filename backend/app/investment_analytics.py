@@ -100,9 +100,7 @@ def external_flows(session, account_ids, start, end, currency, fx):
     return rows, totals
 
 
-def performance(session, start, end, currency, account_ids=None, benchmark_id=None):
-    accounts = scope_accounts(session, account_ids)
-    ids = [a.id for a in accounts]
+def performance_start(session, start, end, ids):
     if start is None:
         dates = [
             session.scalar(
@@ -123,12 +121,28 @@ def performance(session, start, end, currency, account_ids=None, benchmark_id=No
         start = min((d for d in dates if d is not None), default=end) - timedelta(days=1)
     if start >= end:
         raise HTTPException(422, "Performance needs distinct ordered closing-value dates")
-    values = history(
-        session, start, end, reporting_currency=currency, account_ids=ids, serialize=False
+    return start
+
+
+def performance(
+    session, start, end, currency, account_ids=None, benchmark_id=None, *, _values=None
+):
+    accounts = scope_accounts(session, account_ids)
+    ids = [a.id for a in accounts]
+    start = performance_start(session, start, end, ids)
+    values = (
+        _values
+        if _values is not None
+        else history(
+            session, start, end, reporting_currency=currency, account_ids=ids, serialize=False
+        )
     )
     fx = FXBook(session, end, preferences(session)["fx_provider"])
     flows, daily = external_flows(session, ids, start, end, currency, fx)
     twr, points = time_weighted(values["points"], daily)
+    from app.performance_risk import performance_statistics
+
+    statistics = performance_statistics(twr, values["points"], daily)
     opening = values["points"][0]["value"]
     closing = values["points"][-1]["value"]
     reasons = sorted({f["reason"] for f in flows if f["reason"]})
@@ -216,6 +230,8 @@ def performance(session, start, end, currency, account_ids=None, benchmark_id=No
             "absolute_gain": gain,
             "twr": twr,
             "xirr": irr,
+            "annualized_twr": statistics["annualized_twr"],
+            "risk": {key: statistics[key] for key in ("volatility", "max_drawdown")},
             "points": points,
             "valuation": values,
             "flows": flows,
@@ -224,7 +240,7 @@ def performance(session, start, end, currency, account_ids=None, benchmark_id=No
     )
 
 
-def income(session, start, end, account_ids=None, asset_id=None):
+def income(session, start, end, account_ids=None, asset_id=None, currency=None):
     if start > end or end > date.today() or (end - start).days > 3660:
         raise HTTPException(422, "Select an ordered historical period")
     accounts = {a.id: a for a in scope_accounts(session, account_ids)}
@@ -312,6 +328,7 @@ def income(session, start, end, account_ids=None, asset_id=None):
                     bucket[field] += entry[field]
             breakdowns[dimension] = [buckets[k] for k in sorted(buckets)]
     from app.fixed_income_reporting import redemption_results
+    from app.income_reporting import reporting_income
 
     return investments.wire(
         {
@@ -323,6 +340,9 @@ def income(session, start, end, account_ids=None, asset_id=None):
             "months": [groups[k] for k in sorted(groups)],
             "breakdowns": breakdowns,
             "quality": "COMPLETE",
+            "reporting": reporting_income(session, events, start, end, currency)
+            if currency
+            else None,
         }
     )
 
@@ -336,6 +356,8 @@ def allocation(session, as_of, currency, account_ids=None):
     book = PriceBook(session, as_of)
     fx = FXBook(session, as_of, preferences(session)["fx_provider"])
     metadata = {r.asset_id: r for r in session.scalars(select(AssetClassification))}
+    assets = book.assets
+    contracts = book.fixed.contracts
     rows = []
     reasons = set()
     with localcontext() as ctx:
@@ -354,9 +376,27 @@ def allocation(session, as_of, currency, account_ids=None):
             if converted is None:
                 reasons.add("MISSING_PRICE_OR_FX")
             classification = metadata.get(asset_id)
+            asset = assets[asset_id]
+            contract = contracts.get(asset_id)
+            basis, _ = fx.convert(position["cost_basis"], position["currency"], currency, as_of)
+            if position["cost_basis"] == ZERO:
+                basis = ZERO
             rows.append(
                 {
                     "asset_id": asset_id,
+                    "symbol": asset.symbol,
+                    "name": asset.name,
+                    "instrument_type": contract.instrument_type if contract else asset.asset_type,
+                    "issuer": contract.issuer if contract else "Unknown",
+                    "contract_fictional": contract.fictional if contract else False,
+                    "price_source": quote.source if quote else None,
+                    "price_date": quote.price_date if quote else None,
+                    "quantity": position["quantity"],
+                    "cost_basis": position["cost_basis"],
+                    "reporting_cost_basis": basis,
+                    "reporting_unrealized": converted - basis
+                    if converted is not None and basis is not None
+                    else None,
                     "account_id": position["account_id"],
                     "security": f"{position['symbol']} · {position['exchange']} "
                     f"· {position['currency']}",
@@ -386,6 +426,14 @@ def allocation(session, as_of, currency, account_ids=None):
             rows.append(
                 {
                     "asset_id": None,
+                    "symbol": "Cash",
+                    "name": accounts[account["id"]].name,
+                    "instrument_type": "CASH",
+                    "issuer": "Unknown",
+                    "quantity": ZERO,
+                    "cost_basis": ZERO,
+                    "reporting_cost_basis": ZERO,
+                    "reporting_unrealized": ZERO,
                     "account_id": account["id"],
                     "security": "Cash",
                     "account": account["name"],
@@ -400,7 +448,16 @@ def allocation(session, as_of, currency, account_ids=None):
         known = sum((r["value"] for r in rows if r["value"] is not None), ZERO)
         total = None if reasons else known
         groups = {}
-        for dimension in ("security", "account", "asset_class", "currency", "sector", "geography"):
+        for dimension in (
+            "security",
+            "account",
+            "asset_class",
+            "currency",
+            "sector",
+            "geography",
+            "instrument_type",
+            "issuer",
+        ):
             buckets = {}
             for row in rows:
                 bucket = buckets.setdefault(
@@ -426,6 +483,25 @@ def allocation(session, as_of, currency, account_ids=None):
                 buckets.values(),
                 key=lambda b: (b["value"] is None, -(b["value"] or ZERO), b["name"]),
             )
+        cash_rows = [r for r in rows if r["asset_id"] is None]
+        invested_rows = [r for r in rows if r["asset_id"] is not None]
+
+        def complete_sum(selected, field):
+            return (
+                None
+                if any(r[field] is None for r in selected)
+                else sum((r[field] for r in selected), ZERO)
+            )
+
+        summary = dict(
+            cash_value=complete_sum(cash_rows, "value"),
+            invested_value=complete_sum(invested_rows, "value"),
+            cost_basis=complete_sum(invested_rows, "reporting_cost_basis"),
+            unrealized=complete_sum(invested_rows, "reporting_unrealized"),
+            holdings_count=len({r["asset_id"] for r in invested_rows}),
+            accounts_count=len(accounts),
+            basis_fx_policy="NATIVE_WEIGHTED_AVERAGE_BASIS_CONVERTED_AT_AS_OF_FX",
+        )
         concentration = {}
         # Cash is visible in allocation but not a security concentration holding.
         securities = [r for r in groups["security"] if r["name"] != "Cash"]
@@ -445,6 +521,7 @@ def allocation(session, as_of, currency, account_ids=None):
             "total_value": total,
             "known_value": known,
             "groups": groups,
+            "summary": summary,
             "concentration": concentration,
             "rows": rows,
             "metadata_policy": "Current user-declared metadata, including on past dates; "

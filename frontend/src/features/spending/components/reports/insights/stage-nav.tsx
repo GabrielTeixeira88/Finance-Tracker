@@ -1,0 +1,68 @@
+import { useMotionPolicy } from '@/lib/motion'
+// SPDX-License-Identifier: AGPL-3.0-only
+// Adapted from Wealthfolio 92b4647 apps/frontend/src/features/spending/components/reports/insights/stage-nav.tsx; see THIRD_PARTY_NOTICES.md.
+import { useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+
+import { useEffectOnChange } from '@/features/spending/use-effect-on-change'
+import { cn } from '@/lib/utils'
+
+export type InsightsStage = 'where' | 'changed' | 'when'
+
+interface StageNavProps {
+  stage: InsightsStage
+  onStageChange: (s: InsightsStage) => void
+}
+
+export function StageNav({ stage, onStageChange }: StageNavProps) {
+  const { t } = useTranslation()
+  const reduced = useMotionPolicy()
+  const STAGES = useMemo<{ id: InsightsStage; label: string }[]>(
+    () => [
+      { id: 'where', label: t('wfSpending:insights.stageWhere') },
+      { id: 'changed', label: t('wfSpending:insights.stageChanged') },
+      { id: 'when', label: t('wfSpending:insights.stageWhen') },
+    ],
+    [t],
+  )
+  const activeRef = useRef<HTMLButtonElement | null>(null)
+  // When the URL deep-links to a stage on mount or `stage` changes
+  // (e.g. via the dashboard "Where I am" link), scroll the active chip
+  // into view so it isn't off-screen on a 375px column. Not when a phone
+  // screen is shown again: the page keeps the scroll it was left with.
+  useEffectOnChange(() => {
+    activeRef.current?.scrollIntoView({
+      behavior: reduced ? 'instant' : 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    })
+  }, [stage, reduced])
+
+  return (
+    <nav
+      aria-label={t('wfSpending:insights.stagesLabel')}
+      className="border-border/60 bg-card/40 flex items-center gap-1 overflow-x-auto rounded-2xl border p-1 backdrop-blur-xl"
+    >
+      {STAGES.map((s) => {
+        const active = stage === s.id
+        return (
+          <button
+            key={s.id}
+            type="button"
+            ref={active ? activeRef : undefined}
+            onClick={() => onStageChange(s.id)}
+            className={cn(
+              'group inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-xs transition-colors',
+              active
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+            )}
+            aria-current={active ? 'step' : undefined}
+          >
+            <span className="font-medium">{s.label}</span>
+          </button>
+        )
+      })}
+    </nav>
+  )
+}

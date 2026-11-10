@@ -23,6 +23,8 @@ export default defineConfig(({ mode }) => {
       globals: true,
       setupFiles: ['./src/test/setup.ts'],
       restoreMocks: true,
+      // Bound simultaneous jsdom/source-transform workers on desktop/CI machines.
+      maxWorkers: 4,
     },
   }
 })

@@ -107,9 +107,7 @@ function setup({ configured = true, fail = false } = {}) {
 
 it('renders exact provider amounts as observations and uses backend product filtering', async () => {
   const { fetch } = setup()
-  expect(
-    await screen.findByText('R$9,007,199,254,740,993.123456'),
-  ).toBeVisible()
+  expect(await screen.findByText('R$ 9.007.199.254.740.993,12')).toBeVisible()
   expect(
     screen.getByText(/Pluggy processes connected financial data/),
   ).toBeVisible()

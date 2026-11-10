@@ -1,5 +1,20 @@
 # Investment analytics — v0.7.0
 
+# Unreleased v0.14 interface update
+
+The [Investment Income dashboard](INCOME_V014.md) now separates received payments
+from contractual accrued earnings, adds cached payment-date reporting FX and
+redemption-aware period estimates, and documents the separately approved fictional
+income showcase. Original income events and currencies remain available.
+
+The [Portfolio Insights implementation record](PORTFOLIO_INSIGHTS_V014.md) describes
+the current Overview adaptation, enriched read-only allocation response and widget
+layout customization. The financial rules in this document still apply. Reporting book cost is
+remaining native weighted-average basis converted using dated as-of FX; it is not
+historical cash invested. Native basis stays inspectable. Contract type/issuer are
+separate from sector/geographic exposure. The historical validation counts in the original milestone
+describe their original milestone, not the unreleased v0.14 validation run.
+
 ## Reference inspection and decisions
 
 Inspected the reference checkout at commit
@@ -41,6 +56,7 @@ All endpoints are under `/api/investments/analytics`:
 | Method/path | Purpose |
 | --- | --- |
 | GET `/performance` | `end`, optional `start`, currency, repeated `account_ids`, benchmark_id |
+| GET `/dashboard` | Selected-date value/history, account-scoped returns and cumulative external-funding overlay; same scope/date conventions as performance |
 | GET `/income` | Inclusive start/end, optional accounts and asset_id; original currencies |
 | GET `/allocation` | as_of, reporting currency and optional accounts |
 | GET `/insights` | start/end, reporting currency, optional accounts and asset_id |
@@ -176,3 +192,29 @@ preferences or multi-account selection UI; current classification metadata; no y
 forecast, look-through, corporate actions, full FX attribution, tax reports or risk
 scores. These limitations are not silently replaced by estimates. Gmail, trading,
 rebalancing, reconciliation and later product phases are not implemented here.
+
+## v0.14 read-only risk summaries and source UI
+
+The existing Performance response now adds `annualized_twr` and
+`risk.volatility` / `risk.max_drawdown`; existing fields/contracts remain intact.
+TWR and XIRR calculations are unchanged. Annualized TWR uses actual/365 and flags
+short-period extrapolation. Volatility uses sample standard deviation of log
+flow-adjusted returns, annualized at `sample_count × 365.25 / covered_days`.
+Zero-capital days are not invested samples. Nonpositive factors make log volatility
+unavailable; fewer than two eligible samples also remain unavailable. Maximum
+drawdown is peak-to-trough decline of the flow-adjusted TWR index, not raw portfolio
+value. Missing TWR coverage propagates to all these metrics. Python Decimal `ln`,
+`exp` and `sqrt` operate in a 60-digit local context. Extreme annualization remains
+unavailable rather than overflowing.
+
+The source-adapted Performance workspace supports several account and cached
+security comparisons on identical API opening/closing dates. Benchmarks are
+explicitly price-only proxies; no fake total-return index or historical XIRR curve
+is introduced. Exact percentage strings remain on normalized chart points, and
+gaps are not bridged. Desktop and mobile source chart geometries are distinct.
+
+The gain/loss sheet reconciles ending minus opening minus external flows. Existing
+position components/original currencies and limited unchanged-quantity FX effects
+remain available below it. Full trading/cash/FX attribution is explicitly postponed.
+Allocation targets are separate local planning configurations and never post trades.
+Details, acceptance matrix and validation: [Performance and Insights v0.14](PERFORMANCE_INSIGHTS_V014.md).
