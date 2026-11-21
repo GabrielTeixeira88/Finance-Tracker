@@ -37,6 +37,16 @@ also passes a clean local install. Actual Linux installation and the normal test
 lint/type/build/browser jobs must still pass on GitHub before merging. Do not
 replace `npm ci`, discard the lockfile or force major dependency overrides.
 
+Once installation succeeded, CI exposed pre-migration browser selectors. The
+standard demo runner now uses the labeled searchbox, Add Activities/type-picker
+flow, row-body editing, budget row actions and current goal metadata dialog.
+It retains the exact expense/income/balance assertions, transfer reporting
+exclusions, import/reconciliation decisions, reset and responsive checks. Posting
+waits for the actual successful API response before balances are read. The
+Settings component test also waits for its code-split screen on cold runners;
+its General/category navigation assertions are unchanged. These are test-harness
+compatibility fixes, not changes to financial behavior or skipped CI checks.
+
 | Job | Commands |
 | --- | --- |
 | Backend tests and migrations | In backend: `uv sync --frozen`; `uv run --frozen --no-sync ruff check . ../scripts`; `uv run --frozen --no-sync ruff format --check . ../scripts`; `uv run --frozen --no-sync pytest` |
