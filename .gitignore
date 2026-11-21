@@ -72,8 +72,23 @@ coverage/
 .vite/
 playwright-report/
 test-results/
-# Local visual review evidence; do not publish new screenshots or generated galleries.
-docs/screenshots/
+# Keep audit/reference captures private; publish only the reviewed fictional v0.14 gallery.
+docs/screenshots/*
+!docs/screenshots/v014/
+docs/screenshots/v014/*
+!docs/screenshots/v014/README.md
+!docs/screenshots/v014/capture-manifest.json
+!docs/screenshots/v014/investments.jpg
+!docs/screenshots/v014/spending.jpg
+!docs/screenshots/v014/holdings.jpg
+!docs/screenshots/v014/performance.jpg
+!docs/screenshots/v014/portfolio-insights.jpg
+!docs/screenshots/v014/net-worth.jpg
+!docs/screenshots/v014/goals.jpg
+!docs/screenshots/v014/activities.jpg
+!docs/screenshots/v014/budgets.jpg
+!docs/screenshots/v014/income.jpg
+!docs/screenshots/v014/walkthrough.webm
 
 # Local tools and OS/editor files
 .cache/
@@ -88,3 +103,9 @@ Thumbs.db
 Desktop.ini
 *.swp
 *.swo
+# Local database process leases and backup staging files
+*.runtime-lock
+*.staging
+*.upload
+*.restore-*
+*.backups/

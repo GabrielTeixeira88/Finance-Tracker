@@ -56,3 +56,22 @@ or above target are on track; at least 90% are at risk; below 90% are off track.
 contributions and overfunding are valid. Unsupported horizons beyond 50 years stay
 unavailable. Missing coverage never displays an invented actual balance. Existing
 same-currency shared-account allocation guards remain unchanged. No tax-aware funding.
+
+## v0.14 presentation and comparisons
+
+Insights → When & Where uses the source timeline on desktop and month calendar on
+narrow screens. The heatmap represents recorded calendar dates and weekday totals;
+transaction hours are unavailable and are never synthesized. Selected event details
+reuse existing event costs, category totals, dated FX and refund associations.
+
+The detailed panel compares recorded seven-day spending before an event, tagged
+event cost per day across its planned window and three complete days after it. Missing before/after
+coverage leaves averages and comparisons unavailable; future days are not filled.
+These are descriptive local-ledger comparisons, not a causal claim or guaranteed
+normal spending. Linked refunds outside an event's dates remain dated credits and
+remain visible. Negative composition is not drawn as a complete positive allocation.
+
+Event edits/linking/unlinking/delete still use the established metadata services.
+An optional, confirmed date expansion includes already-linked out-of-window dates;
+it does not change transactions. Planned budget and remaining cost stay available
+under the event's planning disclosure. The event-type catalog remains fixed.

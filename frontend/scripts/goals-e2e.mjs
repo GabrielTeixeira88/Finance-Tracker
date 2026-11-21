@@ -26,8 +26,8 @@ export async function checkGoals(page, origin, output) {
         'Synthetic',
       ),
     )
-    assert((await studio.innerText()).includes('13.3%'))
-    assert((await studio.innerText()).includes('R$2,000.00'))
+    assert((await studio.innerText()).includes('13,33%'))
+    assert((await studio.innerText()).includes('R$ 2.000,00'))
     const funding = page.locator('.goal-funding-overview')
     const fundingSummary = funding.locator('summary')
     assert.equal(await funding.getAttribute('open'), null)
@@ -43,9 +43,9 @@ export async function checkGoals(page, origin, output) {
     })
     await fundingTable.waitFor()
     const savings = fundingTable.getByRole('row').filter({ hasText: 'Savings' })
-    assert((await savings.innerText()).includes('R$48,000.00'))
-    assert((await savings.innerText()).includes('R$25,000.00'))
-    assert((await savings.innerText()).includes('R$23,000.00'))
+    assert((await savings.innerText()).includes('R$ 48.000,00'))
+    assert((await savings.innerText()).includes('R$ 25.000,00'))
+    assert((await savings.innerText()).includes('R$ 23.000,00'))
     await page.screenshot({
       path: path.join(
         output,

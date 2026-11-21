@@ -1,9 +1,35 @@
-import { ArrowLeft } from 'lucide-react'
+import { formatWealthLabel } from '@/lib/wealth-labels'
+import { useReportingCurrency } from '@/features/settings/reporting-currency'
+import {
+  backToDashboard,
+  dashboardDetailContext,
+} from '@/features/dashboard/period'
+// SPDX-License-Identifier: AGPL-3.0-only
+// Net Worth composition adapted from Wealthfolio 92b4647; local posting/detail workflows retained.
+import {
+  ArrowLeft,
+  EllipsisVertical,
+  Plus,
+  CreditCard,
+  List,
+} from 'lucide-react'
+import { ActionPalette } from '@/features/holdings/action-palette'
+import { getManualHoldings } from '@/features/holdings/api'
+import { ManualAssetProfile } from '@/features/holdings/manual-asset-profile'
+import { PortalScope } from '@/vendor/wealthfolio/ui/components/ui/portal-scope'
+import '@/features/holdings/i18n'
+import '@/features/holdings/migration.css'
 import { t as tr, ui } from '@/lib/i18n'
 import { exactFormData } from '@/lib/localized-number'
 import { DetailDrawer } from '@/components/detail-drawer'
 import { useSection, useRoute, navigateTo } from '@/lib/navigation'
 import './wealth.css'
+import { NetWorthOverview } from '@/components/net-worth-overview'
+import { FinancialPrivacy } from '@/components/financial-privacy'
+import { useFinancialPrivacy } from '@/lib/financial-privacy'
+import { netWorthStart } from '@/lib/net-worth-period'
+import { PeriodControls } from '@/features/dashboard/period-controls'
+import { netWorthViewSchema } from '@/lib/net-worth-view'
 import { lazy, Suspense, useState, type ReactNode, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -32,12 +58,11 @@ import {
 import {
   getPositions,
   observationSchema,
-  wealthSchema,
   type Position,
 } from '@/lib/wealth-api'
 import { useWrite } from '@/lib/use-write'
 import type { Navigate } from '@/components/app-shell'
-import { formatRatioPercent as percent, decimalUnits } from '@/lib/money'
+import { formatRatioPercent as percent } from '@/lib/money'
 
 export function WealthForm({
   title,
@@ -119,8 +144,10 @@ export function WealthChart({
   currency,
   label,
   hero = false,
+  mode = 'ledger',
 }: {
   hero?: boolean
+  mode?: import('@/lib/chart-presentation').FinancialChartMode
   points: { date: string; value: string | null }[]
   currency: string
   label: string
@@ -130,6 +157,7 @@ export function WealthChart({
       fallback={<LoadingState text={tr('wealth:loading_chart__ec093e')} />}
     >
       <PortfolioValueChart
+        mode={mode}
         hero={hero}
         label={label}
         history={{
@@ -172,29 +200,40 @@ export default function NetWorth({
   )
 }
 
-export function NetWorthWorkspace({
-  navigate,
+export function NetWorthWorkspace(props: {
+  navigate: Navigate
+  initialEnd: string
+}) {
+  return (
+    <FinancialPrivacy>
+      <NetWorthContent {...props} />
+    </FinancialPrivacy>
+  )
+}
+
+function NetWorthContent({
   initialEnd,
 }: {
   navigate: Navigate
   initialEnd: string
 }) {
+  const { hidden } = useFinancialPrivacy()
   const route = useRoute()
-  const context = (values: Record<string, string>) =>
-    navigateTo('Net Worth', undefined, {
-      ...Object.fromEntries(route.params),
-      ...values,
-    })
-  const end = route.params.get('end') || initialEnd
-  const setEnd = (end: string) => {
-    if (end) context({ end })
+  const context = (values: Record<string, string>) => {
+    const next = new URLSearchParams(route.params)
+    for (const [key, value] of Object.entries(values)) {
+      if (value) next.set(key, value)
+      else next.delete(key)
+    }
+    navigateTo('Net Worth', undefined, Object.fromEntries(next))
   }
+  const end = route.params.get('end') || initialEnd
   const period = route.params.get('range') || '1Y'
-  const setPeriod = (range: string) => context({ range })
+  const setPeriod = (range: string) =>
+    context({ range, start: netWorthStart(range, end, custom) })
   const custom = route.params.get('start') || localDate()
-  const setCustom = (start: string) => context({ start })
-  const currency = route.params.get('currency') || 'BRL'
-  const setCurrency = (currency: string) => context({ currency })
+  const reportingCurrency = useReportingCurrency()
+  const currency = route.params.get('currency') || reportingCurrency
   const [tab, setTab] = useSection(
     ['Overview', 'Assets', 'Liabilities'],
     'Overview',
@@ -203,76 +242,93 @@ export function NetWorthWorkspace({
     'value' | 'assets' | 'liabilities'
   >('value')
   const selected = route.params.get('position')
-  const setSelected = (position: string | null) =>
-    context({ position: position ?? '' })
+  const setSelected = (position: string | null) => {
+    if (!position && backToDashboard(route.params)) return
+    context({
+      ...(position
+        ? dashboardDetailContext('net-worth', { start, end, range: period })
+        : {}),
+      position: position ?? '',
+    })
+  }
   const [creating, setCreating] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<{
-    kind: string
-    category: string
-  } | null>(null)
+  const [palette, setPalette] = useState(false)
+  const [recordedSince, setRecordedSince] = useState<string | null>(null)
   const positions = useQuery({
     queryKey: ['manual-positions'],
     queryFn: getPositions,
   })
-  const date = new Date(`${end}T12:00:00`)
-  const months =
-    (
-      { '1M': 1, '3M': 3, '6M': 6, '1Y': 12, '3Y': 36, ALL: 120 } as Record<
-        string,
-        number
-      >
-    )[period] ?? 0
-  const beginning =
-    period === 'YTD'
-      ? new Date(date.getFullYear(), 0, 1)
-      : new Date(date.getFullYear(), date.getMonth() - months + 1, 1)
+  const manual = useQuery({
+    queryKey: ['manual-holdings', end],
+    queryFn: ({ signal }) => getManualHoldings(end, signal),
+    enabled: !!selected,
+  })
+  const boundedStart =
+    route.params.get('start') || netWorthStart(period, end, custom)
   const start =
-    period === 'Custom'
-      ? custom
-      : `${beginning.getFullYear()}-${String(beginning.getMonth() + 1).padStart(2, '0')}-01`
+    period === 'ALL' &&
+    recordedSince &&
+    recordedSince <= end &&
+    recordedSince > boundedStart
+      ? recordedSince
+      : boundedStart
   const history = useQuery({
     queryKey: ['wealth', start, end, currency],
     queryFn: async ({ signal }) =>
-      wealthSchema.parse(
+      netWorthViewSchema.parse(
         await request(
-          `/net-worth/history?${new URLSearchParams({ start, end, currency })}`,
+          `/net-worth/history?${new URLSearchParams({ start, end, currency, details: 'true' })}`,
           { signal },
         ),
       ),
     enabled: !!start && !!end && /^[A-Z]{3}$/.test(currency),
   })
   const record = positions.data?.find((p) => p.id === selected)
+  const earliest = history.data?.insights?.tracked_since
+  if (earliest !== undefined && earliest !== recordedSince)
+    setRecordedSince(earliest)
   if (selected)
     return (
       <div className="manual-position-page">
-        <Button
-          className="entity-back"
-          variant="ghost"
-          aria-label={tr('wealth:net_worth_329352')}
-          onClick={() => setSelected(null)}
-        >
-          <ArrowLeft size={18} aria-hidden="true" />
-        </Button>
-        {positions.isPending ? (
+        {!manual.data?.rows.some((row) => row.id === selected) && (
+          <Button
+            className="entity-back"
+            variant="ghost"
+            aria-label={tr('wealth:net_worth_329352')}
+            onClick={() => setSelected(null)}
+          >
+            <ArrowLeft size={18} aria-hidden="true" />
+          </Button>
+        )}
+        {positions.isPending || manual.isPending ? (
           <LoadingState />
-        ) : positions.isError ? (
+        ) : positions.isError || manual.isError ? (
           <ErrorState
-            text={positions.error.message}
-            retry={() => void positions.refetch()}
+            text={positions.error?.message || manual.error?.message || ''}
+            retry={() => {
+              void positions.refetch()
+              void manual.refetch()
+            }}
           />
-        ) : record ? (
-          <PositionDetail
-            key={record.id}
-            position={record}
-            positions={positions.data ?? []}
-          />
+        ) : record && manual.data?.rows.find((r) => r.id === selected) ? (
+          <PortalScope name="net-worth-detail">
+            <div className="wf-workspace">
+              <ManualAssetProfile
+                key={record.id}
+                holding={manual.data.rows.find((r) => r.id === selected)!}
+                holdings={manual.data.rows}
+                asOf={end}
+                onBack={() => setSelected(null)}
+              />
+            </div>
+          </PortalScope>
         ) : (
           <EmptyState title={tr('common:unavailable')} />
         )}
       </div>
     )
   return (
-    <div className="net-worth-workspace">
+    <div className="net-worth-workspace net-worth-v014">
       {tab !== 'Overview' && (
         <PageHeader
           title={tr('wealth:net_worth_329352')}
@@ -281,420 +337,152 @@ export function NetWorthWorkspace({
           )}
         />
       )}
-      <div
-        className="page-actions"
-        role="tablist"
-        aria-label={tr('wealth:net_worth_sections_fa1b57')}
-      >
-        {(['Overview', 'Assets', 'Liabilities'] as const).map((t) => (
-          <Button
-            role="tab"
-            aria-selected={tab === t}
-            variant={tab === t ? 'outline' : 'ghost'}
-            key={ui(t)}
-            onClick={() => {
-              setTab(t)
-              setCreating(false)
-            }}
+      {tab !== 'Overview' && (
+        <details className="net-worth-manage">
+          <summary aria-label={tr('networth:actions')}>
+            <EllipsisVertical size={18} />
+          </summary>
+          <div
+            className="page-actions"
+            role="tablist"
+            aria-label={tr('wealth:net_worth_sections_fa1b57')}
           >
-            {ui(t)}
-          </Button>
-        ))}
-      </div>
+            {(['Overview', 'Assets', 'Liabilities'] as const).map((t) => (
+              <Button
+                role="tab"
+                aria-selected={tab === t}
+                variant={tab === t ? 'outline' : 'ghost'}
+                key={ui(t)}
+                onClick={() => {
+                  setTab(t)
+                  setCreating(false)
+                }}
+              >
+                {ui(t)}
+              </Button>
+            ))}
+          </div>
+        </details>
+      )}
       {tab === 'Overview' ? (
         <>
-          <details className="net-worth-controls">
-            <summary>{tr('parity:period_and_currency')}</summary>
-            <div className="filter-bar">
-              <Field label={tr('wealth:reporting_currency_8b1716')}>
-                <input
-                  value={currency}
-                  maxLength={3}
-                  onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-                />
-              </Field>
-              <Field label={tr('wealth:as_of_a8770f')}>
-                <input
-                  type="date"
-                  max={localDate()}
-                  required
-                  value={end}
-                  onChange={(e) => e.target.value && setEnd(e.target.value)}
-                />
-              </Field>
-              <Field label={tr('wealth:period_170a28')}>
-                <select
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                >
-                  {['1M', '3M', '6M', 'YTD', '1Y', '3Y', 'ALL', 'Custom'].map(
-                    (p) => (
-                      <option key={p} value={p}>
-                        {ui(p)}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </Field>
-              {period === 'Custom' && (
-                <Field label={tr('wealth:start_date_ff99f5')}>
-                  <input
-                    type="date"
-                    max={end}
-                    value={custom}
-                    onChange={(e) => setCustom(e.target.value)}
-                  />
-                </Field>
-              )}
-            </div>
-          </details>
+          <div className="net-worth-quick-actions">
+            <ActionPalette
+              open={palette}
+              onOpenChange={setPalette}
+              groups={[
+                {
+                  items: [
+                    {
+                      icon: Plus,
+                      label: tr('dashboard_v014:add_asset'),
+                      onClick: () => {
+                        setTab('Assets')
+                        setCreating(true)
+                      },
+                    },
+                    {
+                      icon: CreditCard,
+                      label: tr('dashboard_v014:add_liability'),
+                      onClick: () => {
+                        setTab('Liabilities')
+                        setCreating(true)
+                      },
+                    },
+                    {
+                      icon: List,
+                      label: tr('dashboard_v014:manage_assets'),
+                      onClick: () => setTab('Assets'),
+                    },
+                  ],
+                },
+              ]}
+            />
+          </div>
+
           {history.isPending ? (
             <LoadingState
               text={tr('wealth:reconstructing_net_worth__724d41')}
             />
           ) : history.isError ? (
-            <ErrorState
-              text={history.error.message}
-              retry={() => void history.refetch()}
-            />
-          ) : (
             <>
-              <div className="overview-balance">
-                <p className="metadata">
-                  {' '}
-                  {tr('wealth:net_worth__7a3b6a')} {end}
-                </p>
-                <h2 className="text-3xl font-semibold tracking-tight tabular-nums">
-                  <NullableMoney
-                    value={history.data.value}
-                    currency={currency}
-                    minorUnits
-                  />
-                </h2>
-                <p className="net-worth-change">
-                  <NullableMoney
-                    value={history.data.change}
-                    currency={currency}
-                    minorUnits
-                  />
-                  <span title={percent(history.data.change_ratio)}>
-                    {percent(history.data.change_ratio, 2)}
-                  </span>
-                  <span>{ui(period)}</span>
-                </p>
-              </div>
-              {!history.data.complete && (
-                <ErrorState
-                  text={tr(
-                    'wealth:incomplete_valuation_missing_values_are_not_zero_41a2f2',
-                  )}
-                />
-              )}
-              <WealthChart
-                hero
-                points={history.data.points.map((p) => ({
-                  date: p.date,
-                  value: p[chartSeries],
-                }))}
-                currency={currency}
-                label={
-                  chartSeries === 'value'
-                    ? tr('dynamic:net_worth_0ec2a7')
-                    : chartSeries === 'assets'
-                      ? tr('dynamic:assets_20e338')
-                      : tr('dynamic:liabilities_556a42')
-                }
+              <ErrorState
+                text={history.error.message}
+                retry={() => void history.refetch()}
               />
-              <nav
-                className="range-tabs net-worth-ranges"
-                aria-label={tr('parity:net_worth_range')}
-              >
-                {['1M', '3M', '6M', 'YTD', '1Y', '3Y', 'ALL'].map((range) => (
-                  <button
-                    key={range}
-                    aria-pressed={period === range}
-                    onClick={() => setPeriod(range)}
-                  >
-                    {ui(range)}
-                  </button>
-                ))}
-              </nav>
-              <SectionHeader
-                title={tr('wealth:asset_and_liability_breakdown_2d6590')}
-                detail={tr(
-                  'wealth:native_amounts_remain_visible_negative_balances__8b143b',
-                )}
+              <PeriodControls
+                range={period}
+                start={start}
+                end={end}
+                asOf={initialEnd}
+                onChange={(period) => context(period)}
               />
-              <div
-                className={
-                  history.data.complete
-                    ? 'net-worth-breakdown'
-                    : 'net-worth-breakdown has-attention'
-                }
-              >
-                <div>
-                  <div className="table-scroll">
-                    <table className="finance-wealth-table">
-                      <thead>
-                        <tr>
-                          <th scope="col">{tr('wealth:category_a3c686')}</th>
-                          <th scope="col">{tr('wealth:side_265283')}</th>
-                          <th scope="col" className="amount-cell">
-                            {currency}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {history.data.categories.map((c) => (
-                          <tr key={`${c.kind}-${c.category}`}>
-                            <td>
-                              <button
-                                className="text-link"
-                                onClick={() =>
-                                  setSelectedCategory({
-                                    kind: c.kind,
-                                    category: c.category,
-                                  })
-                                }
-                              >
-                                {ui(c.category)}
-                              </button>
-                            </td>
-                            <td>{ui(c.kind)}</td>
-                            <td className="amount-cell">
-                              <NullableMoney
-                                value={c.value}
-                                currency={currency}
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="table-scroll">
-                    <table className="finance-wealth-table">
-                      <thead>
-                        <tr>
-                          <th scope="col">{tr('wealth:component_c92c52')}</th>
-                          <th scope="col">
-                            {tr('wealth:classification_94c2a3')}
-                          </th>
-                          <th scope="col">{tr('wealth:liquidity_76a3e6')}</th>
-                          <th scope="col" className="amount-cell">
-                            {tr('wealth:native_value_5d4bf8')}
-                          </th>
-                          <th scope="col" className="amount-cell">
-                            {currency}
-                          </th>
-                          <th scope="col">{tr('wealth:coverage_80e135')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {history.data.components.map((c) => (
-                          <tr key={c.id}>
-                            <td>
-                              <button
-                                className="text-left"
-                                onClick={() =>
-                                  c.source === 'ACCOUNT'
-                                    ? navigate('Account', c.id)
-                                    : context({
-                                        view:
-                                          c.source === 'ASSET'
-                                            ? 'Assets'
-                                            : 'Liabilities',
-                                        position: c.id,
-                                      })
-                                }
-                              >
-                                {c.name}
-                              </button>
-                            </td>
-                            <td>{c.category}</td>
-                            <td>{c.liquidity}</td>
-                            <td className="amount-cell">
-                              <NullableMoney
-                                value={c.native_value}
-                                currency={c.currency}
-                              />
-                            </td>
-                            <td className="amount-cell">
-                              <NullableMoney
-                                value={c.value}
-                                currency={currency}
-                              />
-                            </td>
-                            <td>
-                              {c.missing.join('; ') ||
-                                c.observation_date ||
-                                tr('dynamic:available_7c62a1')}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                {!history.data.complete && (
-                  <aside className="coverage-attention">
-                    <SectionHeader title={tr('wealth:coverage_80e135')} />
-                    {history.data.components
-                      .filter((c) => c.missing.length || c.value === null)
-                      .map((c) => (
-                        <div key={c.id}>
-                          <strong>{c.name}</strong>
-                          <p>
-                            {c.missing.join('; ') || tr('common:unavailable')}
-                          </p>
-                          <small>
-                            {c.currency} - {c.observation_date ?? end}
-                          </small>
-                        </div>
-                      ))}
-                  </aside>
-                )}
-              </div>
-              {selectedCategory && (
-                <DetailDrawer
-                  title={ui(selectedCategory.category)}
-                  onClose={() => setSelectedCategory(null)}
-                >
-                  <div className="category-constituents">
-                    {history.data.components
-                      .filter(
-                        (c) =>
-                          c.category === selectedCategory.category &&
-                          (c.source === 'LIABILITY' ||
-                          (c.native_value !== null &&
-                            decimalUnits(c.native_value) < 0n)
-                            ? 'LIABILITY'
-                            : 'ASSET') === selectedCategory.kind,
-                      )
-                      .map((c) => (
-                        <button
-                          className="account-row"
-                          key={c.id}
-                          onClick={() => {
-                            setSelectedCategory(null)
-                            if (c.source === 'ACCOUNT')
-                              navigate('Account', c.id)
-                            else
-                              context({
-                                view:
-                                  c.source === 'ASSET'
-                                    ? 'Assets'
-                                    : 'Liabilities',
-                                position: c.id,
-                              })
-                          }}
-                        >
-                          <span>
-                            {c.name}
-                            <small className="metadata block">
-                              {c.observation_date ?? c.currency}
-                            </small>
-                          </span>
-                          <NullableMoney value={c.value} currency={currency} />
-                          <span>{tr('parity:open_details')}</span>
-                        </button>
-                      ))}
-                  </div>
-                </DetailDrawer>
-              )}
-              <details className="net-worth-methods">
-                <summary>{tr('parity:calculation_details')}</summary>
-                <div className="wealth-metrics">
-                  <div>
-                    {' '}
-                    {tr('wealth:assets_20e338')}{' '}
-                    <NullableMoney
-                      value={history.data.assets}
-                      currency={currency}
-                    />
-                  </div>
-                  <div>
-                    {' '}
-                    {tr('wealth:liabilities_556a42')}{' '}
-                    <NullableMoney
-                      value={history.data.liabilities}
-                      currency={currency}
-                    />
-                  </div>
-                  <div>
-                    {' '}
-                    {tr('wealth:period_change_315f5c')}{' '}
-                    <NullableMoney
-                      value={history.data.change}
-                      currency={currency}
-                    />
-                    {history.data.change_ratio !== null && (
-                      <span>{percent(history.data.change_ratio)}</span>
-                    )}
-                  </div>
-                  <div>
-                    {' '}
-                    {tr('wealth:debt_assets_9a8e2a')}{' '}
-                    {percent(history.data.debt_to_assets)}
-                  </div>
-                  <div>
-                    {' '}
-                    {tr('wealth:liquid_share_ee9cac')}{' '}
-                    {percent(history.data.liquid_share)}
-                  </div>
-                </div>
+            </>
+          ) : (
+            <NetWorthOverview
+              report={history.data}
+              positions={positions.data ?? []}
+              period={period}
+              setPeriod={setPeriod}
+              asOf={initialEnd}
+              onDateRange={(period) => context(period)}
+              chartSeries={chartSeries}
+              onPosition={setSelected}
+              onComponent={(c) =>
+                c.source === 'ACCOUNT'
+                  ? navigateTo(
+                      'Account',
+                      c.id,
+                      dashboardDetailContext('net-worth', {
+                        start,
+                        end,
+                        range: period,
+                      }),
+                    )
+                  : setSelected(c.id)
+              }
+              seriesControl={
                 <Field label={tr('wealth:chart_series_95c009')}>
                   <select
                     value={chartSeries}
                     onChange={(e) =>
-                      setChartSeries(
-                        e.target.value as 'value' | 'assets' | 'liabilities',
-                      )
+                      setChartSeries(e.target.value as typeof chartSeries)
                     }
                   >
                     <option value="value">
                       {tr('wealth:net_worth_0ec2a7')}
                     </option>
                     <option value="assets">{tr('wealth:assets_20e338')}</option>
-                    <option value="liabilities">
-                      {tr('wealth:liabilities_556a42')}
-                    </option>
                   </select>
                 </Field>
+              }
+              methods={
                 <div className="wealth-metrics">
                   <div>
-                    {' '}
-                    {tr('wealth:asset_change_268646')}{' '}
+                    {tr('wealth:assets_20e338')}
                     <NullableMoney
-                      value={history.data.assets_change}
+                      value={history.data.assets}
                       currency={currency}
                     />
                   </div>
                   <div>
-                    {' '}
-                    {tr('wealth:liability_change_06a0ba')}{' '}
+                    {tr('wealth:liabilities_556a42')}
                     <NullableMoney
-                      value={history.data.liabilities_change}
+                      value={history.data.liabilities}
                       currency={currency}
                     />
                   </div>
+                  <div>
+                    {tr('networth:debt_to_assets')}
+                    <span>
+                      {hidden
+                        ? '\u2022\u2022\u2022\u2022'
+                        : percent(history.data.debt_to_assets, 2)}
+                    </span>
+                  </div>
                 </div>
-                <p className="metadata">
-                  {history.data.method}{' '}
-                  {tr(
-                    'wealth:period_change_is_not_investment_performance_all__e51684',
-                  )}{' '}
-                </p>
-              </details>
-              {!history.data.components.length && (
-                <EmptyState
-                  title={tr('wealth:no_financial_records_yet_b4300b')}
-                  detail={tr(
-                    'wealth:add_an_account_or_a_dated_manual_asset_to_begin__a979b9',
-                  )}
-                />
-              )}
-            </>
+              }
+            />
           )}
         </>
       ) : (
@@ -784,7 +572,7 @@ export function NetWorthWorkspace({
   )
 }
 
-function PositionEditor({
+export function PositionEditor({
   kind,
   position,
   positions,
@@ -848,7 +636,9 @@ function PositionEditor({
           'PERSONAL_LOAN',
           'STUDENT_LOAN',
         ].map((x) => (
-          <option key={x}>{x}</option>
+          <option key={x} value={x}>
+            {formatWealthLabel(x)}
+          </option>
         ))}
       </datalist>
       <Field label={tr('wealth:currency_e070de')}>
@@ -876,7 +666,9 @@ function PositionEditor({
           defaultValue={position?.liquidity ?? 'ILLIQUID'}
         >
           {['LIQUID', 'MARKETABLE', 'ILLIQUID', 'UNKNOWN'].map((x) => (
-            <option key={x}>{x}</option>
+            <option key={x} value={x}>
+              {formatWealthLabel(x)}
+            </option>
           ))}
         </select>
       </Field>
@@ -958,7 +750,7 @@ function PositionEditor({
   )
 }
 
-function PositionDetail({
+export function PositionDetail({
   position: p,
   positions,
 }: {
@@ -989,7 +781,7 @@ function PositionDetail({
   const last = eligible.at(-1)
   return (
     <section>
-      <SectionHeader title={p.name} detail={ui(p.category)}>
+      <SectionHeader title={p.name} detail={formatWealthLabel(p.category)}>
         <div className="entity-actions">
           <nav className="range-tabs" aria-label={tr('parity:position_views')}>
             {(['Overview', 'Values'] as const).map((v) => (
@@ -1090,8 +882,9 @@ function PositionDetail({
                   {last?.effective_date ?? tr('common:unavailable')} -{' '}
                   {p.currency}
                 </p>
-                {eligible.length > 1 ? (
+                {eligible.length > 0 ? (
                   <WealthChart
+                    mode="manual-observations"
                     label={tr('wealth:value_8dce17')}
                     currency={p.currency}
                     points={eligible.map((o) => ({
@@ -1118,7 +911,7 @@ function PositionDetail({
                 <dl className="position-metadata">
                   <div>
                     <dt>{tr('wealth:category_a3c686')}</dt>
-                    <dd>{ui(p.category)}</dd>
+                    <dd>{formatWealthLabel(p.category)}</dd>
                   </div>
                   <div>
                     <dt>{tr('wealth:currency_e070de')}</dt>
@@ -1126,7 +919,7 @@ function PositionDetail({
                   </div>
                   <div>
                     <dt>{tr('wealth:liquidity_76a3e6')}</dt>
-                    <dd>{ui(p.liquidity)}</dd>
+                    <dd>{formatWealthLabel(p.liquidity)}</dd>
                   </div>
                   <div>
                     <dt>{tr('wealth:ownership_start_581737')}</dt>

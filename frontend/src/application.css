@@ -116,7 +116,10 @@
   margin-left: 70px;
 }
 .reference-shell .main-content.overview-main {
-  padding: 0;
+  padding: 16px 0 0;
+}
+.reference-shell .main-content.overview-main > .section-navigation {
+  margin-inline-start: 16px;
 }
 .overview-reference {
   min-height: 100vh;
@@ -659,6 +662,14 @@
   margin: 0;
   background: transparent;
 }
+.demo-market-footer {
+  min-width: 0;
+  max-width: 100%;
+}
+.demo-market-footer :is(code, a) {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
 .demo-menu {
   position: absolute;
   right: 0;
@@ -735,4 +746,22 @@
 }
 .spending-overview .spending-periods button[aria-pressed='true'] {
   background: var(--card);
+}
+
+.sidebar-order-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  max-width: 480px;
+}
+.sidebar-order-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-order-list li > span {
+  flex: 1;
+  font-size: 14px;
 }

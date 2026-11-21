@@ -12,7 +12,7 @@ from app.fixed_income_calendar import days
 from app.historical_cdi import factor, parse_sgs
 
 START, END = date(2024, 10, 1), date(2026, 9, 30)
-VERSION = "real-market-brazil-2"
+VERSION = "real-market-brazil-3"
 OFFICIAL = Path(__file__).with_name("observations") / "brazil-2024-2026.json"
 LOCAL_ETF = PROJECT_ROOT / "data" / "real-market-snapshot" / "etfs.json"
 ETF_PLAN = (

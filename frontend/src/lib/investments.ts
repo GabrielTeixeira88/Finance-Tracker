@@ -1,3 +1,4 @@
+import { formatDecimal } from './money'
 import { z } from 'zod'
 import { request } from './api'
 
@@ -105,5 +106,4 @@ export const getActivities = async (
         { signal },
       ),
     )
-export const quantityText = (value: string) =>
-  value.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')
+export const quantityText = formatDecimal

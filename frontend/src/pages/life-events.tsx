@@ -1,3 +1,6 @@
+import { lifeEventSchema } from '@/lib/life-events'
+import { formatDateISO } from '@/features/spending/lib/calendar-adapter'
+import { EventDetailPanel } from '@/features/spending/components/reports/insights/event-detail-panel'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -10,7 +13,41 @@ import {
   BookOpen,
   X,
 } from 'lucide-react'
-import { DetailDrawer } from '@/components/detail-drawer'
+import { EventVisuals } from '@/features/spending/components/event-visuals'
+import type { SpendingWorkspaceData } from '@/features/spending/api'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/features/spending/ui'
+import type { ReactNode } from 'react'
+function DetailDrawer({
+  title,
+  children,
+  onClose,
+}: {
+  title: string
+  children: ReactNode
+  onClose: () => void
+}) {
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        {children}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 import { Field } from '@/components/forms'
 import { Button } from '@/components/ui/button'
 import { CompositionChart } from '@/components/composition-chart'
@@ -42,7 +79,13 @@ const icons = {
   music: Music,
   book: BookOpen,
 }
-export default function LifeEvents({ context }: { context?: BudgetReport }) {
+export default function LifeEvents({
+  context,
+  workspace,
+}: {
+  context?: BudgetReport
+  workspace?: SpendingWorkspaceData
+}) {
   const query = useQuery({ queryKey: ['life-events'], queryFn: getEvents })
   const route = useRoute()
   const selected = route.params.get('event') ?? ''
@@ -53,7 +96,14 @@ export default function LifeEvents({ context }: { context?: BudgetReport }) {
       event: id,
     })
   const [create, setCreate] = useState(false)
-  const [currency, setCurrency] = useState(context?.currency ?? '')
+  const [prefill, setPrefill] = useState<{ startDate?: Date; endDate?: Date }>()
+  const openCreate = (options?: {
+    prefill?: { startDate?: Date; endDate?: Date }
+  }) => {
+    setPrefill(options?.prefill)
+    setCreate(true)
+  }
+  const currency = context?.currency ?? ''
   if (query.isPending) return <LoadingState />
   if (query.isError)
     return (
@@ -75,111 +125,124 @@ export default function LifeEvents({ context }: { context?: BudgetReport }) {
   return (
     <section className="life-events">
       <SectionHeader title={t('parity:life_events')}>
-        <Button onClick={() => setCreate(true)}>{t('parity:add_event')}</Button>
+        <Button onClick={() => openCreate()}>{t('parity:add_event')}</Button>
       </SectionHeader>
-      {!context && (
-        <>
-          {' '}
-          <Field label={t('parity:currency')}>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-            >
-              <option value="">{t('parity:all_currencies')}</option>
-              {[...new Set(query.data.map((r) => r.event.currency))].map(
-                (c) => (
-                  <option key={c}>{c}</option>
-                ),
-              )}
-            </select>
-          </Field>
-        </>
-      )}
-      <section
-        className="event-timeline"
-        aria-label={t('parity:event_timeline')}
-      >
-        <div className="event-time-scale">
-          <span>{formatDate(timeline.days[0])}</span>
-          <span>{formatDate(timeline.days.at(-1)!)}</span>
-        </div>
-        {!timeline.bands.length && <EmptyState title={t('parity:no_events')} />}
-        <div
-          className="event-desktop-lanes"
-          style={{ height: Math.max(1, timeline.lanes) * 78 }}
+      {workspace ? (
+        <EventVisuals
+          reports={query.data}
+          report={workspace}
+          selected={selected}
+          onSelect={setSelected}
+          onCreate={openCreate}
+          onRange={(start, end) =>
+            navigateTo('Budget', undefined, {
+              ...Object.fromEntries(route.params),
+              view: 'Life Events',
+              start,
+              end,
+            })
+          }
+        />
+      ) : (
+        <section
+          className="event-timeline"
+          aria-label={t('parity:event_timeline')}
         >
-          {timeline.bands.map(({ report: r, lane, left, width }) => {
-            const e = r.event
-            const Icon = icons[e.icon as keyof typeof icons] ?? CalendarDays
-            return (
-              <button
-                key={e.id}
-                className={`event-band event-color-${e.color}`}
-                aria-pressed={selected === e.id}
-                onClick={() => setSelected(e.id)}
-                title={`${e.name}: ${formatDate(e.start_date)} - ${formatDate(e.end_date)}`}
-                style={{ left: `${left}%`, width: `${width}%`, top: lane * 78 }}
-              >
-                <span>
-                  <Icon size={14} />
-                  <span>{e.name}</span>
-                </span>
-                <strong>
-                  {r.actual_cost === null ? (
-                    t('common:unavailable')
-                  ) : (
-                    <Money value={r.actual_cost} currency={e.currency} />
-                  )}
-                </strong>
-                <small>{t(`parity:${e.event_type.toLowerCase()}`)}</small>
-              </button>
-            )
-          })}
-        </div>
-        {context && currency === context.currency && (
-          <div className="event-context-chart">
-            <EventDailyChart
-              points={context.daily
-                .filter((d) => d.date <= context.as_of)
-                .map((d) => ({ date: d.date, value: d.amount }))}
-              currency={context.currency}
-            />
+          <div className="event-time-scale">
+            <span>{formatDate(timeline.days[0])}</span>
+            <span>{formatDate(timeline.days.at(-1)!)}</span>
           </div>
-        )}
-        <div className="event-calendar" aria-label={t('parity:event_calendar')}>
-          {Array.from({ length: timeline.offset }, (_, i) => (
-            <span key={`empty-${i}`} />
-          ))}
-          {timeline.days.map((date) => {
-            const matches = timeline.bands.filter(
-              ({ report: r }) =>
-                r.event.start_date <= date && r.event.end_date >= date,
-            )
-            return (
-              <div key={date} className="event-calendar-day">
-                <time dateTime={date}>{date.slice(-2)}</time>
-                {matches.map(({ report: r }) => (
-                  <button
-                    key={r.event.id}
-                    className={`event-color-${r.event.color}`}
-                    aria-label={`${formatDate(date)}: ${r.event.name}`}
-                    aria-pressed={selected === r.event.id}
-                    onClick={() => setSelected(r.event.id)}
-                  >
-                    {r.event.name}
-                  </button>
-                ))}
-              </div>
-            )
-          })}
-        </div>
-      </section>
+          {!timeline.bands.length && (
+            <EmptyState title={t('parity:no_events')} />
+          )}
+          <div
+            className="event-desktop-lanes"
+            style={{ height: Math.max(1, timeline.lanes) * 78 }}
+          >
+            {timeline.bands.map(({ report: r, lane, left, width }) => {
+              const e = r.event
+              const Icon = icons[e.icon as keyof typeof icons] ?? CalendarDays
+              return (
+                <button
+                  key={e.id}
+                  className={`event-band event-color-${e.color}`}
+                  aria-pressed={selected === e.id}
+                  onClick={() => setSelected(e.id)}
+                  title={`${e.name}: ${formatDate(e.start_date)} - ${formatDate(e.end_date)}`}
+                  style={{
+                    left: `${left}%`,
+                    width: `${width}%`,
+                    top: lane * 78,
+                  }}
+                >
+                  <span>
+                    <Icon size={14} />
+                    <span>{e.name}</span>
+                  </span>
+                  <strong>
+                    {r.actual_cost === null ? (
+                      t('common:unavailable')
+                    ) : (
+                      <Money value={r.actual_cost} currency={e.currency} />
+                    )}
+                  </strong>
+                  <small>{t(`parity:${e.event_type.toLowerCase()}`)}</small>
+                </button>
+              )
+            })}
+          </div>
+          {context && currency === context.currency && (
+            <div className="event-context-chart">
+              <EventDailyChart
+                points={context.daily
+                  .filter((d) => d.date <= context.as_of)
+                  .map((d) => ({ date: d.date, value: d.amount }))}
+                currency={context.currency}
+              />
+            </div>
+          )}
+          <div
+            className="event-calendar"
+            aria-label={t('parity:event_calendar')}
+          >
+            {Array.from({ length: timeline.offset }, (_, i) => (
+              <span key={`empty-${i}`} />
+            ))}
+            {timeline.days.map((date) => {
+              const matches = timeline.bands.filter(
+                ({ report: r }) =>
+                  r.event.start_date <= date && r.event.end_date >= date,
+              )
+              return (
+                <div key={date} className="event-calendar-day">
+                  <time dateTime={date}>{date.slice(-2)}</time>
+                  {matches.map(({ report: r }) => (
+                    <button
+                      key={r.event.id}
+                      className={`event-color-${r.event.color}`}
+                      aria-label={`${formatDate(date)}: ${r.event.name}`}
+                      aria-pressed={selected === r.event.id}
+                      onClick={() => setSelected(r.event.id)}
+                    >
+                      {r.event.name}
+                    </button>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
       {create && (
         <DetailDrawer
           title={t('parity:add_event')}
           onClose={() => setCreate(false)}
         >
-          <EventEditor onDone={() => setCreate(false)} />
+          <EventEditor
+            prefill={prefill}
+            onCreated={(id) => setSelected(id)}
+            onDone={() => setCreate(false)}
+          />
         </DetailDrawer>
       )}
       {current && (
@@ -187,17 +250,20 @@ export default function LifeEvents({ context }: { context?: BudgetReport }) {
           className="event-inline-detail"
           aria-label={current.event.name}
         >
-          <SectionHeader title={current.event.name}>
-            <Button
-              variant="ghost"
-              aria-label={t('parity:close')}
-              onClick={() => setSelected('')}
-            >
-              <X size={16} />
-            </Button>
-          </SectionHeader>
+          {!workspace && (
+            <SectionHeader title={current.event.name}>
+              <Button
+                variant="ghost"
+                aria-label={t('parity:close')}
+                onClick={() => setSelected('')}
+              >
+                <X size={16} />
+              </Button>
+            </SectionHeader>
+          )}
           <EventDetail
             key={current.event.id}
+            native={!!workspace}
             report={current}
             events={query.data}
             onClose={() => setSelected('')}
@@ -211,7 +277,11 @@ export default function LifeEvents({ context }: { context?: BudgetReport }) {
 function EventEditor({
   event,
   onDone,
+  prefill,
+  onCreated,
 }: {
+  prefill?: { startDate?: Date; endDate?: Date }
+  onCreated?: (id: string) => void
   event?: LifeEvent
   onDone: () => void
 }) {
@@ -228,7 +298,13 @@ function EventEditor({
             method: event ? 'PATCH' : 'POST',
             data: { ...d, planned_budget: d.planned_budget || null },
           },
-          { onSuccess: onDone },
+          {
+            onSuccess: (result) => {
+              const parsed = lifeEventSchema.safeParse(result)
+              if (parsed.success) onCreated?.(parsed.data.id)
+              onDone()
+            },
+          },
         )
       }}
     >
@@ -282,7 +358,12 @@ function EventEditor({
             type="date"
             name="start_date"
             required
-            defaultValue={event?.start_date ?? getDemoDate() ?? localDate()}
+            defaultValue={
+              event?.start_date ??
+              (prefill?.startDate
+                ? formatDateISO(prefill.startDate)
+                : (getDemoDate() ?? localDate()))
+            }
           />
         </Field>
         <Field label={t('parity:end')}>
@@ -290,7 +371,12 @@ function EventEditor({
             type="date"
             name="end_date"
             required
-            defaultValue={event?.end_date ?? getDemoDate() ?? localDate()}
+            defaultValue={
+              event?.end_date ??
+              (prefill?.endDate
+                ? formatDateISO(prefill.endDate)
+                : (getDemoDate() ?? localDate()))
+            }
           />
         </Field>
         <Field label={t('parity:planned_budget')}>
@@ -329,29 +415,65 @@ function EventDetail({
   report: r,
   events,
   onClose,
+  native = false,
 }: {
+  native?: boolean
   report: EventReport
   events: EventReport[]
   onClose: () => void
 }) {
+  const route = useRoute()
+  const choose = (id: string) =>
+    navigateTo('Budget', undefined, {
+      ...Object.fromEntries(route.params),
+      view: 'Life Events',
+      event: id,
+    })
   const [edit, setEdit] = useState(false)
   const [linking, setLinking] = useState(false)
   const write = useWrite()
   const e = r.event
   return (
     <>
-      <p className="metadata">
-        {formatDate(e.start_date)} – {formatDate(e.end_date)} ·{' '}
-        {t(`parity:${e.event_type.toLowerCase()}`)}
-      </p>
-      <p>{e.description}</p>
+      {native && (
+        <>
+          <div className="mb-2 flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              aria-label={t('parity:close')}
+            >
+              <X size={16} />
+            </Button>
+          </div>
+          <EventDetailPanel
+            report={r}
+            reports={events}
+            onSelect={choose}
+            onEdit={() => setEdit(true)}
+            onLink={() => setLinking(true)}
+          />
+        </>
+      )}
+      {!native && (
+        <p className="metadata">
+          {formatDate(e.start_date)} – {formatDate(e.end_date)} ·{' '}
+          {t(`parity:${e.event_type.toLowerCase()}`)}
+        </p>
+      )}
+      <p className="text-muted-foreground mt-3 text-sm">{e.description}</p>
       <div className="form-actions">
-        <Button variant="outline" onClick={() => setEdit(!edit)}>
-          {t('parity:edit')}
-        </Button>
-        <Button onClick={() => setLinking(!linking)}>
-          {t('parity:link_transactions')}
-        </Button>
+        {!native && (
+          <>
+            <Button variant="outline" onClick={() => setEdit(!edit)}>
+              {t('parity:edit')}
+            </Button>
+            <Button onClick={() => setLinking(!linking)}>
+              {t('parity:link_transactions')}
+            </Button>
+          </>
+        )}
         <Button
           variant="ghost"
           onClick={() => {
@@ -372,37 +494,42 @@ function EventDetail({
       )}
       {linking && <EventLinker report={r} events={events} />}
       {write.isError && <ErrorState text={write.error.message} />}
-      <div className="event-summary">
-        {[
-          ['actual_cost', r.actual_cost],
-          ['planned_budget', e.planned_budget],
-          ['remaining', r.remaining],
-        ].map(([k, v]) => (
-          <div key={k}>
-            <small>{t(`parity:${k}`)}</small>
-            <strong>
-              {v === null ? '—' : <Money value={v!} currency={e.currency} />}
-            </strong>
+      <details open={!native}>
+        <summary>{t('spendingMigration:eventPlanning')}</summary>
+        <div className="event-summary">
+          {[
+            ['actual_cost', r.actual_cost],
+            ['planned_budget', e.planned_budget],
+            ['remaining', r.remaining],
+          ].map(([k, v]) => (
+            <div key={k}>
+              <small>{t(`parity:${k}`)}</small>
+              <strong>
+                {v === null ? '—' : <Money value={v!} currency={e.currency} />}
+              </strong>
+            </div>
+          ))}
+          <div>
+            <small>{t('parity:transactions')}</small>
+            <strong>{r.transaction_count}</strong>
           </div>
-        ))}
-        <div>
-          <small>{t('parity:transactions')}</small>
-          <strong>{r.transaction_count}</strong>
         </div>
-      </div>
+      </details>
       {!r.complete && <p role="status">{t('parity:missing_fx')}</p>}
-      <div className="visual-grid">
-        <EventDailyChart points={r.daily} currency={e.currency} />
-        <CompositionChart
-          title={t('parity:categories')}
-          currency={e.currency}
-          complete={r.complete}
-          items={r.categories.map((row) => ({
-            ...row,
-            id: row.id ?? 'uncategorized',
-          }))}
-        />
-      </div>
+      {!native && (
+        <div className="visual-grid">
+          <EventDailyChart points={r.daily} currency={e.currency} />
+          <CompositionChart
+            title={t('parity:categories')}
+            currency={e.currency}
+            complete={r.complete}
+            items={r.categories.map((row) => ({
+              ...row,
+              id: row.id ?? 'uncategorized',
+            }))}
+          />
+        </div>
+      )}
       <p className="metadata">{t('parity:event_refunds')}</p>
       <div className="table-scroll">
         <table className="investment-table">

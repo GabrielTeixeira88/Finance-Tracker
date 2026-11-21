@@ -129,15 +129,13 @@ export async function checkThemes(page, origin, root) {
         return { missing, ratios }
       }, tokens)
       assert.deepEqual(result.missing, [])
-      // Classic retains the approved original contrast; new themes meet AA on both surfaces.
-      if (theme !== 'Classic')
-        assert(
-          result.ratios.every((x) => x[2] >= 4.5),
-          JSON.stringify({ theme, mode, ...result }),
-        )
+      assert(
+        result.ratios.every((x) => x[2] >= 4.5),
+        JSON.stringify({ theme, mode, ...result }),
+      )
       audit.push({ theme, mode, ...result })
       await page.goto(origin + '/#/goals')
-      await page.locator('.goal-visual').first().waitFor()
+      await page.locator('.goals-workspace a[href*="goal="]').first().waitFor()
       await page.waitForTimeout(120)
       await page.screenshot({
         path: path.join(
@@ -159,19 +157,15 @@ export async function checkThemes(page, origin, root) {
       p.remove()
       return c
     }, token)
-  const destructive = await color('destructive'),
-    gain = await color('positive')
-  await page
-    .getByRole('button', { name: 'Red gains / green losses', exact: true })
-    .click()
+  const destructive = await color('destructive')
+  assert.equal(
+    await page
+      .getByRole('heading', { name: 'Financial colors', exact: true })
+      .count(),
+    0,
+  )
+  await page.getByLabel('Font family', { exact: true }).selectOption('geist')
   assert.equal(await color('destructive'), destructive)
-  assert.equal(await color('positive'), destructive)
-  assert.notEqual(await color('positive'), gain)
-  await page
-    .getByRole('button', { name: 'Neutral gains / blue losses', exact: true })
-    .click()
-  assert.equal(await color('negative'), await color('info'))
-  await page.getByRole('button', { name: /Geist/ }).click()
   await page.reload()
   await page.locator('.appearance-settings').waitFor()
   assert.equal(
@@ -179,6 +173,16 @@ export async function checkThemes(page, origin, root) {
     'cool',
   )
   assert.equal(await page.locator('html').getAttribute('data-font'), 'geist')
+  const fontSelect = page.getByLabel('Font family', { exact: true })
+  const fontChoices = await fontSelect
+    .locator('option')
+    .evaluateAll((nodes) => nodes.map((node) => node.value))
+  assert.equal(fontChoices.length, 10)
+  for (const font of fontChoices) {
+    await fontSelect.selectOption(font)
+    await page.evaluate(() => document.fonts.ready)
+    assert.equal(await page.locator('html').getAttribute('data-font'), font)
+  }
   await page.getByRole('button', { name: 'System', exact: true }).click()
   await page.emulateMedia({ colorScheme: 'dark' })
   await page.waitForFunction(
@@ -229,6 +233,6 @@ export async function checkThemes(page, origin, root) {
     JSON.stringify(audit, null, 2),
   )
   console.log(
-    'Theme browser validation PASS: 12 modes, tokens, AA, persistence, system changes, gain conventions, 8 routes and unchanged accounts',
+    'Theme browser validation PASS: 12 modes, tokens, AA, persistence, system changes, financial-color controls absent, 8 routes and unchanged accounts',
   )
 }

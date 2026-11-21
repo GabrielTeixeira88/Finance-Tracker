@@ -1,0 +1,114 @@
+/* UI control tokens adapted from the pinned upstream classic theme. Product palette stays authoritative. */
+.wf-workspace,
+[data-portal-scope='holdings-migration'] {
+  --button-radius: 9999px;
+  --control-radius: 0.5rem;
+  --control-height: 2.75rem;
+  --card-radius: 0.625rem;
+  --card-border: var(--border);
+  --card-shadow: none;
+  --popup-radius: 1rem;
+  --dialog-radius: 0.625rem;
+  --badge-radius: 9999px;
+  --segmented-radius: 9999px;
+  --button-image: none;
+  --button-shadow: none;
+  --button-border: transparent;
+  --button-weight: 500;
+  --button-outline-bg: var(--card);
+  --button-outline-border: var(--border);
+  --button-outline-image: none;
+  --button-outline-shadow: none;
+  --button-outline-hover-bg: var(--muted);
+  --button-secondary-bg: var(--secondary);
+  --button-secondary-border: transparent;
+  --button-secondary-image: none;
+  --button-secondary-shadow: none;
+  --button-secondary-hover-bg: var(--muted);
+  --button-destructive-bg: var(--destructive);
+  --button-destructive-foreground: var(--destructive-foreground);
+  --button-destructive-border: transparent;
+  --button-destructive-shadow: none;
+  --button-destructive-hover-bg: var(--destructive);
+  --field-border: var(--input);
+  --field-shadow: none;
+  --field-glow: none;
+  --input-bg: var(--background);
+  --segmented-thumb: var(--background);
+  --segmented-thumb-image: none;
+  --segmented-thumb-shadow: none;
+  --overlay-border: var(--border);
+  --overlay-shadow: 0 10px 30px #0003;
+  --sheet-bg: var(--background);
+  --popup-shadow: 0 12px 30px #0003;
+  --card-title-size: 1.25rem;
+  --card-title-tracking: -0.025em;
+  --card-title-case: none;
+}
+.main-content:has(.wf-workspace:not(.wf-editor)) {
+  padding: 0;
+  max-width: none;
+}
+.main-content > .wf-workspace {
+  margin-top: 0;
+}
+.wf-workspace:not(.wf-editor) {
+  min-height: calc(100dvh - 24px);
+}
+.wf-workspace [data-slot='table-head'] {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.875rem;
+}
+.wf-workspace .wf-editor {
+  min-height: 0;
+}
+.wf-workspace [data-slot='table-cell'] {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.wf-workspace .form-grid {
+  padding: 4px 0;
+}
+/* Native dialogs/sheets already supply the surface and title. Keep the existing
+   exact form controllers without nesting the legacy CRUD panel inside them.
+   The pinned cash/trade forms group fields directly on the editor surface. */
+.wf-editor .editor-surface,
+.wf-editor .transaction-composer {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+.wf-editor .editor-surface > h2,
+.wf-editor .editor-surface > .section-header {
+  margin-bottom: 16px;
+}
+.wf-editor .form-grid:not(.investment-editor) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.wf-activity-viewport {
+  height: min(65dvh, 720px);
+}
+.wf-workspace .wf-spending-table [data-slot='table-cell'] {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.wf-workspace.wf-investment-activity {
+  min-height: 0;
+}
+.wf-workspace [data-virtual-scroll-parent] {
+  min-height: 0;
+}
+.wf-workspace [data-slot='popover-content'] button,
+[data-portal-scope='holdings-migration'] button {
+  font-family: inherit;
+}
+@media (max-width: 767px) {
+  .wf-workspace:not(.wf-editor) {
+    min-height: calc(100dvh - 64px);
+  }
+  .wf-editor .form-grid:not(.investment-editor) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

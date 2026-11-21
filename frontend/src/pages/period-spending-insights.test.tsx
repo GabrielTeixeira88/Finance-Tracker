@@ -54,7 +54,7 @@ test('compares equal-length periods through the API and retains exact scoped dri
     payee_id: 'p',
   })
   expect(
-    screen.getAllByText('R$9,007,199,254,740,993.123456').length,
+    screen.getAllByText('R$ 9.007.199.254.740.993,12').length,
   ).toBeGreaterThan(0)
   await waitFor(() =>
     expect(

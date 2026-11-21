@@ -38,3 +38,11 @@ class ResizeObserverMock {
   disconnect() {}
 }
 globalThis.ResizeObserver = ResizeObserverMock
+
+// cmdk scrolls its selected option. jsdom has no layout/scroll implementation;
+// Playwright checks the real filter popovers and their keyboard interactions.
+HTMLElement.prototype.scrollIntoView = function () {}
+
+// jsdom has no canvas/layout implementation. Source charts use their documented
+// unavailable-measurement fallback here; real font metrics are exercised in Playwright.
+HTMLCanvasElement.prototype.getContext = () => null

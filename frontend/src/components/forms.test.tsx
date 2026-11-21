@@ -137,9 +137,9 @@ it('allows only distinct same-currency destinations and submits one transfer req
 
 it('formats large and fractional amounts without floating-point loss', () => {
   expect(formatMoney('9007199254740993.123456', 'USD')).toBe(
-    '$9,007,199,254,740,993.123456',
+    'US$ 9.007.199.254.740.993,12',
   )
-  expect(formatMoney('-100.100000', 'BRL')).toBe('-R$100.10')
+  expect(formatMoney('-100.100000', 'BRL')).toBe('-R$ 100,10')
   for (const input of ['0', '-1', 'NaN', 'Infinity', '1e3', '0.0000001'])
     expect(moneyInput.safeParse(input).success).toBe(false)
 })

@@ -1,4 +1,14 @@
+import {
+  defaultSidebarOrder,
+  normalizeSidebarOrder,
+  type SidebarItem,
+} from './sidebar-order'
 import { useSyncExternalStore } from 'react'
+import {
+  defaultInsightsLayout,
+  readInsightsLayout,
+  type InsightsLayout,
+} from './insights-layout'
 
 export const fonts = {
   mono: 'JetBrains Mono',
@@ -56,6 +66,8 @@ export const themeNames = {
 export const languages = ['en', 'pt-BR', 'es-419'] as const
 export type Language = (typeof languages)[number]
 export type Preferences = {
+  insightsLayout: InsightsLayout
+  sidebarOrder: readonly SidebarItem[]
   font: keyof typeof fonts
   palette: (typeof palettes)[number]
   mode: 'light' | 'dark' | 'system'
@@ -64,6 +76,8 @@ export type Preferences = {
   language: Language
 }
 export const defaults: Preferences = {
+  insightsLayout: defaultInsightsLayout(),
+  sidebarOrder: defaultSidebarOrder,
   chartPalette: 'theme',
   financialColors: 'standard',
   font: 'mono',
@@ -98,6 +112,8 @@ function read(): Preferences {
     const legacy =
       scope === 'normal' ? localStorage.getItem('finance-tracker-theme') : null
     return {
+      insightsLayout: readInsightsLayout(saved.insightsLayout),
+      sidebarOrder: normalizeSidebarOrder(saved.sidebarOrder),
       chartPalette: chartPalettes.includes(saved.chartPalette)
         ? saved.chartPalette
         : defaults.chartPalette,
@@ -164,7 +180,13 @@ export function subscribePreferences(listener: () => void) {
   }
 }
 export function setPreferences(patch: Partial<Preferences>) {
-  current = { ...current, ...patch }
+  current = {
+    ...current,
+    ...patch,
+    sidebarOrder: normalizeSidebarOrder(
+      patch.sidebarOrder ?? current.sidebarOrder,
+    ),
+  }
   try {
     localStorage.setItem(key(), JSON.stringify(current))
   } catch {

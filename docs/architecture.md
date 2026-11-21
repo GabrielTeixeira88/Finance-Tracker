@@ -1,6 +1,7 @@
 # Application architecture
 
-Current release: **v0.13.0 - Product Refinements & Brazilian Historical Demo**.
+Current finalized source milestone: **v0.14.0 - Frontend Integration and Stabilization**.
+No v0.14 release tag, binary distribution or deployment is implied. See FINALIZATION_V014.md.
 See [demo architecture](DEMO.md) and [release validation](RELEASE_0_13_0.md).
 Historical phase labels below describe prior implementation checkpoints.
 
@@ -61,7 +62,7 @@ and physical deletion of ordinary transactions. See DATA_MODEL.md.
 
 ## Migration lineage and transition
 
-New SQLite files run `sqlite_0001` through `sqlite_0015` using Alembic. These contain an explicit schema and
+New SQLite files run `sqlite_0001` through `sqlite_0021` using Alembic. These contain an explicit schema and
 integrity triggers; application startup never invokes metadata.create_all(). The
 optional container runs Alembic before Uvicorn. Native startup runs Alembic explicitly.
 Old PostgreSQL revisions remain unchanged under migrations_legacy/postgresql and
@@ -78,6 +79,18 @@ commits. Engine-restart persistence and lock-contention tests run without servic
 Browser tests also use a separate database. The normal review demo stays unpolluted.
 
 ## Frontend and boundaries
+
+Unreleased v0.14 Holdings/Activities uses thin, read-only projections:
+`GET /api/investments/workspace/holdings`,
+`GET /api/investments/workspace/manual-holdings`,
+`GET /api/investments/workspace/activities`, and
+`GET /api/accounts/{id}/workspace?start=YYYY-MM-DD&end=YYYY-MM-DD`.
+These reuse cash reconstruction, weighted-average positions and dated valuation
+services. Consolidated holdings combine accounts; acquisition history is not a
+remaining tax-lot model. Activity search/filter/paging is server-side with stable
+sequence ordering. Account history counts cash and investments once, retains
+unavailable coverage and never creates editable balance snapshots.
+See [the migration checklist](HOLDINGS_ACTIVITIES_V014.md).
 
 TanStack Query fetches the local API; Zod validates transport and input. Money is
 exchanged as exact strings. Only theme and sidebar appearance preferences are stored in localStorage.
@@ -334,3 +347,74 @@ namespace. Normal core operation remains offline; Pluggy's own bank-data process
 is external and acknowledged explicitly. Demo middleware denies Pluggy before
 service/vault resolution. No public webhook/tunnel or new queue is required.
 See [Pluggy scope, limits and setup](PLUGGY.md).
+
+## Spending presentation read models (v0.14)
+
+`GET /api/spending/workspace` is a read-only projection of the established spending
+classification. `date_from` is inclusive, `date_to` exclusive and `as_of` bounds
+historical observations. It provides current/prior exact totals, category daily and
+monthly series, weekday totals, income sources and explicit saving transfers.
+Transfers to/from savings/investment accounts are separated from income/consumption;
+`net_flow` remains income minus expenses, while `after_savings` also subtracts net
+saving transfers. Gross saving destinations and return flows remain distinct.
+Foreign currencies are reported as excluded rather than silently converted.
+
+`GET /api/budgets/workspace` adds configuration data to the existing monthly report.
+The frontend preserves effective versions, selected-month overrides, target
+activation, ordering and signed carryover. It never stores derived spending.
+`classification_appearance` is a separate, exclusively category-or-group-owned
+metadata record. Its migration changes no historical financial tables or balances.
+The approved product boundary keeps budget comparisons monthly, without proration.
+
+## v0.14 Goals workspace
+
+`features/goals` retains pinned-source page/card/planner/date-control structures.
+Thin adapters exchange exact strings with `wealth_routes`, `goal_workspace` and
+existing `wealth`/`goal_trajectory` services. Temporary contribution/target/deadline
+changes stay in memory, debounce into read-only previews and require an explicit
+plan save. Navigation warns about unsaved scenario changes. Funding mutations are
+atomic, validated against shared cash/exclusive investment reservations and never
+post ledger entries. New dated lifecycle epochs release funding on archive/delete;
+restoration needs explicit reallocation. See [migration contract](GOALS_V014.md).
+
+## v0.14 Performance and allocation planning
+
+`performance_risk.py` derives read-only summaries from the established exact TWR
+values/flows. `allocation_targets.py` reuses canonical allocation/FX reconstruction;
+its three configuration tables are independent of financial postings. Write routes
+retain the shared `BEGIN IMMEDIATE` unit of work, expected-version checks and FK
+guards. No return, balance, exposure or drift cache becomes authoritative.
+
+`features/performance` contains source-adapted desktop/mobile chart leaves, the
+comparison/metric workspace, native-currency Top Movers, exact basis-point inputs
+and target rails/editor. Thin typed adapters call existing analytics/holdings APIs
+and the additive target routes. Comparisons use explicit common API dates rather
+than float rebasing. The existing Income workspace and Insights grid are reused.
+Only widget geometry/visibility is persisted as appearance; no financial scopes,
+comparisons or targets enter localStorage. Targets live in local SQLite.
+
+Full attribution, trade planning, ETF look-through, custom taxonomies and named
+portfolios remain postponed. [Coverage and source inventory](PERFORMANCE_INSIGHTS_V014.md).
+
+## Settings migration (unreleased v0.14)
+
+The source-adapted Settings shell wraps existing editors with one responsive outlet.
+Main Accounts and Settings reuse one administration component. Account groups are
+local organizational metadata, not financial ownership or cached balances. General
+writes the existing reporting preference; original currencies and ledger records
+remain unchanged. Exports whitelist exact columns and reuse valuation projections.
+
+Personal restore is separate from demo reset and requires an explicit maintenance
+restart. Financial endpoints and workers are disabled; an OS lease prevents a second
+API process. Validate schema/integrity/FKs, retain recovery, and publish a staged copy
+atomically. No cloud or vault data is involved. See [Settings contracts](SETTINGS_V014.md).
+
+## v0.14 stabilization
+
+The current working tree adapts Dashboard, Holdings/Activities, Spending/Budgets,
+Goals, Performance/Insights/Income and Settings through thin FastAPI adapters.
+Financial services remain authoritative; UI chart normalization never changes
+exact stored/API values. The additive `audit_content` demo extension creates only
+missing fictional classification metadata and one unposted rent expectation.
+See [audit evidence and release gates](AUDIT_V014.md). No server/database migration
+or new background worker is introduced by stabilization.

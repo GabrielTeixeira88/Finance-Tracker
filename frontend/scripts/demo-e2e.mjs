@@ -1,3 +1,13 @@
+import { checkApplicationAudit } from './application-audit-e2e.mjs'
+import { checkSettingsMigration } from './settings-migration-e2e.mjs'
+import { checkDashboardMigration } from './dashboard-migration-e2e.mjs'
+import { checkPerformanceInsights } from './performance-insights-e2e.mjs'
+import { checkGoalsMigration } from './goals-migration-e2e.mjs'
+import { checkSpendingMigration } from './spending-migration-e2e.mjs'
+import { checkUnifiedDemo } from './unified-demo-e2e.mjs'
+import { checkHoldingsActivities } from './holdings-activities-e2e.mjs'
+import { checkNumbers } from './numbers-e2e.mjs'
+import { checkSidebarOrder } from './sidebar-order-e2e.mjs'
 // Real browser + API + migrated SQLite. Never runs against an existing server/workspace.
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
@@ -12,6 +22,10 @@ import { checkGoals } from './goals-e2e.mjs'
 import { checkTypography } from './typography-e2e.mjs'
 import { checkRealMarket } from './real-market-e2e.mjs'
 import { checkThemes } from './themes-e2e.mjs'
+import { checkChartDemo } from './chart-demo-e2e.mjs'
+import { checkPortfolioInsights } from './portfolio-insights-e2e.mjs'
+import { checkIncome } from './income-e2e.mjs'
+import { checkNetWorth } from './net-worth-e2e.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const port = process.env.DEMO_E2E_PORT || '8001'
@@ -32,21 +46,23 @@ await mkdir(path.join(root, '.tmp'), { recursive: true })
 const media = process.argv.includes('--screenshots')
 const output = path.join(
   root,
-  process.argv.includes('--real-market')
-    ? '.tmp/real-market-regression-results'
-    : process.argv.includes('--typography')
-      ? 'docs/screenshots/appearance-options'
-      : process.argv.includes('--goals')
-        ? 'docs/screenshots/goals-refinement'
-        : process.argv.includes('--parity')
-          ? 'docs/screenshots/parity-v013'
-          : process.argv.includes('--fixed-income')
-            ? 'docs/screenshots/fixed-income'
-            : process.argv.includes('--appearance')
-              ? 'docs/screenshots/v013/after'
-              : media
-                ? 'docs/screenshots/v012'
-                : '.tmp/demo-e2e-results',
+  process.argv.includes('--unified')
+    ? '.tmp/unified-demo-e2e'
+    : process.argv.includes('--real-market')
+      ? '.tmp/real-market-regression-results'
+      : process.argv.includes('--typography')
+        ? 'docs/screenshots/appearance-options'
+        : process.argv.includes('--goals')
+          ? 'docs/screenshots/goals-refinement'
+          : process.argv.includes('--parity')
+            ? 'docs/screenshots/parity-v013'
+            : process.argv.includes('--fixed-income')
+              ? 'docs/screenshots/fixed-income'
+              : process.argv.includes('--appearance')
+                ? 'docs/screenshots/v013/after'
+                : media
+                  ? 'docs/screenshots/v012'
+                  : '.tmp/demo-e2e-results',
 )
 await mkdir(output, { recursive: true })
 const python = path.join(
@@ -67,7 +83,7 @@ market.load_etfs = lambda: None
 snapshot.LOCAL_ETF = root / "no-authorized-export.json"`
     : ''
 }
-uvicorn.run(create_demo_app(get_settings().resolved_database_path, root, scenario="${process.argv.includes('--real-market-only') ? 'real-market-br' : 'synthetic'}", legacy_fixture=${process.argv.includes('--real-market-only') ? 'False' : 'True'}), host="127.0.0.1", port=${port}, access_log=False)
+uvicorn.run(create_demo_app(get_settings().resolved_database_path, root, scenario="${process.argv.includes('--unified') || process.argv.includes('--holdings-activities') || process.argv.includes('--spending-migration') || process.argv.includes('--goals-migration') || process.argv.includes('--performance-insights') || process.argv.includes('--dashboard-migration') || process.argv.includes('--settings-migration') || process.argv.includes('--app-audit') || process.argv.includes('--themes') ? 'unified' : process.argv.includes('--real-market-only') ? 'real-market-br' : 'synthetic'}", legacy_fixture=${process.argv.includes('--real-market-only') ? 'False' : 'True'}), host="127.0.0.1", port=${port}, access_log=False)
 `
 const server = spawn(python, ['-c', source], {
   cwd: path.join(root, 'backend'),
@@ -112,7 +128,18 @@ try {
       errors.push(`${response.status()} ${new URL(response.url()).pathname}`)
   })
   page.on('dialog', (dialog) => dialog.accept())
-  if (!process.argv.includes('--real-market-only')) {
+  if (
+    !process.argv.includes('--real-market-only') &&
+    !process.argv.includes('--unified') &&
+    !process.argv.includes('--holdings-activities') &&
+    !process.argv.includes('--spending-migration') &&
+    !process.argv.includes('--goals-migration') &&
+    !process.argv.includes('--performance-insights') &&
+    !process.argv.includes('--dashboard-migration') &&
+    !process.argv.includes('--settings-migration') &&
+    !process.argv.includes('--app-audit') &&
+    !process.argv.includes('--themes')
+  ) {
     await page.goto(origin)
     await page.locator('.demo-menu > summary').click()
     await page.getByRole('button', { name: 'Guided tour', exact: true }).click()
@@ -124,11 +151,13 @@ try {
       await page.goto(`${origin}/#/${route}`)
       if (await page.getByRole('button', { name: 'Skip tour' }).count())
         await page.getByRole('button', { name: 'Skip tour' }).click()
-      await page
-        .getByText(marker, { exact: false })
-        .filter({ visible: true })
-        .first()
-        .waitFor()
+      const ready =
+        marker === 'Search transactions'
+          ? page.getByRole('searchbox', { name: marker })
+          : route === 'investments'
+            ? page.locator('.investment-source-dashboard .recharts-surface')
+            : page.getByText(marker, { exact: false }).filter({ visible: true })
+      await ready.first().waitFor()
       await page.waitForLoadState('networkidle')
       await page.waitForFunction(
         () =>
@@ -184,14 +213,35 @@ try {
     await visit('overview', 'Where it went')
     await page.getByRole('button', { name: '1Y', exact: true }).click()
     await page.waitForLoadState('networkidle')
-    await page.locator('.daily-bars').waitFor()
+    await page.locator('.wf-spending .recharts-surface').first().waitFor()
     await visit('transactions', 'Search transactions')
     const accountsBefore = await (await fetch(`${origin}/api/accounts`)).json()
+    const openTransaction = async (kind) => {
+      await page
+        .getByRole('button', { name: 'Add Activities', exact: true })
+        .click()
+      await page
+        .getByRole('button', { name: 'Add Transaction', exact: true })
+        .click()
+      await page.getByTestId('activity-type-' + kind).click()
+    }
+    const saveTransaction = async (endpoint) => {
+      const saved = page.waitForResponse(
+        (response) =>
+          response.url().endsWith('/api/' + endpoint) &&
+          response.request().method() === 'POST',
+      )
+      await page.getByRole('button', { name: 'Save', exact: true }).click()
+      assert.equal((await saved).status(), 201)
+      await page
+        .getByRole('button', { name: 'Save', exact: true })
+        .waitFor({ state: 'detached' })
+    }
     const units = (value) => {
       const [whole, fraction = ''] = value.split('.')
       return BigInt(whole) * 1000000n + BigInt(fraction.padEnd(6, '0'))
     }
-    await page.getByRole('button', { name: '+ Add Transaction' }).click()
+    await openTransaction('withdrawal')
     await page
       .getByLabel('Account', { exact: true })
       .selectOption({ label: 'Checking (BRL)' })
@@ -202,9 +252,9 @@ try {
     await page
       .getByLabel('Category', { exact: true })
       .selectOption({ label: 'Shopping' })
-    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await saveTransaction('transactions')
     await page.getByLabel('Search transactions').fill('Synthetic E2E purchase')
-    await page.getByRole('cell', { name: /Synthetic E2E purchase/ }).waitFor()
+    await page.getByText('Synthetic E2E purchase', { exact: true }).waitFor()
     const accountsAfterExpense = await (
       await fetch(`${origin}/api/accounts`)
     ).json()
@@ -213,17 +263,13 @@ try {
         units(accountsAfterExpense.find((a) => a.name === 'Checking').balance),
       12340000n,
     )
-    await page
-      .getByRole('row')
-      .filter({ hasText: 'Synthetic E2E purchase' })
-      .getByRole('button', { name: 'Edit', exact: true })
-      .click()
+    await page.getByText('Synthetic E2E purchase', { exact: true }).click()
     await page
       .getByLabel('Description', { exact: true })
       .fill('Synthetic E2E purchase edited')
     await page.getByRole('button', { name: 'Save', exact: true }).click()
     await page
-      .getByRole('cell', { name: /Synthetic E2E purchase edited/ })
+      .getByText('Synthetic E2E purchase edited', { exact: true })
       .waitFor()
     const accountsAfterEdit = await (
       await fetch(`${origin}/api/accounts`)
@@ -243,10 +289,7 @@ try {
         ).json()
       ).totals.find((row) => row.currency === 'BRL')
     const beforeTransfer = await reporting()
-    await page.getByRole('button', { name: '+ Add Transaction' }).click()
-    await page
-      .getByLabel('Transaction type', { exact: true })
-      .selectOption('TRANSFER')
+    await openTransaction('transfer')
     await page
       .getByLabel('From account', { exact: true })
       .selectOption({ label: 'Checking (BRL)' })
@@ -254,8 +297,7 @@ try {
       .getByLabel('To account', { exact: true })
       .selectOption({ label: 'Savings (BRL)' })
     await page.getByLabel('Amount', { exact: true }).fill('25')
-    await page.getByRole('button', { name: 'Save', exact: true }).click()
-    await page.getByRole('button', { name: '+ Add Transaction' }).waitFor()
+    await saveTransaction('transfers')
     const accountsAfterTransfer = await (
       await fetch(`${origin}/api/accounts`)
     ).json()
@@ -275,12 +317,7 @@ try {
       units(beforeTransfer.expenses),
       'Transfers must not count as spending',
     )
-    await page
-      .getByRole('button', { name: '+ Add Transaction', exact: true })
-      .click()
-    await page
-      .getByLabel('Transaction type', { exact: true })
-      .selectOption('INCOME')
+    await openTransaction('deposit')
     await page
       .getByLabel('Account', { exact: true })
       .selectOption({ label: 'Checking (BRL)' })
@@ -291,10 +328,7 @@ try {
     await page
       .getByLabel('Category', { exact: true })
       .selectOption({ label: 'Salary' })
-    await page.getByRole('button', { name: 'Save', exact: true }).click()
-    await page
-      .getByRole('button', { name: '+ Add Transaction', exact: true })
-      .waitFor()
+    await saveTransaction('transactions')
     const afterIncome = await reporting()
     assert.equal(
       units(afterIncome.income) - units(afterTransfer.income),
@@ -370,23 +404,47 @@ try {
     await visit('settings?view=rules', 'Rules')
     await page.getByRole('button', { name: 'Preview history' }).first().click()
     await page.getByText(/Rule preview . no changes saved/).waitFor()
-    await visit('spending?view=Budgets', 'Spending')
+    await visit(
+      'dashboard?view=spending&detail=budget&month=' +
+        runtime.end_date.slice(0, 7),
+      'Budget',
+    )
+    for (const button of await page
+      .getByRole('button', { name: 'Expand group', exact: true })
+      .all())
+      await button.click()
+    const grocery = page.getByText('Groceries', { exact: true }).first()
+    await grocery
+      .locator('xpath=ancestor::div[.//button[@aria-label="Row options"]][1]')
+      .getByRole('button', { name: 'Row options', exact: true })
+      .click()
     await page
-      .getByRole('button', { name: 'Edit target Groceries', exact: true })
+      .getByRole('menuitem', {
+        name: 'Target details & appearance',
+        exact: true,
+      })
       .click()
     await page.getByLabel('Target amount (BRL)').fill('1050')
     await page.getByRole('button', { name: 'Save target', exact: true }).click()
     await page.getByLabel('Target amount (BRL)').waitFor({ state: 'hidden' })
     await visit('goals', 'Emergency')
-    await page.getByRole('button', { name: /Emergency/ }).click()
-    await page.getByRole('button', { name: 'Edit goal', exact: true }).click()
-    await page.getByLabel('Goal name').fill('Synthetic E2E emergency goal')
     await page
-      .locator('form')
-      .filter({ has: page.getByLabel('Goal name') })
-      .getByRole('button', { name: 'Save', exact: true })
+      .getByRole('link', { name: /Emergency/ })
+      .first()
       .click()
-    await page.getByLabel('Goal name').waitFor({ state: 'hidden' })
+    await page
+      .getByRole('button', { name: 'More options', exact: true })
+      .click()
+    await page.getByRole('button', { name: 'Edit goal', exact: true }).click()
+    await page
+      .getByRole('dialog')
+      .getByLabel('Title', { exact: true })
+      .fill('Synthetic E2E emergency goal')
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Save changes', exact: true })
+      .click()
+    await page.getByRole('dialog').waitFor({ state: 'hidden' })
     await visit('settings?view=categories', 'Categories')
     await page
       .getByRole('button', { name: 'Add category', exact: true })
@@ -410,7 +468,7 @@ try {
     ).json()
     assert.equal(rows.length, 0)
     await page.setViewportSize({ width: 1920, height: 1080 })
-    await page.locator('.daily-bars').waitFor()
+    await page.locator('.wf-spending .recharts-surface').first().waitFor()
     await page.screenshot({
       path: path.join(output, 'overview-wide.jpg'),
       quality: 85,
@@ -425,7 +483,7 @@ try {
         `Unexpected page overflow at 1280px: ${route}`,
       )
       if (route === 'transactions') {
-        const table = page.locator('.table-scroll').first()
+        const table = page.locator('.wf-spending-table').locator('..')
         assert(
           await table.evaluate((element) => {
             element.scrollLeft = element.scrollWidth
@@ -451,12 +509,15 @@ try {
       .getByRole('dialog', { name: 'Navigation' })
       .getByRole('button', { name: 'Activities', exact: true })
       .click()
+    await page.getByRole('button', { name: 'Spending', exact: true }).click()
     await page.getByLabel('Search transactions').waitFor()
     await page.screenshot({
       path: path.join(output, 'mobile.jpg'),
       quality: 85,
     })
   }
+  if (process.argv.includes('--unified'))
+    await checkUnifiedDemo(page, origin, output)
   if (process.argv.includes('--themes')) await checkThemes(page, origin, root)
   if (process.argv.includes('--appearance'))
     await checkAppearance(page, origin, output, root)
@@ -472,6 +533,30 @@ try {
       origin,
       path.join(root, 'docs/screenshots/real-market-demo'),
     )
+  if (process.argv.includes('--numbers')) await checkNumbers(page, origin, root)
+  if (process.argv.includes('--sidebar-order'))
+    await checkSidebarOrder(page, origin, root)
+  if (process.argv.includes('--charts'))
+    await checkChartDemo(page, origin, root)
+  if (process.argv.includes('--net-worth'))
+    await checkNetWorth(page, origin, root)
+  if (process.argv.includes('--insights'))
+    await checkPortfolioInsights(page, origin, root)
+  if (process.argv.includes('--income')) await checkIncome(page, origin, root)
+  if (process.argv.includes('--spending-migration'))
+    await checkSpendingMigration(page, origin, root)
+  if (process.argv.includes('--holdings-activities'))
+    await checkHoldingsActivities(page, origin, root)
+  if (process.argv.includes('--performance-insights'))
+    await checkPerformanceInsights(page, origin, root)
+  if (process.argv.includes('--goals-migration'))
+    await checkGoalsMigration(page, origin, root)
+  if (process.argv.includes('--dashboard-migration'))
+    await checkDashboardMigration(page, origin, root)
+  if (process.argv.includes('--settings-migration'))
+    await checkSettingsMigration(page, origin, root)
+  if (process.argv.includes('--app-audit'))
+    await checkApplicationAudit(page, origin, root)
   assert.deepEqual(errors, [])
   await writeFile(
     path.join(root, '.tmp/demo-e2e-results.json'),

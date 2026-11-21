@@ -1,13 +1,18 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { DemoContext, type DemoRuntime } from '@/lib/demo-runtime'
 import { localDate, request, setDemoGeneration } from '@/lib/api'
-import { DemoExperience, DemoScenarios } from './demo-experience'
+import {
+  DemoExperience,
+  DemoScenarios,
+  HistoricalDemoFooter,
+} from './demo-experience'
 import { DemoProvider } from './demo-provider'
 import { GmailQueue } from '@/pages/gmail'
 import { getGoals } from '@/lib/wealth-api'
+import { navigateTo } from '@/lib/navigation'
 
 vi.mock('./real-market-demo', () => ({
   RealMarketDemo: () => <p>Historical portfolio context</p>,
@@ -43,6 +48,7 @@ it('never exposes reset or demo controls in a normal workspace', () => {
 })
 
 it('offers only the Brazil portfolio without legacy scenario or household actions', async () => {
+  navigateTo('Investments')
   render(
     wrapper(
       <DemoContext.Provider
@@ -57,6 +63,7 @@ it('offers only the Brazil portfolio without legacy scenario or household action
         }}
       >
         <DemoExperience />
+        <HistoricalDemoFooter />
         <DemoScenarios settings />
       </DemoContext.Provider>,
     ),
@@ -72,20 +79,69 @@ it('offers only the Brazil portfolio without legacy scenario or household action
   expect(screen.getByText('Historical portfolio context')).toBeVisible()
 })
 
-it('selects a separate historical scenario through the runtime action', async () => {
+it('keeps historical context below investment content and excludes household pages', async () => {
   const user = userEvent.setup()
-  const selectScenario = vi.fn().mockResolvedValue(undefined)
+  render(
+    wrapper(
+      <DemoContext.Provider
+        value={{ runtime: { ...runtime, scenario: 'real-market-br' } }}
+      >
+        <DemoExperience />
+        <div>Financial page content</div>
+        <HistoricalDemoFooter />
+      </DemoContext.Provider>,
+    ),
+  )
+  expect(
+    screen.queryByText('Historical portfolio context'),
+  ).not.toBeInTheDocument()
+  await user.click(screen.getByText('Demo', { selector: 'summary' }))
+  expect(screen.getByRole('button', { name: 'Reset demo' })).toBeVisible()
+  for (const page of ['Investments', 'Performance'] as const) {
+    // Navigate through the same hash/history mechanism as the application shell.
+    await act(async () => navigateTo(page))
+    expect(screen.getByText('Historical portfolio context')).toBeVisible()
+    const footer = screen
+      .getByText('Historical portfolio context')
+      .closest('footer')!
+    expect(
+      screen
+        .getByText('Financial page content')
+        .compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      screen.getByText(/Historical simulation: actual market observations/),
+    ).toBeVisible()
+  }
+  for (const page of [
+    'Budget',
+    'Accounts',
+    'Transactions',
+    'Net Worth',
+    'Goals',
+    'Settings',
+  ] as const) {
+    await act(async () => navigateTo(page))
+    expect(
+      screen.queryByText('Historical portfolio context'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/Historical simulation: actual market observations/),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('Demo', { selector: 'summary' })).toBeVisible()
+  }
+})
+
+it('shows one complete demo without scenario switching controls', async () => {
+  const selectScenario = vi.fn()
   render(
     wrapper(
       <DemoContext.Provider
         value={{
           runtime: {
             ...runtime,
-            scenario: 'synthetic',
-            scenarios: [
-              { id: 'synthetic', name: 'Synthetic household' },
-              { id: 'real-market-br', name: 'Real Market Portfolio — Brazil' },
-            ],
+            scenario: 'unified',
+            scenarios: [{ id: 'unified', name: 'Complete demo' }],
           },
           selectScenario,
         }}
@@ -94,14 +150,13 @@ it('selects a separate historical scenario through the runtime action', async ()
       </DemoContext.Provider>,
     ),
   )
-  await user.click(screen.getByText('Demo', { selector: 'summary' }))
-  await user.selectOptions(
-    screen.getByLabelText('Demo scenario'),
-    'real-market-br',
-  )
-  await waitFor(() =>
-    expect(selectScenario).toHaveBeenCalledWith('real-market-br'),
-  )
+  await userEvent.click(screen.getByText('Demo', { selector: 'summary' }))
+  expect(screen.queryByLabelText('Demo scenario')).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('button', { name: 'Return to household demo' }),
+  ).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Reset demo' })).toBeVisible()
+  expect(selectScenario).not.toHaveBeenCalled()
 })
 
 it('shows a skippable tour and navigates real product sections', async () => {
@@ -230,4 +285,37 @@ it('anchors demo goal calculations to the fixture date without altering normal q
   setDemoGeneration()
   await getGoals()
   expect(fetch).toHaveBeenLastCalledWith('/api/goals', expect.anything())
+})
+
+it('keeps provenance at the investment footer without launch or return actions', async () => {
+  navigateTo('Investments')
+  render(
+    wrapper(
+      <DemoContext.Provider
+        value={{ runtime: { ...runtime, scenario: 'unified' } }}
+      >
+        <DemoExperience />
+        <p>Financial content</p>
+        <HistoricalDemoFooter />
+        <DemoScenarios settings />
+      </DemoContext.Provider>,
+    ),
+  )
+  const disclosure = screen.getByText(
+    /Fictional household and holdings through/,
+  )
+  expect(disclosure.closest('footer')).toBeInTheDocument()
+  expect(screen.getByText('Historical portfolio context')).toBeVisible()
+  expect(
+    screen.queryByRole('button', {
+      name: /Open income demo|Return to household/,
+    }),
+  ).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('button', { name: 'Simulate Gmail notification' }),
+  ).not.toBeInTheDocument()
+  await act(async () => navigateTo('Goals'))
+  expect(
+    screen.queryByText(/Fictional household and holdings through/),
+  ).not.toBeInTheDocument()
 })

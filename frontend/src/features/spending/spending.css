@@ -1,0 +1,32 @@
+﻿/* Source spending tokens map to the existing appearance palette. */
+.wf-spending {
+  --spending-deep: var(--spending-bar, var(--chart-1));
+  --spending-mid: color-mix(
+    in oklab,
+    var(--spending-deep) 62%,
+    var(--background)
+  );
+  --spending-accent: var(--spending-deep);
+  --spending-saving: var(--positive);
+  --status-warn: var(--warning);
+  --event-today: var(--foreground);
+}
+.wf-spending .budget-editor {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.wf-spending :where(button, a, input):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+/* Full month labels and supported controls need their own row on phones;
+   otherwise the native header can shrink its title to zero width. */
+@media (max-width: 767px) {
+  .wf-spending .spending-page-header > .p-4 > .mx-auto > div {
+    flex-wrap: wrap;
+  }
+  .wf-spending .spending-page-header > .p-4 > .mx-auto > div > div:first-child {
+    flex-basis: 100%;
+  }
+}

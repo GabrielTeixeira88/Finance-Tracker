@@ -85,23 +85,31 @@ def deactivate_account(record_id: UUID, db: DB):
 
 @router.get("/categories", response_model=list[schemas.CategoryOutput])
 def list_categories(db: DB):
-    return list(db.scalars(select(Category).order_by(Category.name)))
+    from app.spending_appearance import annotate
+
+    return annotate(db, list(db.scalars(select(Category).order_by(Category.name))), "category")
 
 
 @router.post("/categories", response_model=schemas.CategoryOutput, status_code=201)
 def create_category(data: schemas.CategoryInput, db: DB):
-    category = Category(**data.model_dump())
+    from app.spending_appearance import annotate, save
+
+    category = Category(name=data.name)
     db.add(category)
     db.flush()
-    return category
+    save(db, category.id, "category", data)
+    return annotate(db, [category], "category")[0]
 
 
 @router.put("/categories/{record_id}", response_model=schemas.CategoryOutput)
 def update_category(record_id: UUID, data: schemas.CategoryInput, db: DB):
+    from app.spending_appearance import annotate, save
+
     category = ledger.require(db, Category, record_id)
     category.name = data.name
     db.flush()
-    return category
+    save(db, category.id, "category", data)
+    return annotate(db, [category], "category")[0]
 
 
 @router.delete("/categories/{record_id}", status_code=204)
@@ -301,3 +309,11 @@ def demo(db: DB):
         "end_date": fixture.end_date,
         "preview": fixture.payload,
     }
+
+
+@router.get("/accounts/{account_id}/workspace")
+def account_workspace(account_id: UUID, db: DB, start: date, end: date):
+    from app.account_workspace import workspace
+    from app.investments import wire
+
+    return wire(workspace(db, account_id, start, end))

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { startDate } from '@/lib/investment-analytics'
 import InvestmentAnalytics, {
@@ -8,10 +8,92 @@ import InvestmentAnalytics, {
 
 beforeAll(async () => {
   await Promise.all([
-    import('@/components/performance-chart'),
+    import('@/features/performance/performance-workspace'),
     import('@/components/income-chart'),
   ])
 }, 20000)
+
+it('keeps incomplete reporting unavailable and original payment amounts visible without currency controls', async () => {
+  const event = {
+    id: 'fictional-payment',
+    date: '2026-09-30',
+    account_id: 'a',
+    account: 'Fictional USD account',
+    asset_id: null,
+    symbol: 'Cash interest',
+    type: 'INTEREST',
+    currency: 'USD',
+    gross: '100',
+    fees: '0',
+    taxes: '0',
+    net: '100',
+  }
+  const emptyAmounts = { gross: null, fees: null, taxes: null, net: null }
+  setup(
+    <InvestmentAnalytics
+      view="Income"
+      accountId=""
+      asOf="2026-09-30"
+      onSecurity={vi.fn()}
+    />,
+    (path) =>
+      path.endsWith('/assets')
+        ? []
+        : {
+            events: [event],
+            months: [
+              {
+                month: '2026-09',
+                currency: 'USD',
+                gross: '100',
+                fees: '0',
+                taxes: '0',
+                net: '100',
+              },
+            ],
+            breakdowns: {},
+            reporting: {
+              currency: 'BRL',
+              quality: 'PARTIAL',
+              missing_currencies: ['USD'],
+              known_net: '0',
+              totals: emptyAmounts,
+              start: '2026-01-01',
+              end: '2026-09-30',
+              method: 'PAYMENT_DATE_FX',
+              fx_policy: 'CACHED',
+              events: [
+                {
+                  ...event,
+                  ...emptyAmounts,
+                  currency: 'BRL',
+                  original: {
+                    currency: 'USD',
+                    gross: '100',
+                    fees: '0',
+                    taxes: '0',
+                    net: '100',
+                  },
+                  fx: null,
+                },
+              ],
+              months: [],
+              breakdowns: {},
+            },
+          },
+  )
+  expect(await screen.findByText('Reporting total unavailable')).toBeVisible()
+  expect(
+    screen.queryByRole('heading', { name: 'Income history' }),
+  ).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('combobox', { name: 'Amount display' }),
+  ).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('combobox', { name: 'Reporting currency' }),
+  ).not.toBeInTheDocument()
+  expect(screen.getAllByText('US$ 100,00').length).toBeGreaterThan(0)
+})
 
 const metric = (value: string | null, reasons: string[] = []) => ({
   value,
@@ -87,7 +169,7 @@ it('renders exact returns separately from contributions, changes ranges and sele
           ? { warning: 'Fees already included', currency: 'BRL', positions: [] }
           : performance,
   )
-  expect(await screen.findByText('10%')).toBeInTheDocument()
+  expect(await screen.findByText('10,00%')).toBeInTheDocument()
   expect(screen.getByText('potentially multiple roots')).toBeInTheDocument()
   expect(screen.getByText('XIRR · annualized')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '1Y' }))
@@ -161,11 +243,18 @@ it('keeps incomplete allocation weights unavailable and drills into a security',
     ),
   )
   expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'FAKE' }))
+  const breakdown = screen
+    .getByRole('navigation', { name: 'Breakdown' })
+    .closest('section')!
+  await userEvent.click(within(breakdown).getByText('FAKE', { exact: true }))
   await userEvent.click(screen.getByRole('button', { name: 'View security' }))
   expect(open).toHaveBeenCalledWith('s')
-  await userEvent.click(screen.getByRole('button', { name: 'sector' }))
-  expect(screen.getByRole('button', { name: 'Unknown' })).toBeInTheDocument()
+  await userEvent.click(
+    within(breakdown).getByRole('button', { name: 'Sectors' }),
+  )
+  expect(
+    within(breakdown).getByText('Unknown', { exact: true }),
+  ).toBeInTheDocument()
 })
 
 it('shows an explicit empty return state rather than a zero chart for unfunded history', async () => {
@@ -288,4 +377,75 @@ it('saves explicit security metadata without changing activity amounts', async (
     sector: 'Synthetic sector',
     geography: '',
   })
+})
+
+it('preserves native-currency bookmarks without rendering a currency selector', async () => {
+  window.history.replaceState(
+    null,
+    '',
+    '/#/investments?view=Income&income_basis=native&income_currency=USD',
+  )
+  const event = {
+    id: 'fake-brl-income',
+    date: '2026-09-15',
+    currency: 'BRL',
+    account_id: 'fake-brl',
+    account: 'BRL test account',
+    asset_id: null,
+    symbol: 'Cash interest',
+    type: 'INTEREST',
+    gross: '95',
+    net: '95',
+    fees: '0',
+    taxes: '0',
+  }
+  setup(
+    <InvestmentAnalytics
+      view="Income"
+      accountId=""
+      asOf="2026-09-30"
+      onSecurity={vi.fn()}
+    />,
+    (path) =>
+      path.includes('/assets')
+        ? []
+        : {
+            events: [
+              event,
+              {
+                ...event,
+                id: 'fake-usd-income',
+                currency: 'USD',
+                account_id: 'fake-usd',
+                account: 'USD test account',
+                gross: '77',
+                net: '77',
+              },
+            ],
+            months: [
+              {
+                month: '2026-09',
+                currency: 'BRL',
+                gross: '95',
+                net: '95',
+                fees: '0',
+                taxes: '0',
+              },
+              {
+                month: '2026-09',
+                currency: 'USD',
+                gross: '77',
+                net: '77',
+                fees: '0',
+                taxes: '0',
+              },
+            ],
+            breakdowns: {},
+          },
+  )
+  expect(await screen.findByText('USD test account')).toBeVisible()
+  expect(screen.queryByText('BRL test account')).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('combobox', { name: 'Currency' }),
+  ).not.toBeInTheDocument()
 })

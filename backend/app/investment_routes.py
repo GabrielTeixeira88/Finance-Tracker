@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
@@ -10,6 +11,53 @@ from app.models import Asset, InvestmentActivity, PriceObservation
 from app.routes import DB
 
 router = APIRouter(prefix="/api/investments", tags=["investments"])
+
+
+@router.get("/workspace/activities")
+def activity_workspace(
+    db: DB,
+    account_id: UUID | None = None,
+    asset_id: UUID | None = None,
+    query: str = Query("", max_length=200),
+    activity_type: str = "",
+    status: Literal["all", "active", "voided"] = "all",
+    start: date | None = None,
+    end: date | None = None,
+    sort: Literal["date", "type", "security", "account"] = "date",
+    descending: bool = True,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
+    from app.activity_workspace import activity_page
+
+    return activity_page(
+        db,
+        account_id=account_id,
+        asset_id=asset_id,
+        query=query,
+        activity_type=activity_type,
+        status=status,
+        start=start,
+        end=end,
+        sort=sort,
+        descending=descending,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/workspace/holdings")
+def holdings_workspace(db: DB, account_id: UUID | None = None, as_of: date | None = None):
+    from app.holdings_workspace import holdings
+
+    return holdings(db, account_id, as_of)
+
+
+@router.get("/workspace/manual-holdings")
+def manual_holdings_workspace(db: DB, as_of: date | None = None):
+    from app.holdings_workspace import manual_holdings
+
+    return manual_holdings(db, as_of)
 
 
 @router.get("/assets")

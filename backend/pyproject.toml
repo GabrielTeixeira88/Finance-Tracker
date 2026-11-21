@@ -6,6 +6,8 @@ build-backend = "hatchling.build"
 name = "finance-tracker-backend"
 dynamic = ["version"]
 description = "Local-first Finance Tracker API foundation"
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.142.2,<0.143",

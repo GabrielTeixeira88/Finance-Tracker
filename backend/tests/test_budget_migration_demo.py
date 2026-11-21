@@ -19,11 +19,18 @@ from app.seed_spending_demo import seed_spending_demo
 
 def snapshot(engine):
     with engine.connect() as connection:
-        return {
-            table: list(connection.execute(text(f'SELECT * FROM "{table}" ORDER BY id')))
-            for table in inspect(connection).get_table_names()
-            if table != "alembic_version"
-        }
+        schema = inspect(connection)
+        result = {}
+        for table in schema.get_table_names():
+            if table == "alembic_version":
+                continue
+            # Association tables may use a foreign-key primary key rather than id.
+            keys = schema.get_pk_constraint(table)["constrained_columns"]
+            order = ", ".join(f'"{column}"' for column in keys)
+            result[table] = list(
+                connection.execute(text(f'SELECT * FROM "{table}" ORDER BY {order}'))
+            )
+        return result
 
 
 def test_populated_phase3_migration_preserves_every_existing_table(tmp_path):

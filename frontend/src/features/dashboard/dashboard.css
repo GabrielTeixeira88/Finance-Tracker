@@ -1,0 +1,188 @@
+/* Source dashboard-content.tsx geometry; semantic surfaces preserve all themes. */
+.investment-source-dashboard {
+  --investments: var(--chart-1);
+  --card-radius: 18px;
+  --card-border: color-mix(in srgb, var(--border) 60%, transparent);
+  --card-shadow: none;
+  position: relative;
+  margin: 12px -16px 0;
+}
+:where(.investment-source-dashboard, .net-worth-v014) {
+  --button-radius: 9999px;
+  --button-border: transparent;
+  --button-outline-border: var(--border);
+  --button-outline-bg: var(--card);
+  --button-outline-image: none;
+  --button-outline-shadow: none;
+}
+.dashboard-balance-trigger {
+  font: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.dashboard-source-actions {
+  position: absolute;
+  inset-inline-end: 16px;
+  top: -52px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 2;
+}
+.investment-source-dashboard .text-display {
+  font-size: 32px;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -0.04em;
+}
+.dashboard-source-landscape {
+  display: flex;
+  flex-direction: column;
+  --dashboard-landscape: var(--investments, var(--positive));
+  background-image: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--dashboard-landscape) 30%, transparent),
+    color-mix(in srgb, var(--dashboard-landscape) 15%, transparent) 50%,
+    transparent 100%
+  );
+}
+.dashboard-source-landscape.is-negative {
+  --dashboard-landscape: var(--negative);
+}
+.dashboard-hero-chart,
+.dashboard-history-chart {
+  height: 280px;
+  margin: 0;
+  min-width: 0;
+}
+.dashboard-chart-empty {
+  height: 280px;
+  display: grid;
+  place-items: center;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.dashboard-period-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  position: relative;
+  z-index: 2;
+  padding-inline: 12px;
+}
+.dashboard-period-controls > div {
+  overflow-x: auto;
+}
+.dashboard-freshness {
+  margin-block: 4px;
+}
+.dashboard-freshness summary {
+  cursor: pointer;
+}
+.dashboard-freshness[open] {
+  max-width: 48rem;
+}
+.dashboard-account-row {
+  text-align: start;
+}
+.dashboard-holding-menu fieldset + fieldset {
+  border-top: 1px solid var(--border);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+.dashboard-holding-menu legend {
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.dashboard-holding-menu label {
+  cursor: pointer;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+.dashboard-holding-menu label:hover {
+  background: var(--accent);
+}
+.dashboard-holding-menu input {
+  order: 2;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--muted-foreground);
+}
+.dashboard-holding-menu input:checked {
+  border-color: var(--primary);
+  background: var(--primary-foreground);
+  box-shadow: inset 0 0 0 3px var(--primary);
+}
+.dashboard-holding-menu input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+@media (min-width: 768px) {
+  .investment-source-dashboard {
+    margin-inline: -16px;
+  }
+  .dashboard-source-actions {
+    inset-inline-end: 24px;
+  }
+}
+@media (max-width: 639px) {
+  .application-shell.reference-shell
+    nav.section-navigation[aria-label='Dashboard'] {
+    flex-wrap: nowrap;
+    width: max-content;
+    max-width: calc(100% - 72px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .application-shell.reference-shell
+    nav.section-navigation[aria-label='Dashboard']
+    button {
+    padding: 6px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .application-shell.reference-shell
+    nav.section-navigation[aria-label='Dashboard']
+    .motion-choice-label {
+    font-size: 11px;
+    gap: 4px;
+  }
+  .application-shell.reference-shell
+    nav.section-navigation[aria-label='Dashboard']
+    svg {
+    width: 12px;
+    height: 12px;
+  }
+  .net-worth-v014 .net-worth-quick-actions {
+    top: 24px;
+    right: 0;
+  }
+  .net-worth-primary-line h1 {
+    min-width: 0;
+  }
+  .net-worth-primary-line h1 .money {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .dashboard-source-actions {
+    position: static;
+    justify-content: flex-end;
+    padding-inline: 16px;
+    margin-block: 4px 12px;
+  }
+  .investment-source-dashboard .text-display {
+    font-size: clamp(24px, 7vw, 32px);
+  }
+}

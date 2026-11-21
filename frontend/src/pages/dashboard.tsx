@@ -55,16 +55,8 @@ export default function Dashboard({
   categories: Category[]
   navigate: Navigate
 }) {
-  const {
-    demo,
-    period,
-    setPeriod,
-    end,
-    moveMonth,
-    result,
-    series,
-    setCurrency,
-  } = useHistory('3M')
+  const { demo, period, setPeriod, end, moveMonth, result, series } =
+    useHistory('3M')
   const [spending, setSpending] = useState(false)
   const [options, setOptions] = useState(false)
   const [chartData, setChartData] = useState(false)
@@ -174,20 +166,6 @@ export default function Dashboard({
                 : tr('dynamic:local_ledger_db536e')}{' '}
               · {end}
             </p>
-            {!!series && (result.data?.series.length ?? 0) > 1 && (
-              <label className="field">
-                {' '}
-                {tr('dashboard:currency_e070de')}{' '}
-                <select
-                  value={series.currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                >
-                  {result.data?.series.map((s) => (
-                    <option key={s.currency}>{s.currency}</option>
-                  ))}
-                </select>
-              </label>
-            )}
           </div>
         )}
       </header>

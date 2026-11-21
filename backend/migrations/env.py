@@ -1,14 +1,18 @@
 from alembic import context
 
 from app import (  # noqa: F401
+    allocation_models,
     analytics_models,
     fixed_income_models,
     gmail_models,
+    goal_models,
     life_event_models,
     market_models,
     models,
     pluggy_models,
     reconciliation_models,
+    settings_models,
+    spending_appearance,
     wealth_models,
 )
 from app.config import get_settings

@@ -106,9 +106,13 @@ export const getSecurityHistory = async (
   id: string,
   end: string,
   signal?: AbortSignal,
+  start?: string,
 ) =>
   marketHistorySchema.parse(
-    await request(`/market-data/assets/${id}/history?end=${end}`, { signal }),
+    await request(
+      `/market-data/assets/${id}/history?${new URLSearchParams({ end, ...(start ? { start } : {}) })}`,
+      { signal },
+    ),
   )
 export const reportingSchema = z.object({
   reporting: z.object({

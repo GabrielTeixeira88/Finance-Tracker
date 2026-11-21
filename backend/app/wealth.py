@@ -107,7 +107,7 @@ def void_record(record, reason):
     record.void_reason = reason
 
 
-def net_worth(session, start, end, currency):
+def net_worth(session, start, end, currency, *, details=False):
     valid_day(end)
     if start > end or (end - start).days > 3660 or start.year < 2:
         raise HTTPException(422, "Select an ordered range of at most ten years")
@@ -213,6 +213,46 @@ def net_worth(session, start, end, currency):
                 )
             )
             final = components
+            if details:
+                breakdown = {}
+                for c in components:
+                    kind = (
+                        "LIABILITY"
+                        if c["source"] == "LIABILITY"
+                        or (c["native_value"] is not None and c["native_value"] < ZERO)
+                        else "ASSET"
+                    )
+                    key = f"{kind}:{c['category']}"
+                    if c["value"] is None or c["missing"]:
+                        breakdown[key] = None
+                    elif breakdown.get(key, ZERO) is not None:
+                        breakdown[key] = breakdown.get(key, ZERO) + abs(c["value"])
+                points[-1].update(
+                    breakdown=breakdown,
+                    component_values={
+                        str(c["id"]): c["value"] if not c["missing"] else None for c in components
+                    },
+                    portfolio_value=sum(
+                        (
+                            c["value"] or ZERO
+                            for c in components
+                            if c["source"] == "ACCOUNT" and c["category"] == "INVESTMENT"
+                        ),
+                        ZERO,
+                    )
+                    if complete
+                    else None,
+                    manual_asset_value=sum(
+                        (c["value"] or ZERO for c in components if c["source"] == "ASSET"), ZERO
+                    )
+                    if complete
+                    else None,
+                    manual_debt_value=-sum(
+                        (c["value"] or ZERO for c in components if c["source"] == "LIABILITY"), ZERO
+                    )
+                    if complete
+                    else None,
+                )
             day += timedelta(days=1)
         complete = points[-1]["complete"]
         categories = {}
@@ -275,14 +315,24 @@ def goal_entries(session, goal):
 
 
 def allocation_map(session, day, book=None):
+    from app import goal_workspace
+
     allocations = {}
     for g in book.goals if book else session.scalars(select(Goal).where(Goal.mode == "ACCOUNT")):
         if g.mode != "ACCOUNT":
             continue
-        if g.start_date > day or (g.archived_date and g.archived_date <= day):
+        if (
+            g.start_date > day
+            or goal_workspace.lifecycle(session, g, day, book) in goal_workspace.RELEASES
+        ):
             continue
+        active_epoch = goal_workspace.epoch(session, g.id, day, book)
         for entry in book.entries.get(g.id, []) if book else goal_entries(session, g):
-            if not entry.voided_at and entry.effective_date <= day:
+            if (
+                not entry.voided_at
+                and entry.effective_date <= day
+                and goal_workspace.entry_epoch(session, entry, book) == active_epoch
+            ):
                 allocations[(g.id, entry.account_id)] = entry.amount
     return allocations
 
@@ -290,14 +340,8 @@ def allocation_map(session, day, book=None):
 def goal_progress(session, goal, day, book=None):
     if day < goal.start_date:
         return ZERO, []
-    funding = (
-        book.funding.get(goal.id)
-        if book
-        else session.scalar(select(GoalAccountFunding).where(GoalAccountFunding.goal_id == goal.id))
-    )
+    funding = funding_at(session, goal, day, book)
     if funding:
-        if day < funding.effective_date or (goal.archived_date and goal.archived_date <= day):
-            return ZERO, []
         if book:
             point = book.investments.get((funding.account_id, day))
         else:
@@ -331,11 +375,18 @@ def goal_progress(session, goal, day, book=None):
 
 
 def check_goal(session, goal):
+    from app import goal_workspace
+
     valid_day(goal.start_date)
     if goal.deadline and goal.deadline < goal.start_date:
         raise HTTPException(422, "Deadline must follow the goal start")
-    funding = session.scalar(
-        select(GoalAccountFunding).where(GoalAccountFunding.goal_id == goal.id)
+    with session.no_autoflush:
+        if any(
+            row.effective_date < goal.start_date for row in goal_workspace.events(session, goal.id)
+        ):
+            raise HTTPException(409, "Start date cannot exclude retained lifecycle history")
+    funding = next(
+        (row for row in investment_goal_funding(session) if row.goal_id == goal.id), None
     )
     if funding and (
         goal.mode != "ACCOUNT"
@@ -350,7 +401,7 @@ def check_goal(session, goal):
             raise HTTPException(409, "Start date cannot exclude existing progress")
 
 
-def validate_progress(session, goal):
+def validate_progress(session, goal, from_day=None):
     session.flush()
     dates = {
         e.effective_date
@@ -366,16 +417,24 @@ def validate_progress(session, goal):
             )
         )
     )
-    book = GoalBook(session, dates)
+    book = GoalBook(session, dates, goal.id)
     for day in sorted(dates):
+        if from_day is not None and day < from_day:
+            continue
         value, warnings = goal_progress(session, goal, day, book)
         if value < 0 or warnings:
             raise HTTPException(409, "Progress cannot be negative or exceed shared account savings")
 
 
 def add_goal_entry(session, goal, data):
+    from app import goal_workspace
+    from app.goal_models import GoalEntryEpoch
+
+    goal_workspace.require_editable(session, goal)
+    if goal_workspace.lifecycle(session, goal, data.effective_date) in goal_workspace.RELEASES:
+        raise HTTPException(409, "Choose a date when the goal is restored and active")
     valid_day(data.effective_date)
-    if session.scalar(select(GoalAccountFunding).where(GoalAccountFunding.goal_id == goal.id)):
+    if funding_at(session, goal, data.effective_date):
         raise HTTPException(
             409,
             "This goal tracks its reserved investment account; fund or redeem that account instead",
@@ -399,12 +458,21 @@ def add_goal_entry(session, goal, data):
         raise HTTPException(409, "Correct the existing dated allocation first")
     entry = GoalEntry(goal_id=goal.id, **data.model_dump())
     session.add(entry)
+    session.flush()
+    active_epoch = goal_workspace.epoch(session, goal.id, data.effective_date)
+    if active_epoch and goal.mode == "ACCOUNT":
+        session.add(GoalEntryEpoch(entry_id=entry.id, funding_epoch=active_epoch))
     validate_progress(session, goal)
     return entry
 
 
-def goal_detail(session, goal, day, monthly=ZERO):
+def goal_detail(session, goal, day, monthly=None):
+    from app import goal_workspace
+
     valid_day(day)
+    saved_plan = goal_workspace.plan(session, goal)
+    if monthly is None:
+        monthly = saved_plan["monthly"]
     with localcontext() as ctx:
         ctx.prec = 60
         saved, warnings = goal_progress(session, goal, day)
@@ -460,15 +528,21 @@ def goal_detail(session, goal, day, monthly=ZERO):
             )
             if goal.archived_date and goal.archived_date <= day:
                 dates = sorted(set(dates) | {goal.archived_date})
-        funding = session.scalar(
-            select(GoalAccountFunding).where(GoalAccountFunding.goal_id == goal.id)
-        )
-        if funding:
+            dates = sorted(
+                set(dates)
+                | {
+                    row.effective_date
+                    for row in goal_workspace.events(session, goal.id)
+                    if row.effective_date <= day
+                }
+            )
+        funding = funding_at(session, goal, day)
+        if any(row.goal_id == goal.id for row in investment_goal_funding(session)):
             # Daily valuation includes accrual without daily ledger/goal postings.
             dates = [
                 goal.start_date + timedelta(days=n) for n in range((day - goal.start_date).days + 1)
             ]
-        book = GoalBook(session, dates)
+        book = GoalBook(session, dates, goal.id)
         result = dict(
             goal=goal,
             saved=None if warnings else saved,
@@ -507,18 +581,83 @@ def goal_detail(session, goal, day, monthly=ZERO):
         from app.goal_trajectory import schedule_pace, trajectory
 
         result["as_of"] = day
+        result["plan"] = saved_plan
+        result["allocations"] = [
+            dict(account_id=account, amount=amount)
+            for (goal_id, account), amount in allocation_map(session, day, book).items()
+            if goal_id == goal.id
+        ]
+        active_epoch = goal_workspace.epoch(session, goal.id, day)
+        result["can_assign_investment"] = (
+            goal.mode == "ACCOUNT"
+            and not funding
+            and not any(
+                not row.voided_at and goal_workspace.entry_epoch(session, row) == active_epoch
+                for row in goal_entries(session, goal)
+            )
+        )
+        result["deleted"] = goal_workspace.deleted(session, goal)
+        result["lifecycle"] = goal_workspace.events(session, goal.id)
         result["schedule_pace"] = schedule_pace(goal, day, saved, warnings)
         result["trajectory"] = trajectory(goal, day, saved, warnings, result["history"], monthly)
+        result["milestone_details"] = [
+            dict(
+                percent=percent,
+                amount=(goal.target * Decimal(percent) / 100).quantize(Decimal("0.000001")),
+                reached=not warnings and saved * 100 >= goal.target * percent,
+                first_observed_date=next(
+                    (
+                        point["date"]
+                        for point in result["history"]
+                        if point["value"] is not None
+                        and point["value"] * 100 >= goal.target * percent
+                    ),
+                    None,
+                ),
+                estimated_date=next(
+                    (
+                        point["date"]
+                        for point in result["trajectory"]["points"]
+                        if point["projected"] is not None
+                        and point["projected"] * 100 >= goal.target * percent
+                    ),
+                    None,
+                ),
+            )
+            for percent in (25, 50, 75, 100)
+        ]
         return result
 
 
 def investment_goal_funding(session):
-    return session.scalars(select(GoalAccountFunding))
+    from app.goal_workspace import all_new_funding
+
+    return list(session.scalars(select(GoalAccountFunding))) + all_new_funding(session)
+
+
+def funding_at(session, goal, day, book=None):
+    from app import goal_workspace
+
+    if goal_workspace.lifecycle(session, goal, day, book) in goal_workspace.RELEASES:
+        return None
+    active_epoch = goal_workspace.epoch(session, goal.id, day, book)
+    rows = book.funding if book else investment_goal_funding(session)
+    eligible = [
+        row
+        for row in rows
+        if row.goal_id == goal.id
+        and row.effective_date <= day
+        and getattr(row, "funding_epoch", 0) == active_epoch
+    ]
+    return max(eligible, key=lambda row: row.effective_date, default=None)
 
 
 class GoalBook:
-    def __init__(self, session, days):
+    def __init__(self, session, days, funding_goal_id=None):
         from collections import defaultdict
+
+        from app.goal_models import GoalEntryEpoch, GoalLifecycle
+        from app.goal_workspace import available
 
         self.goals = list(session.scalars(select(Goal)))
         self.entries = defaultdict(list)
@@ -527,10 +666,24 @@ class GoalBook:
         ):
             self.entries[row.goal_id].append(row)
         self.balances = ledger.balance_series(session, days)
-        self.funding = {f.goal_id: f for f in investment_goal_funding(session)}
+        self.lifecycle = defaultdict(list)
+        for row in (
+            session.scalars(select(GoalLifecycle).order_by(GoalLifecycle.sequence))
+            if available(session)
+            else []
+        ):
+            self.lifecycle[row.goal_id].append(row)
+        self.entry_epochs = (
+            {row.entry_id: row.funding_epoch for row in session.scalars(select(GoalEntryEpoch))}
+            if available(session)
+            else {}
+        )
+        self.funding = list(investment_goal_funding(session))
         self.investments = {}
         if days:
-            for funding in self.funding.values():
+            for funding in self.funding:
+                if funding_goal_id is not None and funding.goal_id != funding_goal_id:
+                    continue
                 points = market_valuation.history(
                     session, min(days), max(days), account_id=funding.account_id, serialize=False
                 )["points"]
@@ -540,18 +693,44 @@ class GoalBook:
 def reserve_investment_account(session, goal, account_id, effective_date):
     """Explicit exclusive reservation; only metadata, never a financial posting."""
     account = ledger.posting_account(session, account_id)
+    from app import goal_workspace
+    from app.goal_models import GoalInvestmentFunding
+
+    goal_workspace.require_editable(session, goal)
     valid_day(effective_date)
     if goal.mode != "ACCOUNT" or account.type != "INVESTMENT" or account.currency != goal.currency:
         raise HTTPException(422, "Reserve a same-currency investment account for an account goal")
-    if effective_date < goal.start_date or goal_entries(session, goal):
-        raise HTTPException(409, "Whole-account funding cannot overlap recorded allocations")
-    if session.scalar(
-        select(GoalAccountFunding).where(
-            (GoalAccountFunding.account_id == account_id) | (GoalAccountFunding.goal_id == goal.id)
-        )
+    active_epoch = goal_workspace.epoch(session, goal.id, effective_date)
+    if effective_date < goal.start_date or any(
+        goal_workspace.entry_epoch(session, row) == active_epoch
+        for row in goal_entries(session, goal)
     ):
+        raise HTTPException(409, "Whole-account funding cannot overlap recorded allocations")
+    if goal_workspace.lifecycle(session, goal, effective_date) in goal_workspace.RELEASES:
+        raise HTTPException(409, "Restore the goal before explicitly assigning funding")
+    rows = investment_goal_funding(session)
+    affected_dates = {effective_date, date.today()} | {
+        row.effective_date for row in rows if row.effective_date >= effective_date
+    }
+    for day in affected_dates:
+        if any(
+            (active := funding_at(session, other, day)) is not None
+            and active.account_id == account_id
+            for other in session.scalars(select(Goal))
+        ):
+            raise HTTPException(409, "Investment account is already reserved")
+    if funding_at(session, goal, effective_date):
         raise HTTPException(409, "Investment account is already reserved")
-    row = GoalAccountFunding(goal_id=goal.id, account_id=account_id, effective_date=effective_date)
+    model = (
+        GoalAccountFunding
+        if active_epoch == 0
+        and not any(row.goal_id == goal.id or row.account_id == account_id for row in rows)
+        else GoalInvestmentFunding
+    )
+    values = dict(goal_id=goal.id, account_id=account_id, effective_date=effective_date)
+    if model is GoalInvestmentFunding:
+        values["funding_epoch"] = active_epoch
+    row = model(**values)
     session.add(row)
     session.flush()
     return row
@@ -582,9 +761,9 @@ def savings_allocations(session, day):
                     overallocated=allocated > available,
                 )
             )
-        for funding in session.scalars(select(GoalAccountFunding)):
+        for funding in investment_goal_funding(session):
             goal = session.get(Goal, funding.goal_id)
-            if funding.effective_date > day or (goal.archived_date and goal.archived_date <= day):
+            if funding_at(session, goal, day) != funding:
                 continue
             account = session.get(FinancialAccount, funding.account_id)
             value, warnings = goal_progress(session, goal, day)

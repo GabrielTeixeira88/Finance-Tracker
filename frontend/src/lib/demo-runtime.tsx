@@ -15,3 +15,11 @@ export const DemoContext = createContext<{
   selectScenario?: (scenario: string) => Promise<void>
 }>({})
 export const useDemoRuntime = () => useContext(DemoContext)
+export const isSimulatedInvestmentScenario = (scenario?: string) =>
+  scenario === 'unified' ||
+  scenario === 'etf-showcase' ||
+  scenario === 'income-showcase' ||
+  scenario === 'income-portfolio'
+
+export const demoChartLabel = (scenario?: string) =>
+  scenario === 'unified' ? 'charts:mixed_demo' : 'charts:simulated'

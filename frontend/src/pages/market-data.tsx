@@ -146,22 +146,6 @@ export function MarketDataSettings() {
         )}
       />
       <div className="investment-toolbar">
-        <Field label={tr('market_data:reporting_currency_8b1716')}>
-          <select
-            value={data.settings.reporting_currency}
-            onChange={(e) =>
-              mutation.mutate({
-                path: '/market-data/settings',
-                method: 'PUT',
-                data: { ...data.settings, reporting_currency: e.target.value },
-              })
-            }
-          >
-            {['BRL', 'USD', 'EUR', 'JPY'].map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </Field>
         <Field label={tr('market_data:fx_source_68735c')}>
           <select
             value={data.settings.fx_provider}
@@ -301,7 +285,7 @@ export function MarketDataSettings() {
   )
 }
 
-function PricingForm({
+export function PricingForm({
   id,
   initial,
 }: {
@@ -606,7 +590,6 @@ export function PortfolioHistory({
   onSecurity?: (id: string) => void
 }) {
   const [range, setRange] = useState('3M')
-  const [currency, setCurrency] = useState('')
   const today = new Date()
   const localDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   const end = asOf || localDate
@@ -619,7 +602,6 @@ export function PortfolioHistory({
     end,
     ...(range === 'ALL' ? {} : { start: start.toISOString().slice(0, 10) }),
     ...(accountId ? { account_id: accountId } : {}),
-    ...(currency ? { reporting_currency: currency } : {}),
   })
   const query = useQuery({
     queryKey: ['market-data', 'history', params.toString()],
@@ -628,7 +610,6 @@ export function PortfolioHistory({
   const valueParams = new URLSearchParams({
     as_of: end,
     ...(accountId ? { account_id: accountId } : {}),
-    ...(currency ? { reporting_currency: currency } : {}),
   })
   const valuation = useQuery({
     queryKey: ['market-data', 'valuation', valueParams.toString()],
@@ -677,19 +658,6 @@ export function PortfolioHistory({
             </button>
           ))}
         </nav>
-        <Field label={tr('market_data:valuation_currency_83a461')}>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-          >
-            <option value="">
-              {tr('market_data:configured_currency_881c53')}
-            </option>
-            {['BRL', 'USD', 'EUR', 'JPY'].map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </Field>
       </div>
       {valuation.isError && <ErrorState text={valuation.error.message} />}
       {query.isPending ? (

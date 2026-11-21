@@ -1,3 +1,4 @@
+import { InvestmentActivities as Activities } from '@/features/activities/investment-activities'
 import { DetailDrawer } from '@/components/detail-drawer'
 import { analyticsPeriods } from '@/lib/investment-analytics'
 import { ActivityNavigation } from '@/components/activity-navigation'
@@ -5,7 +6,7 @@ import { InvestmentHero } from '@/components/investment-hero'
 import { t as tr, ui } from '@/lib/i18n'
 import { InvestmentOverviewRows } from '@/components/investment-overview-rows'
 import { useSection, useRoute, navigateTo } from '@/lib/navigation'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
 import { Button } from '@/components/ui/button'
@@ -24,14 +25,12 @@ import {
   type Category,
 } from '@/lib/api'
 import {
-  getActivities,
   getAssets,
   getPortfolio,
   quantityText,
   type Holding,
 } from '@/lib/investments'
 import { decimalUnits } from '@/lib/money'
-import { useWrite } from '@/lib/use-write'
 import { TransactionTable } from '@/components/transaction-table'
 import { ActivityForm, AssetForm, PriceForm } from './investment-forms'
 import BrokerageImports from './investment-imports'
@@ -90,14 +89,12 @@ export function HoldingsTable({
 }) {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('symbol')
-  const [currency, setCurrency] = useState('')
   const filtered = rows
     .filter((r) =>
       `${r.symbol} ${r.name} ${r.exchange}`
         .toLowerCase()
         .includes(search.toLowerCase()),
     )
-    .filter((r) => !currency || r.currency === currency)
     .sort((a, b) =>
       sort === 'value'
         ? a.currency.localeCompare(b.currency) ||
@@ -139,21 +136,6 @@ export function HoldingsTable({
               {tr('investments:quantity_descending_d3beb1')}
             </option>
             <option value="value">{tr('parity:market_value_sort')}</option>
-          </select>
-        </Field>
-        <Field label={tr('investments:holding_currency_49bfd0')}>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-          >
-            <option value="">
-              {tr('investments:all_original_currencies_f78b93')}
-            </option>
-            {[...new Set(rows.map((row) => row.currency))]
-              .sort()
-              .map((code) => (
-                <option key={code}>{code}</option>
-              ))}
           </select>
         </Field>
       </div>
@@ -260,147 +242,7 @@ export function HoldingsTable({
   )
 }
 
-function Activities({
-  accountId,
-  assetId,
-  accounts,
-  assets,
-}: {
-  accountId: string
-  assetId: string
-  accounts: Account[]
-  assets: Awaited<ReturnType<typeof getAssets>>
-}) {
-  const [offset, setOffset] = useState(0)
-  const rows = useQuery({
-    queryKey: ['investments', 'activity', accountId, assetId, offset],
-    queryFn: ({ signal }) => getActivities(accountId, assetId, offset, signal),
-  })
-  const write = useWrite()
-  if (rows.isPending)
-    return (
-      <LoadingState
-        text={tr('investments:loading_investment_activities__2855ca')}
-      />
-    )
-  if (rows.isError)
-    return (
-      <ErrorState text={rows.error.message} retry={() => void rows.refetch()} />
-    )
-  return (
-    <>
-      <SectionHeader
-        title={tr('investments:investment_activity_f52165')}
-        detail={tr(
-          'investments:investment_cash_postings_are_separate_from_perso_26ed51',
-        )}
-      />
-      {write.isError && <ErrorState text={write.error.message} />}
-      {rows.data.length === 0 ? (
-        <EmptyState
-          title={tr('investments:no_activities_on_this_page_e6103e')}
-        />
-      ) : (
-        <div className="table-scroll">
-          <table className="investment-table">
-            <caption className="sr-only">
-              {tr('investments:investment_activities_a7e558')}
-            </caption>
-            <thead>
-              <tr>
-                {[
-                  'Date',
-                  'Activity / security',
-                  'Account',
-                  'Quantity',
-                  'Gross',
-                  'Fees / taxes',
-                  'Net cash',
-                  'Correction',
-                ].map((h) => (
-                  <th key={h}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.data.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.activity_date}</td>
-                  <td>
-                    {r.activity_type} ·{' '}
-                    {assets.find((a) => a.id === r.asset_id)?.symbol ||
-                      tr('dynamic:account_cash_99eb24')}
-                    <small>{r.notes}</small>
-                  </td>
-                  <td>{accounts.find((a) => a.id === r.account_id)?.name}</td>
-                  <td className="number">{quantityText(r.quantity)}</td>
-                  <td className="number">
-                    <Money value={r.gross_amount} currency={r.currency} />
-                  </td>
-                  <td className="number">
-                    <Money value={r.fees} currency={r.currency} />
-                    <small>
-                      <Money value={r.taxes} currency={r.currency} />
-                    </small>
-                  </td>
-                  <td className="number">
-                    {r.direction === 'OUT' ? '−' : '+'}
-                    <Money value={r.cash_amount} currency={r.currency} />
-                  </td>
-                  <td>
-                    {r.voided_at ? (
-                      <span>{tr('investments:voided_45aa9f')}</span>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={write.isPending}
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              tr(
-                                'dynamic:void_this_activity_and_recalculate_all_later_pos_c5b606',
-                              ),
-                            )
-                          )
-                            write.mutate({
-                              path: `/investments/activities/${r.id}/void`,
-                            })
-                        }}
-                      >
-                        {tr('investments:void_207c7c')}
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <div className="investment-actions">
-        <Button
-          size="sm"
-          disabled={!offset}
-          onClick={() => setOffset(offset - 50)}
-        >
-          {tr('investments:previous_activities_c2781d')}
-        </Button>
-        <span className="metadata">
-          {' '}
-          {tr('investments:page_fb0627')} {offset / 50 + 1}
-        </span>
-        <Button
-          size="sm"
-          disabled={rows.data.length < 50}
-          onClick={() => setOffset(offset + 50)}
-        >
-          {tr('investments:next_activities_b038db')}
-        </Button>
-      </div>
-    </>
-  )
-}
+export { InvestmentActivities as Activities } from '@/features/activities/investment-activities'
 
 export default function Investments({
   accounts,
@@ -451,6 +293,7 @@ export function InvestmentWorkspace({
   initialDate?: string
   initialView?: string
 }) {
+  const [insightsAction, setInsightsAction] = useState<ReactNode | null>(null)
   const route = useRoute()
   const accountId = route.params.get('account') ?? initialAccount
   const asOf =
@@ -513,7 +356,7 @@ export function InvestmentWorkspace({
   const isInsights = ['Allocation', 'Performance', 'Income'].includes(tab)
   return (
     <div
-      className={`investment-workspace ${isInsights ? 'insights-workspace' : ''} ${tab === 'Overview' && !security ? 'investment-dashboard' : ''}`}
+      className={`investment-workspace ${isInsights ? 'insights-workspace' : ''} ${tab === 'Income' ? 'income-workspace' : ''} ${tab === 'Overview' && !security ? 'investment-dashboard' : ''}`}
     >
       {isInsights && <h1 className="sr-only">{ui(tab)}</h1>}
       {!isInsights && (
@@ -579,7 +422,9 @@ export function InvestmentWorkspace({
           onTool={() => setContext({ view: 'Imports', asset: '' })}
         />
       )}
-      <div className="investment-toolbar">
+      <div
+        className={`investment-toolbar ${tab === 'Allocation' ? 'insights-overview-toolbar' : ''}`}
+      >
         {!['Activity', 'Imports'].includes(tab) && tab !== 'Overview' && (
           <nav
             className="range-tabs"
@@ -613,7 +458,10 @@ export function InvestmentWorkspace({
             className="range-tabs analytics-period-tabs"
             aria-label={tr('investment_analytics:analytics_period_2d5f60')}
           >
-            {analyticsPeriods.map((range) => (
+            {(tab === 'Income'
+              ? ['YTD', 'LAST_YEAR', 'ALL']
+              : analyticsPeriods
+            ).map((range) => (
               <button
                 key={range}
                 aria-pressed={
@@ -622,23 +470,41 @@ export function InvestmentWorkspace({
                 }
                 onClick={() => setContext({ range })}
               >
-                {ui(range)}
+                {tab === 'Income'
+                  ? tr(`income_dashboard:period_${range}`)
+                  : ui(range)}
               </button>
             ))}
+            {tab === 'Income' && (
+              <select
+                aria-label={tr('income_dashboard:more_periods')}
+                value={
+                  ['YTD', 'LAST_YEAR', 'ALL'].includes(
+                    route.params.get('range') || 'ALL',
+                  )
+                    ? ''
+                    : route.params.get('range')!
+                }
+                onChange={(event) =>
+                  event.target.value &&
+                  setContext({ range: event.target.value })
+                }
+              >
+                <option value="" disabled>
+                  {tr('income_dashboard:more_periods')}
+                </option>
+                {analyticsPeriods
+                  .filter((range) => !['YTD', 'ALL'].includes(range))
+                  .map((range) => (
+                    <option key={range} value={range}>
+                      {ui(range)}
+                    </option>
+                  ))}
+              </select>
+            )}
           </nav>
         )}
-        {isInsights && tab !== 'Income' && (
-          <Field label={tr('investment_analytics:analytics_currency_ceeca4')}>
-            <select
-              value={route.params.get('currency') || 'BRL'}
-              onChange={(e) => setContext({ currency: e.target.value })}
-            >
-              {['BRL', 'USD', 'EUR', 'JPY'].map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </Field>
-        )}
+
         <Field label={tr('investments:portfolio_account_cf6a1f')}>
           <select
             value={accountId}
@@ -666,6 +532,7 @@ export function InvestmentWorkspace({
             onChange={(e) => setAsOf(e.target.value)}
           />
         </Field>
+        {tab === 'Allocation' && insightsAction}
       </div>
       {assets.isError || portfolio.isError ? (
         <ErrorState
@@ -778,6 +645,7 @@ export function InvestmentWorkspace({
           ) : ['Performance', 'Allocation', 'Income'].includes(tab) ? (
             <InvestmentAnalytics
               externalRangeControls
+              onCustomizeActionChange={setInsightsAction}
               view={tab}
               accountId={accountId}
               asOf={asOf}

@@ -2,6 +2,7 @@ import { t as tr } from '@/lib/i18n'
 import type { ReactNode } from 'react'
 import { Button } from './ui/button'
 import { formatMoney } from '@/lib/money'
+import { useFinancialPrivacy } from '@/lib/financial-privacy'
 
 export function PageHeader({
   title,
@@ -120,6 +121,16 @@ export function Money({
   tone?: 'neutral' | 'positive' | 'negative'
   prefix?: string
 }) {
+  const { hidden } = useFinancialPrivacy()
+  if (hidden)
+    return (
+      <span
+        className={`money ${tone}`}
+        aria-label={tr('networth:balances_hidden')}
+      >
+        ••••
+      </span>
+    )
   const exact = `${prefix}${formatMoney(value, currency)}`
   return (
     <span

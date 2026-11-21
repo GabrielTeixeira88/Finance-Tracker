@@ -1,0 +1,138 @@
+{
+  "version": "0.14.0",
+  "captured": "2026-11-21",
+  "viewport": {
+    "width": 1600,
+    "height": 1000
+  },
+  "theme": "Classic dark",
+  "font": "Inter",
+  "zoom": "100%",
+  "provenance": "Fictional unified ledger; official CDI/Treasury inputs and simulated SIM security quotes remain distinct. Not real investor returns.",
+  "screens": [
+    {
+      "name": "investments",
+      "title": "Investments overview",
+      "route": "dashboard?view=investments&range=ALL",
+      "filename": "investments.jpg",
+      "bytes": 96783
+    },
+    {
+      "name": "spending",
+      "title": "Spending",
+      "route": "dashboard?view=spending&start=2026-09-01&end=2026-09-30",
+      "filename": "spending.jpg",
+      "bytes": 98367
+    },
+    {
+      "name": "holdings",
+      "title": "Holdings",
+      "route": "holdings",
+      "filename": "holdings.jpg",
+      "bytes": 144416
+    },
+    {
+      "name": "performance",
+      "title": "Performance",
+      "route": "insights?view=performance&range=1Y&benchmark=4539aa25-9586-5e24-95af-aef49c636d41",
+      "filename": "performance.jpg",
+      "bytes": 88918
+    },
+    {
+      "name": "portfolio-insights",
+      "title": "Portfolio Insights",
+      "route": "insights?view=overview",
+      "filename": "portfolio-insights.jpg",
+      "bytes": 127226
+    },
+    {
+      "name": "net-worth",
+      "title": "Net Worth",
+      "route": "dashboard?view=net-worth&range=ALL",
+      "filename": "net-worth.jpg",
+      "bytes": 110231
+    },
+    {
+      "name": "goals",
+      "title": "Goals",
+      "route": "goals",
+      "filename": "goals.jpg",
+      "bytes": 106847
+    },
+    {
+      "name": "activities",
+      "title": "Activities",
+      "route": "activities?view=transactions",
+      "filename": "activities.jpg",
+      "bytes": 93727
+    },
+    {
+      "name": "budgets",
+      "title": "Monthly budgets",
+      "route": "dashboard?view=spending&detail=budget",
+      "filename": "budgets.jpg",
+      "bytes": 90213
+    },
+    {
+      "name": "income",
+      "title": "Investment income",
+      "route": "insights?view=income&range=ALL",
+      "filename": "income.jpg",
+      "bytes": 124743
+    }
+  ],
+  "video": {
+    "filename": "walkthrough.webm",
+    "seconds": 115,
+    "timings": [
+      {
+        "screen": "investments",
+        "seconds": 1
+      },
+      {
+        "screen": "spending",
+        "seconds": 10
+      },
+      {
+        "screen": "activities",
+        "seconds": 24
+      },
+      {
+        "screen": "budgets",
+        "seconds": 35
+      },
+      {
+        "screen": "holdings",
+        "seconds": 46
+      },
+      {
+        "screen": "performance",
+        "seconds": 58
+      },
+      {
+        "screen": "portfolio-insights",
+        "seconds": 70
+      },
+      {
+        "screen": "net-worth",
+        "seconds": 84
+      },
+      {
+        "screen": "goals",
+        "seconds": 96
+      },
+      {
+        "screen": "investments",
+        "seconds": 106
+      }
+    ],
+    "bytes": 3305068,
+    "encodedSize": {
+      "width": 1280,
+      "height": 800
+    },
+    "frameRate": 12,
+    "trimmedStartupSeconds": 5,
+    "encoding": "VP8/WebM, 400k target bitrate; actual application frames only"
+  }
+}

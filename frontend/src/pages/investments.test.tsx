@@ -193,9 +193,9 @@ it('renders exact holdings, cash and missing-price state without invented market
   const table = await screen.findByRole('table', {
     name: 'Investment holdings',
   })
-  expect(within(table).getByText('R$603.00')).toBeInTheDocument()
-  expect(within(table).getByText('R$100.50')).toBeInTheDocument()
-  expect(within(table).getByText('R$73.00')).toBeInTheDocument()
+  expect(within(table).getByText('R$ 603,00')).toBeInTheDocument()
+  expect(within(table).getByText('R$ 100,50')).toBeInTheDocument()
+  expect(within(table).getByText('R$ 73,00')).toBeInTheDocument()
   expect(within(table).getAllByText('Unavailable')).toHaveLength(3)
   await userEvent.click(screen.getByRole('button', { name: 'Overview' }))
   await userEvent.click(

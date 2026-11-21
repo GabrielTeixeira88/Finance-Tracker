@@ -116,7 +116,7 @@ function setup(settings = true) {
 
 it('keeps rules under Settings and requires a preview and confirmation for history', async () => {
   const fetch = setup()
-  await userEvent.click(screen.getByRole('button', { name: 'Rules' }))
+  await openRules()
   await screen.findByRole('heading', { name: 'Transaction rules' })
   expect(
     screen.queryByRole('button', { name: 'Apply previewed changes' }),
@@ -146,7 +146,7 @@ it('keeps rules under Settings and requires a preview and confirmation for histo
 
 it('edits a rule using only allowlisted fields and leaves suggestions opt-in', async () => {
   const fetch = setup()
-  await userEvent.click(screen.getByRole('button', { name: 'Rules' }))
+  await openRules()
   await userEvent.click(
     await screen.findByRole('button', { name: 'Edit Synthetic rule' }),
   )
@@ -178,7 +178,7 @@ it('edits a rule using only allowlisted fields and leaves suggestions opt-in', a
 
 it('provides an explicit accept action for learned suggestions', async () => {
   const fetch = setup()
-  await userEvent.click(screen.getByRole('button', { name: 'Rules' }))
+  await openRules()
   await userEvent.click(await screen.findByRole('button', { name: 'Accept' }))
   await waitFor(() =>
     expect(
@@ -191,7 +191,16 @@ it('provides an explicit accept action for learned suggestions', async () => {
 
 it('keeps schedules within Transactions and never posts projections on navigation', async () => {
   const fetch = setup(false)
-  await userEvent.selectOptions(screen.getByLabelText('Tools'), 'scheduled')
+  await userEvent.click(
+    await screen.findByRole(
+      'button',
+      { name: 'Add Activities' },
+      { timeout: 10000 },
+    ),
+  )
+  await userEvent.click(
+    await screen.findByRole('button', { name: 'Scheduled' }),
+  )
   const table = await screen.findByRole('table', {
     name: 'Scheduled occurrences',
   })
@@ -218,12 +227,12 @@ it('keeps schedules within Transactions and never posts projections on navigatio
   ).toEqual({ amount: '199.123456', transaction_date: '2026-10-04' })
   await userEvent.click(screen.getByRole('button', { name: 'Transactions' }))
   expect(
-    screen.getByRole('button', { name: '+ Add Transaction' }),
+    await screen.findByRole('button', { name: 'Add Activities' }),
   ).toBeInTheDocument()
 })
 it('starts a simple rule without exposing advanced controls and preserves them on expansion', async () => {
   setup()
-  await userEvent.click(screen.getByRole('button', { name: 'Rules' }))
+  await openRules()
   await userEvent.click(
     await screen.findByRole('button', { name: 'Create rule' }),
   )
@@ -244,7 +253,7 @@ it('starts a simple rule without exposing advanced controls and preserves them o
 
 it('duplicates as a new disabled draft and filters rules without writing', async () => {
   const fetch = setup()
-  await userEvent.click(screen.getByRole('button', { name: 'Rules' }))
+  await openRules()
   await userEvent.click(
     await screen.findByRole('button', { name: 'Duplicate' }),
   )
@@ -270,3 +279,11 @@ it('duplicates as a new disabled draft and filters rules without writing', async
   await userEvent.type(screen.getByLabelText('Search rules'), 'no match')
   expect(screen.getByText('No matching rules')).toBeInTheDocument()
 })
+
+async function openRules() {
+  await userEvent.click(screen.getByRole('link', { name: 'Spending' }))
+  const heading = await screen.findByRole('heading', { name: 'Rules' })
+  await userEvent.click(
+    within(heading.closest('section')!).getByRole('button', { name: 'Manage' }),
+  )
+}

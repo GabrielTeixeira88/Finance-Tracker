@@ -16,10 +16,7 @@ export function useHistory(initialPeriod: Period = '1Y') {
     queryFn: ({ signal }) => getHistory(period, end, signal),
     enabled: demo.isSuccess,
   })
-  const [chosenCurrency, setCurrency] = useState<string>()
-  const series =
-    result.data?.series.find((s) => s.currency === chosenCurrency) ??
-    result.data?.series[0]
+  const series = result.data?.series[0]
   function moveMonth(delta: number) {
     const date = new Date(`${end}T12:00:00`)
     const target = new Date(date.getFullYear(), date.getMonth() + delta + 1, 0)
@@ -35,6 +32,5 @@ export function useHistory(initialPeriod: Period = '1Y') {
     moveMonth,
     result,
     series,
-    setCurrency,
   }
 }

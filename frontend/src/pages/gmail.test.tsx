@@ -60,7 +60,7 @@ test('Settings exposes Gmail, readonly warning and explicit browser authorizatio
   const { wrapper, fetch } = setup()
   render(<Settings categories={[]} accounts={[]} />, { wrapper })
   const user = userEvent.setup()
-  await user.click(screen.getByRole('button', { name: 'Gmail' }))
+  await user.click(screen.getByRole('link', { name: 'Gmail' }))
   expect(await screen.findByText('No Gmail connection')).toBeInTheDocument()
   expect(
     screen.getByText(/not an OAuth permission boundary/),
@@ -84,7 +84,7 @@ test('connected settings offers label/account mapping, bounded dates and disconn
   const { wrapper, fetch } = setup(true)
   render(<Settings categories={[]} accounts={[]} />, { wrapper })
   const user = userEvent.setup()
-  await user.click(screen.getByRole('button', { name: 'Gmail' }))
+  await user.click(screen.getByRole('link', { name: 'Gmail' }))
   expect(
     await screen.findByRole('option', { name: 'Synthetic notifications' }),
   ).toBeInTheDocument()

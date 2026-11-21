@@ -34,7 +34,12 @@ const accountSchema = z.object({
   active: z.boolean(),
   balance: decimal,
 })
-const categorySchema = z.object({ id: z.string(), name: z.string() })
+const categorySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  color: z.string().nullable().optional(),
+  icon: z.string().nullable().optional(),
+})
 const payeeSchema = z.object({ id: z.string(), name: z.string() })
 export type Payee = z.infer<typeof payeeSchema>
 export const reviewStatuses = ['NEEDS_REVIEW', 'REVIEWED'] as const

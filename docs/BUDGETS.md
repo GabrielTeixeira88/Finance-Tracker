@@ -175,3 +175,27 @@ are reconstructed on demand; caching and high-volume analytical storage remain d
   The normal user database was not reset, overwritten or used for browser mutations.
   Git finalization is a separately authorized checkpoint; no Phase 5 implementation
   is included in this validation.
+
+## v0.14 source-adapted editor
+
+The Spending dashboard opens the supported source Budget editor through Manage.
+Inline monthly amounts create one-month overrides. Defaults edits create versions
+starting at the selected effective month; later recorded versions remain intact.
+Advanced target details retain explicit scope, group, ordering, activation and
+signed category rollover. Existing monetary precision is preserved while editing;
+blurred amounts use the shared two-decimal display convention.
+
+Income is recorded receipts, read-only. Targets remain voluntary category spending
+guidelines independent of available cash. No planned income target or manually
+entered starting rollover balance is implemented. Group buffers and group rollover
+remain postponed. Carryover is reconstructed from targets and exact ledger history.
+
+Insights budget comparisons always use the explicitly labeled whole calendar month,
+including that month's actual spending and previous-month comparison. Selecting a
+longer/shorter period changes cash-flow and change analysis, not target proration.
+This was an explicit product decision. Budget-month navigation remains independent.
+
+Category/group icon and color changes are classification metadata, never postings.
+Groups referenced by target history cannot be deleted. Copy supports the previous
+month through the existing atomic API, preserving current overrides unless the user
+explicitly confirms replacement. Restore removes only the selected month's override.

@@ -1,3 +1,4 @@
+import { financialCurve } from '@/lib/chart-presentation'
 import { useChartMotion } from '@/lib/motion'
 import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from 'recharts'
 import type { FixedHistory } from '@/lib/fixed-income'
@@ -8,16 +9,22 @@ import { Money, SectionHeader } from './primitives'
 export function FixedIncomeChart({
   history,
   returns = false,
+  earnings = false,
 }: {
   history: FixedHistory
   returns?: boolean
+  earnings?: boolean
 }) {
   const chartMotion = useChartMotion()
   const first = history.points.map((p) =>
-    returns ? p.contract_return_percent : p.value,
+    returns ? p.contract_return_percent : earnings ? p.gross_interest : p.value,
   )
   const second = history.points.map((p) =>
-    returns ? p.cdi_return_percent : p.principal,
+    returns
+      ? p.cdi_return_percent
+      : earnings
+        ? (p.estimated_net_earnings ?? null)
+        : p.principal,
   )
   const all = [...first, ...second]
   const exact = all.flatMap((value, i) =>
@@ -37,29 +44,42 @@ export function FixedIncomeChart({
   }))
   const firstLabel = returns
     ? t('fixed_income:contract_return')
-    : t('fixed_income:gross_value')
+    : earnings
+      ? t('fixed_income:gross_interest')
+      : t('fixed_income:gross_value')
   const secondLabel = returns
     ? t('fixed_income:cdi_reference')
-    : t('fixed_income:principal')
+    : earnings
+      ? t('income_dashboard:net_accrual')
+      : t('fixed_income:principal')
   return (
     <section
       className="fixed-income-chart"
       aria-label={
-        returns
-          ? t('fixed_income:return_comparison')
-          : t('fixed_income:value_history')
-      }
-    >
-      <SectionHeader
-        title={
-          returns
+        earnings
+          ? t('fixed_income:gross_interest')
+          : returns
             ? t('fixed_income:return_comparison')
             : t('fixed_income:value_history')
-        }
-      />
-      <p className="metadata">
-        {firstLabel} · {secondLabel}
-      </p>
+      }
+    >
+      {!earnings && (
+        <SectionHeader
+          title={
+            earnings
+              ? t('fixed_income:gross_interest')
+              : returns
+                ? t('fixed_income:return_comparison')
+                : t('fixed_income:value_history')
+          }
+        />
+      )}
+      {!earnings && (
+        <p className="metadata">
+          {firstLabel}
+          {!earnings && <> · {secondLabel}</>}
+        </p>
+      )}
       <ResponsiveContainer
         width="100%"
         height={260}
@@ -79,28 +99,41 @@ export function FixedIncomeChart({
           />
           <Line
             dataKey="first"
+            type={financialCurve('market')}
             stroke="var(--investment-chart)"
             strokeWidth={2}
             dot={false}
             {...chartMotion}
             connectNulls={false}
           />
-          <Line
-            dataKey="second"
-            stroke="var(--chart-secondary)"
-            strokeDasharray="4 3"
-            dot={false}
-            {...chartMotion}
-            connectNulls={false}
-          />
+          {(!earnings ||
+            history.points.some((p) => p.estimated_net_earnings != null)) && (
+            <Line
+              dataKey="second"
+              type={financialCurve(returns ? 'market' : 'ledger')}
+              stroke="var(--chart-secondary)"
+              strokeDasharray="4 3"
+              dot={false}
+              {...chartMotion}
+              connectNulls={false}
+            />
+          )}
           <Tooltip
             content={({ active, payload }) => {
               const row = payload?.[0]?.payload as
                 (typeof rows)[number] | undefined
               if (!active || !row) return null
               const values = [
-                returns ? row.contract_return_percent : row.value,
-                returns ? row.cdi_return_percent : row.principal,
+                returns
+                  ? row.contract_return_percent
+                  : earnings
+                    ? row.gross_interest
+                    : row.value,
+                returns
+                  ? row.cdi_return_percent
+                  : earnings
+                    ? (row.estimated_net_earnings ?? null)
+                    : row.principal,
               ]
               return (
                 <div className="chart-tooltip">

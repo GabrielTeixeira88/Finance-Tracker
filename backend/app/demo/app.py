@@ -23,23 +23,51 @@ from app.main import app as normal_app
 from app.routes import DB
 
 
-def create_demo_app(
-    normal_path, root=DEFAULT_ROOT, scenario="real-market-br", *, legacy_fixture=False
-):
+def create_demo_app(normal_path, root=DEFAULT_ROOT, scenario="unified", *, legacy_fixture=False):
     from app.demo.real_market_snapshot import scenario_root
 
-    # The old international household survives only as an explicit regression
-    # fixture. Public startup and scenario switching expose Brazil alone.
-    roots = {"real-market-br": None}
-    if legacy_fixture:
+    # Public startup has one complete household. Explicit older factory modes
+    # survive for financial regression tests and archived workspace verification.
+    roots = (
+        {"unified": None}
+        if scenario == "unified"
+        else {
+            "real-market-br": None,
+            "etf-showcase": None,
+            "income-showcase": None,
+            "income-portfolio": None,
+        }
+    )
+    if legacy_fixture and scenario != "unified":
         roots["synthetic"] = root
 
     def root_for(selected):
+        if selected == "unified":
+            from app.demo.unified import scenario_root as unified_root
+
+            return unified_root(root)
+        if selected == "income-portfolio":
+            from app.demo.income_portfolio import scenario_root as portfolio_root
+
+            return portfolio_root(root)
+        if selected == "income-showcase":
+            from app.demo.income_showcase import scenario_root as income_root
+
+            return income_root(root)
+        if selected == "etf-showcase":
+            from app.demo.etf_showcase import scenario_root as showcase_root
+
+            return showcase_root(root)
         return root if selected == "synthetic" else scenario_root(root)
 
     if scenario not in roots:
         raise ValueError("Unknown demo scenario")
-    store = DemoStore(root_for(scenario), normal_path, scenario)
+    store = DemoStore(
+        root_for(scenario),
+        normal_path,
+        scenario,
+        household_root=scenario_root(root) if scenario == "unified" else None,
+    )
     stores = {scenario: store}
 
     @asynccontextmanager
@@ -143,8 +171,16 @@ def create_demo_app(
     def runtime():
         return {
             "mode": "local_demo",
-            "profile": "Brazilian investor (fictional holdings)"
+            "profile": "Brazilian household and investment portfolio (fictional)"
+            if store.scenario == "unified"
+            else "Brazilian investor (fictional holdings)"
             if store.scenario == "real-market-br"
+            else "Portfolio Showcase - Simulated ETFs (fictional)"
+            if store.scenario == "etf-showcase"
+            else "Income Showcase - Simulated ETF Distributions (fictional)"
+            if store.scenario == "income-showcase"
+            else "Income Portfolio - Dividend Showcase (fictional)"
+            if store.scenario == "income-portfolio"
             else "Alex Morgan (fictional)",
             "start_date": START,
             "end_date": END,
@@ -153,8 +189,16 @@ def create_demo_app(
             "scenarios": [
                 {
                     "id": key,
-                    "name": "Real Market Portfolio — Brazil"
+                    "name": "Finance Tracker — Complete Demo"
+                    if key == "unified"
+                    else "Real Market Portfolio — Brazil"
                     if key == "real-market-br"
+                    else "Portfolio Showcase \u2014 Simulated ETFs"
+                    if key == "etf-showcase"
+                    else "Income Showcase - Simulated ETF Distributions"
+                    if key == "income-showcase"
+                    else "Income Portfolio - Dividend Showcase"
+                    if key == "income-portfolio"
                     else "Legacy regression fixture",
                 }
                 for key in roots
@@ -202,7 +246,7 @@ def create_demo_app(
         from app.models import DemoFixture
 
         fixture = db.get(DemoFixture, store.version)
-        if store.scenario != "real-market-br":
+        if store.scenario not in {"real-market-br", "unified"}:
             return {"enabled": False}
         return {"enabled": True, **fixture.payload["market_evidence"], **report(db)}
 

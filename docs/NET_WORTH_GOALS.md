@@ -1,6 +1,9 @@
 # Net worth and goals (v0.10.0)
 
-Release version is 0.10.0. See [final audit](RELEASE_0_10_0.md).
+Originally introduced in v0.10.0; see its [historical audit](RELEASE_0_10_0.md).
+Unreleased v0.14 interface and read-only insights are documented in
+[Net Worth source adaptation](NET_WORTH_V014.md) and
+[Goals/Savings Planner migration](GOALS_V014.md).
 
 ## Authoritative values
 
@@ -18,8 +21,9 @@ dimensionless BigInt-normalized coordinates to JavaScript numbers.
 ## Historical coverage and currency
 
 The history endpoint accepts an explicit inclusive date range, at most 3,660 days,
-ending no later than today. The UI offers 1M/3M/6M/YTD/1Y/3Y/ALL/custom; ALL is a
-documented ten-year window. Values are end-of-day. Period change compares the two
+ending no later than today. The v0.14 UI offers rolling 1D/1W/1M/3M/6M/YTD/1Y/5Y/ALL shortcuts
+and custom selection (3Y remains in advanced controls). ALL starts at the first
+recorded financial date, bounded to ten years; it does not invent earlier history. Values are end-of-day. Period change compares the two
 displayed endpoints and is **not investment performance or reconciled attribution**.
 Percentage change is available only with a complete, positive opening value.
 
@@ -81,9 +85,9 @@ instead of inflating it. The shared-savings table shows allocated and unallocate
 amounts. A goal may be overfunded; its bar caps at 100%, while exact amounts remain.
 
 Statuses are ACTIVE, PAUSED, COMPLETED and ARCHIVED. Completion is explicit.
-Archiving is final and releases allocations from today, preserving earlier dates;
-create another goal to start again. Manual progress remains historical information
-after archive. Goal edits and progress entries never create ledger movements.
+Archiving releases allocations from its explicit effective date and preserves earlier
+history. v0.14 adds restoration with explicit new allocations, as described below.
+Manual progress remains historical information after archive. Goal edits and progress entries never create ledger movements.
 
 Required monthly savings divides the remaining target by available calendar
 month-end contributions through the deadline and rounds upward to a cent. A deadline
@@ -177,3 +181,25 @@ Nonblocking warnings: the inherited demo seed emits an SQLAlchemy warning when t
 existing writer connection is reused; tests confirm atomicity and repeat safety.
 The build reports dependency comment annotations and a main bundle over 500 kB.
 Consider bundle splitting and workflow refinements in v0.11, not a new finance engine.
+
+## v0.14 saved plans and lifecycle
+
+`sqlite_0019` adds planning/lifecycle/reservation metadata without rewriting
+existing financial or goal-history rows. Templates and monthly assumptions persist
+separately from hypothetical preview requests. All scenarios assume zero return.
+New `/goals/{id}/preview`, `/plan`, `/metadata` and `/funding` APIs use the same
+exact services; `DELETE /goals/{id}` is a retained tombstone, not row deletion.
+
+Archive/delete releases account reservations on the explicit effective date.
+Restoration retains history but starts a new funding epoch with no automatic
+reclaim. Cash must be explicitly reallocated; whole investment accounts must be
+explicitly selected and pass exclusivity checks again. Manual recorded progress
+remains historical progress. Dated release/restore events preserve prior reports;
+backdating cannot erase later recorded funding. Deleted goals remain retrievable
+for history, disappear from the list and reject edits. Goals never enter Net Worth.
+
+The active source frontend replaces the older inline goal table/editor. Archived
+cards can be opened/restored. Funding details expose original entries/corrections;
+manual progress and exact fixed cash allocations remain distinct from whole-account
+Caixinha funding. No percentage-share, compounding or retirement model is added.
+Earlier dated validation records describe their original version, not current parity.

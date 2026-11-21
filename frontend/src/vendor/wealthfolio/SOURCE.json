@@ -1,0 +1,1755 @@
+{
+  "commit": "92b4647f74ec51fbbb1a772db4f42ea91060c518",
+  "files": {
+    "components/ui/data-table/index.tsx": {
+      "source": "packages/ui/src/components/ui/data-table/index.tsx",
+      "sha256": "bccc741bc311ca1e096a21172ddb506498d0b421ba5db59faa78b4c235eff2ba",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/data-table/data-table-faceted-filter.tsx": {
+      "source": "packages/ui/src/components/ui/data-table/data-table-faceted-filter.tsx",
+      "sha256": "3b74c4d46bb26341f16dfcf3103df36e94a86dcec2b88adbf8d59afd535bd9ba",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/icons.tsx": {
+      "source": "packages/ui/src/components/ui/icons.tsx",
+      "sha256": "59106ca3076857d8afaaf491918ec5885c0bb525deeef53189492bcf6734af74",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/separator.tsx": {
+      "source": "packages/ui/src/components/ui/separator.tsx",
+      "sha256": "1f439fb6e378a08cfb1014a6e514a4fbfc1be84a1ba84dad914658e267c3554b",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/popover.tsx": {
+      "source": "packages/ui/src/components/ui/popover.tsx",
+      "sha256": "d22dd6085eb571df10e58cc1c933e7e344a548871891746a0213d3a51469fe38",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/portal-scope.tsx": {
+      "source": "packages/ui/src/components/ui/portal-scope.tsx",
+      "sha256": "69606667bce26f98886fb01836ff466185b1f21c7b43462c289e81f659ba5e43",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/command.tsx": {
+      "source": "packages/ui/src/components/ui/command.tsx",
+      "sha256": "d786b1bc54da1505fc58368a64ffd7ba6c557a9a16843ecdce11d9b73b10996e",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/dialog.tsx": {
+      "source": "packages/ui/src/components/ui/dialog.tsx",
+      "sha256": "078bbd6b594ff31b9fcbb6cbcadaa21dbbb45c53bb54f835d90fc6195c351b4e",
+      "changes": [
+        "source identification",
+        "namespaced common translations",
+        "preserve Portal/Popup and financial draft identity across mobile/desktop; source sheet geometry is reused without remounting"
+      ]
+    },
+    "components/ui/sheet.tsx": {
+      "source": "packages/ui/src/components/ui/sheet.tsx",
+      "sha256": "fae32416448f1dfc52bf5a9b4233699232d32352da96d5673a9d79f3aa7c6b73",
+      "changes": [
+        "source identification",
+        "namespaced common translations",
+        "export the original sheet style factory for stable responsive Dialog geometry"
+      ]
+    },
+    "components/ui/button.tsx": {
+      "source": "packages/ui/src/components/ui/button.tsx",
+      "sha256": "1805e7b8573a306416bbb8eda5aee3260407c9f9297dfc5fbe4c393a9dbbd6c9",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/button-variants.ts": {
+      "source": "packages/ui/src/components/ui/button-variants.ts",
+      "sha256": "ed658c2dcb804c6602379e8de603af937a94983b344712bec3c5308e11e2cd86",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/badge.tsx": {
+      "source": "packages/ui/src/components/ui/badge.tsx",
+      "sha256": "1fb3f4d8432711554d6620eba6435016775f20b1cb1ae531817111a14bb695cb",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/data-table/data-table-column-header.tsx": {
+      "source": "packages/ui/src/components/ui/data-table/data-table-column-header.tsx",
+      "sha256": "8f4ebf67d4d9bfced24e90289a442a734c2d157f2b79b52b5a84814878c9ff48",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/dropdown-menu.tsx": {
+      "source": "packages/ui/src/components/ui/dropdown-menu.tsx",
+      "sha256": "630c2e1a8a1c64bd3808506c3902b07a9c6bf751eb5a07fc6d634e431a9694d4",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/data-table/data-table-toolbar.tsx": {
+      "source": "packages/ui/src/components/ui/data-table/data-table-toolbar.tsx",
+      "sha256": "9b54ac4318503cb76b5f7a5871bde722578635c315e21c4d0074268aefc15a61",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/table.tsx": {
+      "source": "packages/ui/src/components/ui/table.tsx",
+      "sha256": "d991ad9a35d6c64b700a791a48fb855b8425f1eea95c35474eb86b37729c788d",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/card.tsx": {
+      "source": "packages/ui/src/components/ui/card.tsx",
+      "sha256": "f7315c13a84ac17ece936bc434832da7dbfb673d1dff81d4875462cdc44eeab3",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/animated-toggle-group.tsx": {
+      "source": "packages/ui/src/components/ui/animated-toggle-group.tsx",
+      "sha256": "5c5efc93862a2649bc4987c600f1119b678faa0241b6ad26806c7a50b4b21435",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/label.tsx": {
+      "source": "packages/ui/src/components/ui/label.tsx",
+      "sha256": "f70b0ee8af974122cdf383a72ba05cac03e707a383db03cf1bb6dbaf905dc24f",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/input.tsx": {
+      "source": "packages/ui/src/components/ui/input.tsx",
+      "sha256": "a958347e932c6e12a964787be06b683c21e48c0e9e172996c6fd3b6a4975d91d",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/empty.tsx": {
+      "source": "packages/ui/src/components/ui/empty.tsx",
+      "sha256": "6c9b1d890ce5a80de287725cd24d2d5af37370b2650effaf960b859640bc1bf2",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/skeleton.tsx": {
+      "source": "packages/ui/src/components/ui/skeleton.tsx",
+      "sha256": "67c83497a47cc3afb475a22570826f98418b9c09e31dc412ed0af1072e1c1e77",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/checkbox.tsx": {
+      "source": "packages/ui/src/components/ui/checkbox.tsx",
+      "sha256": "1f30bf7abbfb97ef51d792e1d59b6bdf735d8da09640f97bc2680474fafffadd",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/tooltip.tsx": {
+      "source": "packages/ui/src/components/ui/tooltip.tsx",
+      "sha256": "3743bae1037965da1bddb40af0dac0da7901960d7635b32b8bd9aaa02e32ed9a",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/alert-dialog.tsx": {
+      "source": "packages/ui/src/components/ui/alert-dialog.tsx",
+      "sha256": "950ae616e960975b89fad81eaeca13eb341472c38cdd334bb5433ad9010ad2a4",
+      "changes": ["source identification", "namespaced common translations"]
+    },
+    "components/ui/page.tsx": {
+      "source": "packages/ui/src/components/ui/page.tsx",
+      "sha256": "9924d49d05533f53458a21b13224eb00f3f54081dcd74a53e675e85ba9cada4c",
+      "changes": ["namespaced translations"]
+    },
+    "components/ui/swipable-view.tsx": {
+      "source": "packages/ui/src/components/ui/swipable-view.tsx",
+      "sha256": "9cb423f3aac93411cd6220cfffebacf558659d9bab80c126118063c64d8561a9",
+      "changes": ["namespaced translations"]
+    },
+    "components/ui/direction.tsx": {
+      "source": "packages/ui/src/components/ui/direction.tsx",
+      "sha256": "949216e4fa301413edd4a6b2d2c047d1f11aa7f74f049059297c16e33154569c",
+      "changes": ["namespaced translations"]
+    },
+    "components/ui/spinner.tsx": {
+      "source": "packages/ui/src/components/ui/spinner.tsx",
+      "sha256": "b3e81ff5dd49dbc6a6392ff13dde138535b71b6c2d05465564be94972ed4f5c2",
+      "changes": ["local package imports and translation namespaces"]
+    },
+    "components/ui/scroll-area.tsx": {
+      "source": "packages/ui/src/components/ui/scroll-area.tsx",
+      "sha256": "6494d02a2211968b8e5d47d33f1acc27c66eacbea4d65cd3f33700e102d720a9",
+      "changes": ["local package imports and translation namespaces"]
+    },
+    "components/ui/faceted-filter.tsx": {
+      "source": "packages/ui/src/components/ui/faceted-filter.tsx",
+      "sha256": "6ab27e7c31e77ae3c4c069b8e1edffe0b5a86aebb05e39854358c196b42549f1",
+      "changes": ["translation namespace"]
+    },
+    "components/ui/carousel.tsx": {
+      "source": "packages/ui/src/components/ui/carousel.tsx",
+      "sha256": "ec1dea64d321956edafc88fb3f6d13f4b54df1687e6639c35594a3a7371b1564",
+      "changes": ["local UI dependencies"]
+    },
+    "components/ui/chart.tsx": {
+      "source": "packages/ui/src/components/ui/chart.tsx",
+      "sha256": "eada86e6c32760d3422fde742c8b9b180fe427433c0b08ef204c42bd9e28e3f1",
+      "changes": [
+        "source UI chart context/tooltip/legend; exact formatting adapter and stable payload memoization"
+      ],
+      "license": "MIT"
+    }
+  },
+  "application_files": {
+    "holdings-table.tsx": {
+      "source": "apps/frontend/src/pages/holdings/components/holdings-table.tsx",
+      "sha256": "d2f0e5bc5cb2583124225349a0906e338d417f5cd7f19ec647b34797efa0aeca",
+      "local_path": "frontend/src/features/holdings/holdings-table.tsx"
+    },
+    "holdings-table-styles.ts": {
+      "source": "apps/frontend/src/pages/holdings/components/holdings-table-styles.ts",
+      "sha256": "b4d28520982a48d33c3c7348af2f1ef48b4de991c12c19c2419e9bb42ffef550",
+      "local_path": "frontend/src/features/holdings/holdings-table-styles.ts"
+    },
+    "holdings-status-control.tsx": {
+      "source": "apps/frontend/src/pages/holdings/components/holdings-status-control.tsx",
+      "sha256": "bf0734b44b1612239cdc70041690e8cff2e2554bde4abf97c1961575f6960ad1",
+      "local_path": "frontend/src/features/holdings/holdings-status-control.tsx"
+    },
+    "holdings-visibility.ts": {
+      "source": "apps/frontend/src/pages/holdings/components/holdings-visibility.ts",
+      "sha256": "373969d2ec9888636bffeeb540fe86e2228bb50585d885ac4375b104311b63fa",
+      "local_path": "frontend/src/features/holdings/holdings-visibility.ts"
+    },
+    "holdings-type-filter.ts": {
+      "source": "apps/frontend/src/pages/holdings/components/holdings-type-filter.ts",
+      "sha256": "eecd27a943df0e0c8b90fd20916744ea49df3aeeba68c9f0621f7934a7965e4e",
+      "local_path": "frontend/src/features/holdings/holdings-type-filter.ts"
+    },
+    "swipable-page.tsx": {
+      "source": "apps/frontend/src/components/page/swipable-page.tsx",
+      "sha256": "0ebde49ff628bf317a5a1af23047937aa99d001f10e76ba90e64011559124a1d",
+      "changes": [
+        "local hooks, exact-money types, translation namespaces, no native haptics/cloud"
+      ],
+      "local_path": "frontend/src/features/holdings/swipable-page.tsx"
+    },
+    "action-palette.tsx": {
+      "source": "apps/frontend/src/components/action-palette.tsx",
+      "sha256": "7f2992d641cdcf0f9385fc9f1a4131fe1705469673cf6969b141fdee4d3fac20",
+      "changes": [
+        "local hooks, exact-money types, translation namespaces, no native haptics/cloud"
+      ],
+      "local_path": "frontend/src/features/holdings/action-palette.tsx"
+    },
+    "account-filter-selector.tsx": {
+      "source": "apps/frontend/src/components/account-filter-selector.tsx",
+      "sha256": "4dbd3d572238d992af647191473214bd7f27d8694faae2bc2bb691d9cb77b261",
+      "changes": [
+        "local hooks, exact-money types, translation namespaces, no native haptics/cloud"
+      ],
+      "local_path": "frontend/src/features/holdings/account-filter-selector.tsx"
+    },
+    "holdings-table-mobile.tsx": {
+      "source": "apps/frontend/src/pages/holdings/components/holdings-table-mobile.tsx",
+      "sha256": "5bd7aa64fbe9a1b661985e28b3df397c0e5b7a49bcb25cba1b15d65f1aad2807",
+      "changes": [
+        "local hooks, exact-money types, translation namespaces, no native haptics/cloud"
+      ],
+      "local_path": "frontend/src/features/holdings/holdings-table-mobile.tsx"
+    },
+    "holdings-mobile-filter-sheet.tsx": {
+      "source": "apps/frontend/src/pages/holdings/components/holdings-mobile-filter-sheet.tsx",
+      "sha256": "fa7ae02c2c6eed4639dc664cb72d4ae8718533b11ce845f9aeda5b13d226da37",
+      "changes": [
+        "local hooks, exact-money types, translation namespaces, no native haptics/cloud"
+      ],
+      "local_path": "frontend/src/features/holdings/holdings-mobile-filter-sheet.tsx"
+    },
+    "alternative-holdings-table.tsx": {
+      "source": "apps/frontend/src/pages/holdings/components/alternative-holdings-table.tsx",
+      "sha256": "c4a4c5ec22a92bad8d26f5bcf15488d901c3674b82214204a016ecc0efe2d77a",
+      "changes": [
+        "local hooks, exact-money types, translation namespaces, no native haptics/cloud"
+      ],
+      "local_path": "frontend/src/features/holdings/alternative-holdings-table.tsx"
+    },
+    "alternative-holdings-list-mobile.tsx": {
+      "source": "apps/frontend/src/pages/holdings/components/alternative-holdings-list-mobile.tsx",
+      "sha256": "216cd2a853c02efcc5bacabfedfa73ddeda5a791d973a65f1c4d3d9d01415d34",
+      "changes": [
+        "local hooks, exact-money types, translation namespaces, no native haptics/cloud"
+      ],
+      "local_path": "frontend/src/features/holdings/alternative-holdings-list-mobile.tsx"
+    },
+    "liability-overview.tsx": {
+      "source": "apps/frontend/src/pages/holdings/components/liability-overview.tsx",
+      "sha256": "624ba552f45361f8aa642afc80f638b596441590e7db2a6121be1d41aa5cf64c",
+      "changes": [
+        "exact recorded-debt adapter",
+        "no amortization or inferred payments",
+        "translation namespaces"
+      ],
+      "local_path": "frontend/src/features/holdings/liability-overview.tsx"
+    },
+    "asset-detail-card.tsx": {
+      "source": "apps/frontend/src/pages/asset/asset-detail-card.tsx",
+      "sha256": "07b0bd641bda1a7d52b51b480ba046d3a8d197e53925e0bf985864e8d2a57737",
+      "changes": [
+        "exact nullable decimal strings; existing query and mutation services",
+        "source layout with local platform/data controller; unsupported engines omitted",
+        "namespaced translations and financial privacy"
+      ],
+      "local_path": "frontend/src/features/holdings/asset-detail-card.tsx"
+    },
+    "asset-profile-page.tsx": {
+      "source": "apps/frontend/src/pages/asset/asset-profile-page.tsx",
+      "sha256": "bde9aa9c29861419f05ac533ceaebf565293670c979ed61cb74b6ed37cafdbc9",
+      "changes": [
+        "exact nullable decimal strings; existing query and mutation services",
+        "source layout with local platform/data controller; unsupported engines omitted",
+        "namespaced translations and financial privacy"
+      ],
+      "local_path": "frontend/src/features/holdings/asset-profile-page.tsx"
+    },
+    "activities/activity-table.tsx": {
+      "source": "apps/frontend/src/pages/activity/components/activity-table/activity-table.tsx",
+      "sha256": "ef726809124ade2bb339941386cc82cbd409bb88ab0620dfad1a21eb2374f887",
+      "changes": [
+        "exact local data, platform and workflow adapters",
+        "translation namespaces; source structure retained"
+      ],
+      "local_path": "frontend/src/features/activities/activity-table.tsx"
+    },
+    "activities/activity-table-mobile.tsx": {
+      "source": "apps/frontend/src/pages/activity/components/activity-table/activity-table-mobile.tsx",
+      "sha256": "1b4a84956a4b099e4abc6e472e00a5da745657ab849d37c0b6df865786714494",
+      "changes": [
+        "exact local data, platform and workflow adapters",
+        "translation namespaces; source structure retained"
+      ],
+      "local_path": "frontend/src/features/activities/activity-table-mobile.tsx"
+    },
+    "activities/activity-type-badge.tsx": {
+      "source": "apps/frontend/src/pages/activity/components/activity-type-badge.tsx",
+      "sha256": "30e61ad7ad275f7c787ced539de26604d1a6500b808751af948503704e7be2e2",
+      "changes": [
+        "exact local data, platform and workflow adapters",
+        "translation namespaces; source structure retained"
+      ],
+      "local_path": "frontend/src/features/activities/activity-type-badge.tsx"
+    },
+    "activities/activity-pagination.tsx": {
+      "source": "apps/frontend/src/pages/activity/components/activity-pagination.tsx",
+      "sha256": "f4017d7c64e3f6098c91ad40930b3b861c7da9f7bff610a5adfaea2b6119c6c1",
+      "changes": [
+        "exact local data, platform and workflow adapters",
+        "translation namespaces; source structure retained"
+      ],
+      "local_path": "frontend/src/features/activities/activity-pagination.tsx"
+    },
+    "activities/activity-day-groups.ts": {
+      "source": "apps/frontend/src/pages/activity/components/activity-table/activity-day-groups.ts",
+      "sha256": "297db816c09ae15640dc2a7b053b6e76fa4b644d4c8576e14460e3da9adf1fae",
+      "changes": [
+        "exact local data, platform and workflow adapters",
+        "translation namespaces; source structure retained"
+      ],
+      "local_path": "frontend/src/features/activities/activity-day-groups.ts"
+    },
+    "activities/activity-day-header.tsx": {
+      "source": "apps/frontend/src/pages/activity/components/activity-table/activity-day-header.tsx",
+      "sha256": "61aa4a7391358823ca9041f426a53cab4c163c55874cdcbdf9bc9b99cf4d8325",
+      "changes": [
+        "exact local data, platform and workflow adapters",
+        "translation namespaces; source structure retained"
+      ],
+      "local_path": "frontend/src/features/activities/activity-day-header.tsx"
+    },
+    "activities/day-header.tsx": {
+      "source": "apps/frontend/src/components/day-header.tsx",
+      "sha256": "aad27a14608ef20a9525990aa2c12016a1b7cc7d700098962157dc18347f1671",
+      "changes": [
+        "exact local data, platform and workflow adapters",
+        "translation namespaces; source structure retained"
+      ],
+      "local_path": "frontend/src/features/activities/day-header.tsx"
+    },
+    "activities/day-groups.ts": {
+      "source": "apps/frontend/src/lib/day-groups.ts",
+      "sha256": "48ab5ecab76b4ffee2818a076c3afa809f2115820dff25931fbfadf5864b9bf4",
+      "changes": [
+        "exact local data, platform and workflow adapters",
+        "translation namespaces; source structure retained"
+      ],
+      "local_path": "frontend/src/features/activities/day-groups.ts"
+    },
+    "activities/use-horizontal-overflow.ts": {
+      "source": "apps/frontend/src/hooks/use-horizontal-overflow.ts",
+      "sha256": "5a49f1d13b18ca598075d27d87ce6332c71ae6bed74b5dd60484a87aff60f2a0",
+      "changes": [
+        "exact local data, platform and workflow adapters",
+        "translation namespaces; source structure retained"
+      ],
+      "local_path": "frontend/src/features/activities/use-horizontal-overflow.ts"
+    },
+    "activities/use-virtual-scroll-container.ts": {
+      "source": "apps/frontend/src/hooks/use-virtual-scroll-container.ts",
+      "sha256": "aa1f2621a17b8004e8d0a9879a96a638f39892215ace1d9b4bbc6f1528f60a2f",
+      "changes": [
+        "exact local data, platform and workflow adapters",
+        "translation namespaces; source structure retained"
+      ],
+      "local_path": "frontend/src/features/activities/use-virtual-scroll-container.ts"
+    },
+    "alternative-asset-detail-card.tsx": {
+      "source": "apps/frontend/src/pages/asset/alternative-asset-content.tsx",
+      "sha256": "b4d5d5c2d64715a78b07063727f2e715820ab5f0f79b5c50ac44e60263b9e4e8",
+      "changes": [
+        "copied AlternativeAssetDetailCard subtree",
+        "existing manual-position fields and exact net-equity projection",
+        "tracking date explicitly differs from inferred purchase date; no loan engine"
+      ],
+      "local_path": "frontend/src/features/holdings/alternative-asset-detail-card.tsx"
+    },
+    "activities/spending/transaction-row.tsx": {
+      "source": "apps/frontend/src/features/spending/components/transaction-row.tsx",
+      "sha256": "c2326e89e7dda5c366fc293f89bf3855d82d63fd5c823447b1ab2a08f5bbc432",
+      "changes": [
+        "exact positive amounts and established direction/refund/transfer semantics",
+        "local metadata, event and audit adapters; unsupported engines not exposed",
+        "namespaced labels; source presentation retained"
+      ],
+      "local_path": "frontend/src/features/activities/spending/transaction-row.tsx"
+    },
+    "activities/spending/transaction-card.tsx": {
+      "source": "apps/frontend/src/features/spending/components/transaction-card.tsx",
+      "sha256": "047abf7d2ad11c2a140207a856117d2b2fdb9f3426a2a107ece9db5a1763576c",
+      "changes": [
+        "exact positive amounts and established direction/refund/transfer semantics",
+        "local metadata, event and audit adapters; unsupported engines not exposed",
+        "namespaced labels; source presentation retained"
+      ],
+      "local_path": "frontend/src/features/activities/spending/transaction-card.tsx"
+    },
+    "activities/spending/transaction-row-actions.tsx": {
+      "source": "apps/frontend/src/features/spending/components/transaction-row-actions.tsx",
+      "sha256": "6e8a9f254cf42f0e81da342425f76e89952465309bdf42ad347639464e1f1f2a",
+      "changes": [
+        "exact positive amounts and established direction/refund/transfer semantics",
+        "local metadata, event and audit adapters; unsupported engines not exposed",
+        "namespaced labels; source presentation retained"
+      ],
+      "local_path": "frontend/src/features/activities/spending/transaction-row-actions.tsx"
+    },
+    "activities/spending/selection-checkbox.tsx": {
+      "source": "apps/frontend/src/features/spending/components/selection-checkbox.tsx",
+      "sha256": "b0682c72c575fa678d34bed4c496df5813381df3a9ea4de6bf6c1d6605163677",
+      "changes": [
+        "exact positive amounts and established direction/refund/transfer semantics",
+        "local metadata, event and audit adapters; unsupported engines not exposed",
+        "namespaced labels; source presentation retained"
+      ],
+      "local_path": "frontend/src/features/activities/spending/selection-checkbox.tsx"
+    },
+    "activities/spending/truncated-text.tsx": {
+      "source": "apps/frontend/src/components/truncated-text.tsx",
+      "sha256": "ac87c52b8966cb781fb41d2d142591c16aa92393ff85ed98d3658e020d8d46ef",
+      "changes": [
+        "exact positive amounts and established direction/refund/transfer semantics",
+        "local metadata, event and audit adapters; unsupported engines not exposed",
+        "namespaced labels; source presentation retained"
+      ],
+      "local_path": "frontend/src/features/activities/spending/truncated-text.tsx"
+    },
+    "activities/spending/hover-slot.ts": {
+      "source": "apps/frontend/src/lib/hover-slot.ts",
+      "sha256": "d36e144b851c0ef7dfd5fe78f2d5dd9a41ed194c2ee790a34f84c2ac31a23e32",
+      "changes": [
+        "exact positive amounts and established direction/refund/transfer semantics",
+        "local metadata, event and audit adapters; unsupported engines not exposed",
+        "namespaced labels; source presentation retained"
+      ],
+      "local_path": "frontend/src/features/activities/spending/hover-slot.ts"
+    },
+    "activities/spending/selection-toolbar.tsx": {
+      "source": "apps/frontend/src/features/spending/components/selection-toolbar.tsx",
+      "sha256": "d4a05518f972d2f7935c2baed4acbafa991faa00c01a803d53439910984b53e9",
+      "changes": ["local UI imports and translation namespaces"],
+      "local_path": "frontend/src/features/activities/spending/selection-toolbar.tsx"
+    },
+    "activities/spending/delete-transactions-dialog.tsx": {
+      "source": "apps/frontend/src/features/spending/components/delete-transactions-dialog.tsx",
+      "sha256": "918159f760aa5e6cfff8df0012a18b2b17689d9196d75ca7fd8bc52944a7a7e2",
+      "changes": [
+        "exact nullable decimal preview",
+        "audit-preserving soft deletion; no false undo promise",
+        "local imports and translation namespaces"
+      ],
+      "local_path": "frontend/src/features/activities/spending/delete-transactions-dialog.tsx"
+    },
+    "activities/import/file-dropzone.tsx": {
+      "source": "apps/frontend/src/pages/activity/import/components/file-dropzone.tsx",
+      "sha256": "546f5f7b4f653c8a452634e7114eeca11a4d087380f2741abf99837063521220",
+      "changes": [
+        "local UI and translation imports",
+        "native React lazy motion; accessible bounded upload and local parser callbacks",
+        "workflow step IDs map to actual server preview/confirmation states"
+      ],
+      "local_path": "frontend/src/features/activities/import/file-dropzone.tsx"
+    },
+    "activities/import/wizard-step-indicator.tsx": {
+      "source": "apps/frontend/src/pages/activity/import/components/wizard-step-indicator.tsx",
+      "sha256": "321a0769859d8be0129daa91afdcf23b914ece503d23575d2ca1032912c61643",
+      "changes": [
+        "local UI and translation imports",
+        "native React lazy motion; accessible bounded upload and local parser callbacks",
+        "workflow step IDs map to actual server preview/confirmation states"
+      ],
+      "local_path": "frontend/src/features/activities/import/wizard-step-indicator.tsx"
+    },
+    "activities/activity-type-picker.tsx": {
+      "source": "apps/frontend/src/pages/activity/components/activity-type-picker.tsx",
+      "sha256": "4b017e4b60b7850224dae5f2101a3070053c56a1beb8ca321fd88191e7da4889",
+      "changes": [
+        "local UI imports and translation namespaces",
+        "canonical types mapped without introducing new postings; allowedTypes restricts local capabilities"
+      ],
+      "local_path": "frontend/src/features/activities/activity-type-picker.tsx"
+    },
+    "account-profile-page.tsx": {
+      "source": "apps/frontend/src/pages/account/account-page.tsx",
+      "sha256": "7c270229c5831ec8af31934bc818150b5ca4733f40efa7bcc31b24a0de7baced",
+      "related_sources": [
+        {
+          "source": "apps/frontend/src/pages/account/account-metrics.tsx",
+          "sha256": "a98d1c72279845ee89484fa280a87cd794fa9fdf74cb51dbb228ab2009a4f7e8"
+        }
+      ],
+      "changes": [
+        "native page/header/history/detail tab composition",
+        "exact local account workspace; cash and investments counted once",
+        "existing ledger posting/reconciliation forms; no editable balance snapshots"
+      ],
+      "adaptation": "composition of supported source presentation, not a wholesale copy of the financial editor",
+      "local_path": "frontend/src/features/holdings/account-profile-page.tsx"
+    },
+    "quote-history.tsx": {
+      "source": "apps/frontend/src/pages/asset/quote-history-data-grid.tsx",
+      "sha256": "5c3a8ca66413cfbdf7e14a64ed0c737eae85413f17340d012ba08a53633d392d",
+      "related_sources": [
+        {
+          "source": "apps/frontend/src/pages/asset/quote-history-toolbar.tsx",
+          "sha256": "36aae7518250e4ac25e96146c17ac6649e9548bd11e62cb38a4858b9a9ea613b"
+        }
+      ],
+      "changes": [
+        "dated close-price table/toolbar composition, original-currency provenance and paging",
+        "existing add-only observation/pricing services; no invented OHLC data or unsupported quote deletion"
+      ],
+      "adaptation": "composition of supported source presentation, not a wholesale copy of the financial editor",
+      "local_path": "frontend/src/features/holdings/quote-history.tsx"
+    },
+    "activities/activities-page.tsx": {
+      "source": "apps/frontend/src/pages/activity/activity-page.tsx",
+      "sha256": "c6e6368db998535133d4e17d0eba4190b831ffb603262e274704ee2d5c173450",
+      "related_sources": [],
+      "changes": [
+        "native page pills and action palette",
+        "local Investments/Spending routes and established tools; no cloud sync"
+      ],
+      "adaptation": "composition of supported source presentation, not a wholesale copy of the financial editor",
+      "local_path": "frontend/src/features/activities/activities-page.tsx"
+    },
+    "activities/spending/transactions-filter-bar.tsx": {
+      "source": "apps/frontend/src/features/spending/components/transactions-filter-bar.tsx",
+      "sha256": "1cbd5c55153171719d605507e6b62686254b51a70549147591ea70f9bd34e41c",
+      "related_sources": [],
+      "changes": [
+        "source compact facets and mobile filter sheet",
+        "single-value combined server filters; existing advanced exact filters retained",
+        "review remains distinct from bank clearing"
+      ],
+      "adaptation": "composition of supported source presentation, not a wholesale copy of the financial editor",
+      "local_path": "frontend/src/features/activities/spending/transactions-filter-bar.tsx"
+    },
+    "activities/activity-editor.tsx": {
+      "source": "apps/frontend/src/features/spending/components/cash-activity-form.tsx",
+      "sha256": "833f3cde216fcd1810da86ff298c90b541fedc6ad4a5ce19068f4bdd34aa9600",
+      "related_sources": [],
+      "changes": [
+        "native sheet structure wraps exact local financial forms and validation"
+      ],
+      "adaptation": "composition of supported source presentation, not a wholesale copy of the financial editor",
+      "local_path": "frontend/src/features/activities/activity-editor.tsx"
+    },
+    "activities/spending/transactions-bulk-bar.tsx": {
+      "source": "apps/frontend/src/features/spending/components/transactions-bulk-bar.tsx",
+      "sha256": "2f6fef07a4ef626d6e45aa67e4b20962a3feb1e05f0ba68f009713025ccb3213",
+      "related_sources": [],
+      "changes": [
+        "native selected-count/action-bar composition",
+        "existing atomic page-scoped metadata API and confirmation; no bulk financial deletion"
+      ],
+      "adaptation": "composition of supported source presentation, not a wholesale copy of the financial editor",
+      "local_path": "frontend/src/features/activities/spending/transactions-bulk-bar.tsx"
+    },
+    "activities/import/import-page.tsx": {
+      "source": "apps/frontend/src/pages/activity/import/activity-import-page.tsx",
+      "sha256": "92c426ea971065a01b42636ad897b8c48d455425dba33f459c4cfbf36b9c8b33",
+      "related_sources": [],
+      "changes": [
+        "native page/header/content structure",
+        "existing bounded CSV/OFX and brokerage candidate controllers; no new parser/posting engine"
+      ],
+      "adaptation": "composition of supported source presentation, not a wholesale copy of the financial editor",
+      "local_path": "frontend/src/features/activities/import/import-page.tsx"
+    }
+  },
+  "locales": {
+    "en/account.json": {
+      "source": "apps/frontend/src/i18n/locales/en/account.json",
+      "sha256": "250e88185f7bee7b384c0ae6146bbbfd896459f6d1894f23f525344d5ba22b55",
+      "namespace": "wfAccount"
+    },
+    "en/activity.json": {
+      "source": "apps/frontend/src/i18n/locales/en/activity.json",
+      "sha256": "7a8d3ffe97fefb6a0cf36f0797661562353b398a3e8a8b58929f1c2aeff0478d",
+      "namespace": "wfActivity"
+    },
+    "en/asset.json": {
+      "source": "apps/frontend/src/i18n/locales/en/asset.json",
+      "sha256": "0a4420136909247248873ca2aafd1c5eb048a1f85821d34fb79a6ba88aa873cc",
+      "namespace": "wfAsset"
+    },
+    "en/common.json": {
+      "source": "apps/frontend/src/i18n/locales/en/common.json",
+      "sha256": "13dd4802b884c2e865dd055dd86c7817257224e0b18cc591e11fe69f6b91bb43",
+      "namespace": "wfCommon"
+    },
+    "en/holdings.json": {
+      "source": "apps/frontend/src/i18n/locales/en/holdings.json",
+      "sha256": "c794306a90b819a6a191bfbe614c04afa2ddf28e5854179a1561fc25503f48a2",
+      "namespace": "wfHoldings"
+    },
+    "en/spending.json": {
+      "source": "apps/frontend/src/i18n/locales/en/spending.json",
+      "sha256": "d9449ca4a1810376af4dbd8486a5d57890caff01229c173b0fbf00e1f3bed065",
+      "namespace": "wfSpending"
+    },
+    "en/ui.json": {
+      "source": "apps/frontend/src/i18n/locales/en/ui.json",
+      "sha256": "d703571548cea0b083af1bdf93bc30df6142a2bcdddf5eaa7678f81d87078ee1",
+      "namespace": "wfUi"
+    },
+    "es-419/account.json": {
+      "source": "apps/frontend/src/i18n/locales/es/account.json",
+      "sha256": "e05fb792491c5d366f38a9d75932d760f68f94462e17e98fb6804e7f38b4d7f1",
+      "namespace": "wfAccount"
+    },
+    "es-419/activity.json": {
+      "source": "apps/frontend/src/i18n/locales/es/activity.json",
+      "sha256": "3cea158b457c398b55f5b9fbc91193ecef9474724e26e80d15a7d01d3f9ca01e",
+      "namespace": "wfActivity"
+    },
+    "es-419/asset.json": {
+      "source": "apps/frontend/src/i18n/locales/es/asset.json",
+      "sha256": "ceb9dded7206387b52bbd357a2b896b920f5759f01f8fff970459f33957374b5",
+      "namespace": "wfAsset"
+    },
+    "es-419/common.json": {
+      "source": "apps/frontend/src/i18n/locales/es/common.json",
+      "sha256": "1b2dfe9b9dc364cdfb51c93b43ee0b628aef6742d2e1efb5220e9d7541b91ff5",
+      "namespace": "wfCommon"
+    },
+    "es-419/holdings.json": {
+      "source": "apps/frontend/src/i18n/locales/es/holdings.json",
+      "sha256": "6468ecac6fb51b57fb481151868cae3a1688b1cc8db1ce8c6e82985f4f58be64",
+      "namespace": "wfHoldings"
+    },
+    "es-419/spending.json": {
+      "source": "apps/frontend/src/i18n/locales/es/spending.json",
+      "sha256": "6f799fae28222afe1352ec98704bb26b655da65b2064935b6cdd845b9e1d8160",
+      "namespace": "wfSpending"
+    },
+    "es-419/ui.json": {
+      "source": "apps/frontend/src/i18n/locales/es/ui.json",
+      "sha256": "65644a7e3a55bfe869479ea063aeafc33fa94954e053c6db85f8745fe98ad98c",
+      "namespace": "wfUi"
+    },
+    "pt-BR/account.json": {
+      "source": "apps/frontend/src/i18n/locales/pt/account.json",
+      "sha256": "87ab9fca6bbb1aa585571c8201904d977615f83bef69f9897820fb8b866cf921",
+      "namespace": "wfAccount"
+    },
+    "pt-BR/activity.json": {
+      "source": "apps/frontend/src/i18n/locales/pt/activity.json",
+      "sha256": "27445f1f3c31b493f70627068c63e87c83432e4bd3d1da77c11292803aec3442",
+      "namespace": "wfActivity"
+    },
+    "pt-BR/asset.json": {
+      "source": "apps/frontend/src/i18n/locales/pt/asset.json",
+      "sha256": "9bf0c42aff61a5997940959ae982b63ec638433cf6ddfd228303d2612beffcc3",
+      "namespace": "wfAsset"
+    },
+    "pt-BR/common.json": {
+      "source": "apps/frontend/src/i18n/locales/pt/common.json",
+      "sha256": "f3a1a7e1ae4ccbba7cd7796a4c31f634a324c8b74f468ecd9d7a3e5d5def218b",
+      "namespace": "wfCommon"
+    },
+    "pt-BR/holdings.json": {
+      "source": "apps/frontend/src/i18n/locales/pt/holdings.json",
+      "sha256": "65ea6c9d5249961c9d847fde5c2329727c17abe614cce960cc21cd26c5b720c9",
+      "namespace": "wfHoldings"
+    },
+    "pt-BR/spending.json": {
+      "source": "apps/frontend/src/i18n/locales/pt/spending.json",
+      "sha256": "a4ad2844f86faac93d56e0e7efbbb35a0fd867acd6ea4d91324e16c6ff4248bb",
+      "namespace": "wfSpending"
+    },
+    "pt-BR/ui.json": {
+      "source": "apps/frontend/src/i18n/locales/pt/ui.json",
+      "sha256": "57d4e7f93a590bc085c461a832e1bd21947bdc320de82254640e7bd8654f00f6",
+      "namespace": "wfUi"
+    }
+  },
+  "shared_application_files": {
+    "frontend/src/lib/row-click.ts": {
+      "source": "apps/frontend/src/lib/row-click.ts",
+      "sha256": "b20662d5fb9da5adfb3a9d121b44a0deb8f5776d02ab1cc045f2bf1ebe5ae6d7",
+      "license": "AGPL-3.0-only",
+      "changes": [
+        "source guard retained for control cells, portals and text selection",
+        "native role button/checkbox handling and defensive Element check"
+      ],
+      "tests": {
+        "local_path": "frontend/src/features/activities/row-click.test.tsx",
+        "source": "apps/frontend/src/lib/row-click.test.tsx",
+        "sha256": "b4b8a42781da6fbde90e6c7cd6326f977a15dccbd9253119fdd65e6d95ef7157"
+      }
+    }
+  },
+  "spending_files": {
+    "components/cash-flow-strip.tsx": {
+      "source": "apps/frontend/src/features/spending/components/cash-flow-strip.tsx",
+      "sha256": "7b7c5284a0b8a1d7e1d7c16fb0e445b0e72f19b6c02831b4e1f6a13432b04f91",
+      "local_path": "frontend/src/features/spending/components/cash-flow-strip.tsx",
+      "changes": [
+        "local UI/routes/translations; exact decimal strings replace monetary Number operations where applicable"
+      ]
+    },
+    "components/spending-delta-line.tsx": {
+      "source": "apps/frontend/src/features/spending/components/spending-delta-line.tsx",
+      "sha256": "590934f1a47a051abe3670fcb1bee124c5e53723aa2fa3b288cd9037e5e383d2",
+      "local_path": "frontend/src/features/spending/components/spending-delta-line.tsx",
+      "changes": [
+        "local UI/routes/translations; exact decimal strings replace monetary Number operations where applicable"
+      ]
+    },
+    "components/amount-input.tsx": {
+      "source": "apps/frontend/src/features/spending/components/amount-input.tsx",
+      "sha256": "5438ae7fcd6a14762e2b7eaa6720907f02d3ff17c5e15895f16773a3c72c5334",
+      "local_path": "frontend/src/features/spending/components/amount-input.tsx",
+      "changes": [
+        "local UI/routes/translations; exact decimal strings replace monetary Number operations where applicable"
+      ]
+    },
+    "components/category-chips.tsx": {
+      "source": "apps/frontend/src/features/spending/components/category-chips.tsx",
+      "sha256": "2445436357b1b12e4e03255158fb64408df58d084a1d1a8faae7eb7c16b835db",
+      "local_path": "frontend/src/features/spending/components/category-chips.tsx",
+      "changes": [
+        "local UI/routes/translations; exact decimal strings replace monetary Number operations where applicable"
+      ]
+    },
+    "components/icon-picker.tsx": {
+      "source": "apps/frontend/src/features/spending/components/icon-picker.tsx",
+      "sha256": "7f88a5f7eaa6fa45fce528c41202c91569820b290b1f682eff7b2f67aae286d7",
+      "local_path": "frontend/src/features/spending/components/icon-picker.tsx",
+      "changes": [
+        "local UI/routes/translations; exact decimal strings replace monetary Number operations where applicable"
+      ]
+    },
+    "components/color-picker.tsx": {
+      "source": "apps/frontend/src/features/spending/components/color-picker.tsx",
+      "sha256": "d6908507ca2743dab606e15df874612024f36d24507cff3420738daf436764a8",
+      "local_path": "frontend/src/features/spending/components/color-picker.tsx",
+      "changes": [
+        "local UI/routes/translations; exact decimal strings replace monetary Number operations where applicable"
+      ]
+    },
+    "components/reports/insights/stage-nav.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/stage-nav.tsx",
+      "sha256": "f4817953b684e39f785d83270427aa0b447e2a4588c72f0738e5db23277808ca",
+      "local_path": "frontend/src/features/spending/components/reports/insights/stage-nav.tsx",
+      "changes": [
+        "local UI/routes/translations; exact decimal strings replace monetary Number operations where applicable"
+      ]
+    },
+    "lib/category-icons.ts": {
+      "source": "apps/frontend/src/features/spending/lib/category-icons.ts",
+      "sha256": "907bca5eee98248191a732fcdb286c18ce4f9cdf93e602abb0e6504c094a5a57",
+      "local_path": "frontend/src/features/spending/lib/category-icons.ts",
+      "changes": [
+        "local UI/routes/translations; exact decimal strings replace monetary Number operations where applicable"
+      ]
+    },
+    "lib/theme.ts": {
+      "source": "apps/frontend/src/features/spending/lib/theme.ts",
+      "sha256": "e6a2a25f502b3c6ca6c8131a1e956523cf34af6ac7b372974baeecbd1c94c39a",
+      "local_path": "frontend/src/features/spending/lib/theme.ts",
+      "changes": [
+        "local UI/routes/translations; exact decimal strings replace monetary Number operations where applicable"
+      ]
+    },
+    "use-effect-on-change.ts": {
+      "source": "apps/frontend/src/hooks/use-effect-on-change.ts",
+      "sha256": "30c7b3b7619255f4a8eeffef1221c8d942f4f95850553078e8c96bd56fea3acf",
+      "local_path": "frontend/src/features/spending/use-effect-on-change.ts",
+      "changes": ["ESLint dependency annotation"]
+    },
+    "components/budget-editor.tsx": {
+      "source": "apps/frontend/src/features/spending/components/budget-editor.tsx",
+      "sha256": "3c7ff7ff487387ec6310cbb420e893d23ab8d89132aa45f94cb366c23ea5b3db",
+      "local_path": "frontend/src/features/spending/components/budget-editor.tsx",
+      "changes": [
+        "source editor hierarchy and supported child JSX preserved",
+        "exact decimal amounts and bounded coordinate ratios",
+        "explicitly postponed group buffers/hierarchy/rollover, planned income and independent starting balances excluded pending decisions",
+        "existing versioned defaults/overrides/category rollover; copy previous month and individual restore only"
+      ]
+    },
+    "types/budget.ts": {
+      "source": "apps/frontend/src/features/spending/types/budget.ts",
+      "sha256": "69211668ab5c3ca282065011010ba34eb8c4f21f228a0190eaf82234a0a87ede",
+      "local_path": "frontend/src/features/spending/types/budget.ts",
+      "changes": [
+        "source editor hierarchy and supported child JSX preserved",
+        "exact decimal amounts and bounded coordinate ratios",
+        "explicitly postponed group buffers/hierarchy/rollover, planned income and independent starting balances excluded pending decisions",
+        "existing versioned defaults/overrides/category rollover; copy previous month and individual restore only"
+      ]
+    },
+    "components/category-breakdown.tsx": {
+      "source": "apps/frontend/src/features/spending/components/spending-tab-content.tsx",
+      "sha256": "6551dcf9f024a143ee14c4f3e01f4b49e39de3012a10d13181698763c200ded9",
+      "local_path": "frontend/src/features/spending/components/category-breakdown.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/dashboard-card.tsx": {
+      "source": "apps/frontend/src/components/dashboard-card.tsx",
+      "sha256": "b444bc6fd943cfc57bc781180babcd3cf448a60908b6c5abee6bb3274b9e1cea",
+      "local_path": "frontend/src/features/spending/components/dashboard-card.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/budget-line-chart-card.tsx": {
+      "source": "apps/frontend/src/features/spending/components/budget-line-chart-card.tsx",
+      "sha256": "44b5d40ff6de6e3d7b25677fa7aa0c40449d91e2ffe26c99f8a7926dc7eee29d",
+      "local_path": "frontend/src/features/spending/components/budget-line-chart-card.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/recent-activity-card.tsx": {
+      "source": "apps/frontend/src/features/spending/components/recent-activity-card.tsx",
+      "sha256": "e7466ced9f1abae912fffc2514f078c0948ba3a1ed538990279ec8e11fb9e6ad",
+      "local_path": "frontend/src/features/spending/components/recent-activity-card.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/events-card.tsx": {
+      "source": "apps/frontend/src/features/spending/components/events-card.tsx",
+      "sha256": "40dfaf2feed93f97b51ba2b410a0b52f8378426f28922fda857ae6fb95fe2002",
+      "local_path": "frontend/src/features/spending/components/events-card.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/spending-date-picker.tsx": {
+      "source": "apps/frontend/src/features/spending/components/spending-date-picker.tsx",
+      "sha256": "e51d2bf4453c7043d826bd27fb6c3e7c8fc54dc3130b7ecfd8a19e8d9c748c37",
+      "local_path": "frontend/src/features/spending/components/spending-date-picker.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/spending-period-toggle.tsx": {
+      "source": "apps/frontend/src/features/spending/components/spending-period-toggle.tsx",
+      "sha256": "be4e159062a6787c092a2db4f3e8589a7a164ea7733d91163c1c96af468e937f",
+      "local_path": "frontend/src/features/spending/components/spending-period-toggle.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/reports/category-hierarchy-table.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/category-hierarchy-table.tsx",
+      "sha256": "4b17bcea2ccebd4cc18c51a460b6bf70a072afef61b919eb6effaeaf80f1251c",
+      "local_path": "frontend/src/features/spending/components/reports/category-hierarchy-table.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/reports/category-hierarchy/builders.ts": {
+      "source": "apps/frontend/src/features/spending/components/reports/category-hierarchy/builders.ts",
+      "sha256": "1f5816652c061fe14627e63df4ea631d3b3a19cf7e83502a118c5a51bfb3182f",
+      "local_path": "frontend/src/features/spending/components/reports/category-hierarchy/builders.ts",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/reports/insights/money-flow-chart.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/money-flow-chart.tsx",
+      "sha256": "29b2c0eaa29c54e020a4d477384d6c94f1b0d3fb83a78e946df899be4ece0b3c",
+      "local_path": "frontend/src/features/spending/components/reports/insights/money-flow-chart.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/reports/insights/money-flow-section.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/money-flow-section.tsx",
+      "sha256": "34d4b8eaff0153c490ca96411914055a08a6dcc461b5b713ea693ecbcc9849b4",
+      "local_path": "frontend/src/features/spending/components/reports/insights/money-flow-section.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/reports/insights/position-cards.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/where-i-am-stage.tsx",
+      "sha256": "5dc5d92a1d024a826684abb49b248cd4eefebb5656776fdb04378e91bb22e6b3",
+      "local_path": "frontend/src/features/spending/components/reports/insights/position-cards.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/reports/insights/change-cards.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/what-changed-stage.tsx",
+      "sha256": "13ab756ef7061d5bc9fae26046166a75fb2620dc12b7d023a4c0445f73c633ac",
+      "local_path": "frontend/src/features/spending/components/reports/insights/change-cards.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/reports/insights/when-you-spend-card.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/when-you-spend-card.tsx",
+      "sha256": "cdd8f6728a4ce85699fe03e989e0bd47ad43d3f2851368ceb5c0afa8b764ab2d",
+      "local_path": "frontend/src/features/spending/components/reports/insights/when-you-spend-card.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/reports/insights/event-colors.ts": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/event-colors.ts",
+      "sha256": "e2f379587d6edd376a5b3ef0b38b7c2f6442580400bd2c4eb7c7c51744fc360a",
+      "local_path": "frontend/src/features/spending/components/reports/insights/event-colors.ts",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/reports/insights/events-timeline-card.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/events-timeline-card.tsx",
+      "sha256": "59143693fd79b63030c8a2fbf602834b0403607910a4f04c1381f488843453f4",
+      "local_path": "frontend/src/features/spending/components/reports/insights/events-timeline-card.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "components/reports/insights/events-calendar-card.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/events-calendar-card.tsx",
+      "sha256": "63c9d35328cb3c5f8f5ea00ebe5e47f14809587924550807137d6205a6fec92b",
+      "local_path": "frontend/src/features/spending/components/reports/insights/events-calendar-card.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "hooks/use-month-calendar.ts": {
+      "source": "apps/frontend/src/features/spending/hooks/use-month-calendar.ts",
+      "sha256": "a302dcb64b0cc0b4f172ba8efdc9002dd5e2787e62cf8689181284a78b7bbbe8",
+      "local_path": "frontend/src/features/spending/hooks/use-month-calendar.ts",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "pages/spending-dashboard.tsx": {
+      "source": "apps/frontend/src/features/spending/components/spending-tab-content.tsx",
+      "sha256": "6551dcf9f024a143ee14c4f3e01f4b49e39de3012a10d13181698763c200ded9",
+      "local_path": "frontend/src/features/spending/pages/spending-dashboard.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "pages/spending-insights-page.tsx": {
+      "source": "apps/frontend/src/features/spending/pages/spending-insights-page.tsx",
+      "sha256": "12cbe384e33006aba0fa5da3b4dbbb4377efc5288e11ee8001ae259b2831fbd0",
+      "local_path": "frontend/src/features/spending/pages/spending-insights-page.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "pages/spending-budget-page.tsx": {
+      "source": "apps/frontend/src/features/spending/pages/spending-budget-page.tsx",
+      "sha256": "feab0bc2c9cba31e71b14f9d17ac7603d9daed2e59793b9071d6bfb4542003b1",
+      "local_path": "frontend/src/features/spending/pages/spending-budget-page.tsx",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "lib/color-palette.ts": {
+      "source": "apps/frontend/src/features/spending/components/color-picker.tsx",
+      "sha256": "d6908507ca2743dab606e15df874612024f36d24507cff3420738daf436764a8",
+      "local_path": "frontend/src/features/spending/lib/color-palette.ts",
+      "changes": [
+        "local query/router/localization and immutable exact-money view models; original supported render/layout retained",
+        "postponed engines remain absent; recorded-date heatmap replaces unsupported transaction hours"
+      ]
+    },
+    "ui/calendar": {
+      "source": "packages/ui/src/components/ui/calendar.tsx",
+      "sha256": "e1b9a939485e27268ca492c9fe3b4258bc04c1bb4a4f5775684dfcb1429f356c",
+      "local_path": "frontend/src/vendor/wealthfolio/ui/components/ui/calendar.tsx",
+      "changes": [
+        "local locale/date adapter; React-compatible cursor state where necessary"
+      ]
+    },
+    "ui/month-year-picker": {
+      "source": "packages/ui/src/components/ui/month-year-picker.tsx",
+      "sha256": "a157b238f8dc731c8dec52d3bf4a264f3d335db62a9005ece27958f4f3c43536",
+      "local_path": "frontend/src/vendor/wealthfolio/ui/components/ui/month-year-picker.tsx",
+      "changes": [
+        "local locale/date adapter; React-compatible cursor state where necessary"
+      ]
+    },
+    "ui/item": {
+      "source": "packages/ui/src/components/ui/item.tsx",
+      "sha256": "91b1a9c7e4c30321205dfcbc9a9cfac78cc437004839504fb2ac674a18ad4ff3",
+      "local_path": "frontend/src/vendor/wealthfolio/ui/components/ui/item.tsx",
+      "changes": [
+        "local locale/date adapter; React-compatible cursor state where necessary"
+      ]
+    },
+    "lib/headline.ts": {
+      "source": "apps/frontend/src/features/spending/lib/headline.ts",
+      "sha256": "fa801b4ee69ee5675c6c4548ee69b513e6dc99191611edbc9ffb7649d1159e38",
+      "local_path": "frontend/src/features/spending/lib/headline.ts",
+      "changes": [
+        "adapted source render/narrative patterns; local exact decimal view models, recorded-date projections, query and router adapters; unsupported capabilities remain absent"
+      ]
+    },
+    "lib/headline-descriptors.ts": {
+      "source": "apps/frontend/src/features/spending/lib/change-descriptor.ts",
+      "sha256": "6380baa719f93b9e4e068e4c9c41c8cb0bca17b95e68c85d4e4190dc08a593d4",
+      "local_path": "frontend/src/features/spending/lib/headline-descriptors.ts",
+      "changes": [
+        "adapted source render/narrative patterns; local exact decimal view models, recorded-date projections, query and router adapters; unsupported capabilities remain absent"
+      ]
+    },
+    "components/reports/insights/headline-card.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/what-changed-stage.tsx",
+      "sha256": "13ab756ef7061d5bc9fae26046166a75fb2620dc12b7d023a4c0445f73c633ac",
+      "local_path": "frontend/src/features/spending/components/reports/insights/headline-card.tsx",
+      "changes": [
+        "adapted source render/narrative patterns; local exact decimal view models, recorded-date projections, query and router adapters; unsupported capabilities remain absent"
+      ]
+    },
+    "components/reports/insights/event-detail-panel.tsx": {
+      "source": "apps/frontend/src/features/spending/components/reports/insights/event-detail-panel.tsx",
+      "sha256": "d374299a5f3f0f4487a4e27475d8f1bf19080481bab48cb1d9a7883ca0deed58",
+      "local_path": "frontend/src/features/spending/components/reports/insights/event-detail-panel.tsx",
+      "changes": [
+        "adapted source render/narrative patterns; local exact decimal view models, recorded-date projections, query and router adapters; unsupported capabilities remain absent"
+      ]
+    }
+  },
+  "goals_files": {
+    "components/goal-lever-row.tsx": {
+      "source": "apps/frontend/src/features/goals/components/goal-lever-row.tsx",
+      "sha256": "21fa9206b82890d69f79147516ca278dd2174aa23026349f34d7abdc479a349b",
+      "local_path": "frontend/src/features/goals/components/goal-lever-row.tsx",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "save-up/components/savings-milestones-card.tsx": {
+      "source": "apps/frontend/src/features/goals/save-up/components/savings-milestones-card.tsx",
+      "sha256": "119b93e1713fb37efb6fce1d2590be937d06c24a01e9e403364ab9253fb0a19d",
+      "local_path": "frontend/src/features/goals/save-up/components/savings-milestones-card.tsx",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "locales/en": {
+      "source": "apps/frontend/src/i18n/locales/en/goals.json",
+      "sha256": "a9e8b37980e85bbf4a25d981a646d47558e530101692adce6efb7b7e2bd056b3",
+      "local_path": "frontend/src/vendor/wealthfolio/locales/en/goals.json",
+      "changes": [
+        "loaded as wfGoals namespace; supported local language aliases"
+      ]
+    },
+    "locales/pt-BR": {
+      "source": "apps/frontend/src/i18n/locales/pt/goals.json",
+      "sha256": "0e85583ed8ca3582f09ab18af1cbd40dd1ebe92171ccf5c7690b750c01d21c04",
+      "local_path": "frontend/src/vendor/wealthfolio/locales/pt-BR/goals.json",
+      "changes": [
+        "loaded as wfGoals namespace; supported local language aliases"
+      ]
+    },
+    "locales/es-419": {
+      "source": "apps/frontend/src/i18n/locales/es/goals.json",
+      "sha256": "54aab01fe82038ab71acc09380b12431de26e567d6ed0467a3761029475a0926",
+      "local_path": "frontend/src/vendor/wealthfolio/locales/es-419/goals.json",
+      "changes": [
+        "loaded as wfGoals namespace; supported local language aliases"
+      ]
+    },
+    "pages/goals-dashboard-page.tsx": {
+      "source": "apps/frontend/src/features/goals/pages/goals-dashboard-page.tsx",
+      "sha256": "cbf2d9072c498f3e7c3cce213bf3dc95bb9b3ceff1d085d569f9760c218e0d8f",
+      "local_path": "frontend/src/features/goals/pages/goals-dashboard-page.tsx",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "pages/goal-new-page.tsx": {
+      "source": "apps/frontend/src/features/goals/pages/goal-new-page.tsx",
+      "sha256": "b4732a4e8a79e6e158a0a54bc2b37c2fdbb0aa3773758d9b8f4ca4631957056e",
+      "local_path": "frontend/src/features/goals/pages/goal-new-page.tsx",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "pages/goal-detail-page.tsx": {
+      "source": "apps/frontend/src/features/goals/pages/goal-detail-page.tsx",
+      "sha256": "8779286c7a8ff06bf29d7ce3abbf628c1f8d0c793aa4e6bb20db2c692f844f52",
+      "local_path": "frontend/src/features/goals/pages/goal-detail-page.tsx",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "components/goal-card.tsx": {
+      "source": "apps/frontend/src/features/goals/components/goal-card.tsx",
+      "sha256": "5ee188fc7abd0ad6ad5e864e125838d2a3efd5dc7e81b1eba32dd22a530eed62",
+      "local_path": "frontend/src/features/goals/components/goal-card.tsx",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "components/goal-edit-dialog.tsx": {
+      "source": "apps/frontend/src/features/goals/components/goal-edit-dialog.tsx",
+      "sha256": "24cf4e67dbf58f29efa9d0b82b5e33d520ba8eda50d23af37e1cd643054dd5d0",
+      "local_path": "frontend/src/features/goals/components/goal-edit-dialog.tsx",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "components/goal-funding-editor.tsx": {
+      "source": "apps/frontend/src/features/goals/components/goal-funding-editor.tsx",
+      "sha256": "1f6e83732c88f11048a7a2cafa96ad4135537a4d705ba907c14f66a0bb763d4b",
+      "local_path": "frontend/src/features/goals/components/goal-funding-editor.tsx",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "save-up/components/save-up-detail.tsx": {
+      "source": "apps/frontend/src/features/goals/save-up/components/save-up-detail.tsx",
+      "sha256": "84a137e62b8107b906f7b1f878268a4af49a684783d78b213826be8e6abe0279",
+      "local_path": "frontend/src/features/goals/save-up/components/save-up-detail.tsx",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "save-up/components/save-up-projection-card.tsx": {
+      "source": "apps/frontend/src/features/goals/save-up/components/save-up-projection-card.tsx",
+      "sha256": "339cdf96958d18718e41d904353f03dca7fc9a9ddc8e7a883e79140041368557",
+      "local_path": "frontend/src/features/goals/save-up/components/save-up-projection-card.tsx",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "hooks/use-goals.ts": {
+      "source": "apps/frontend/src/features/goals/hooks/use-goals.ts",
+      "sha256": "5bf3bc1394826ed69f2f388786cf6e22d6412b64a33842ec0eeb80f4140bd683",
+      "local_path": "frontend/src/features/goals/hooks/use-goals.ts",
+      "changes": [
+        "source layout and supported interactions retained; local FastAPI/hash routing and exact decimal-string adapters; zero-return scenarios and fixed dated funding replace upstream financial model"
+      ]
+    },
+    "ui/date-picker-input": {
+      "source": "packages/ui/src/components/ui/date-picker-input.tsx",
+      "sha256": "d022c96de39dccfdacabd8e454f8189fd2d0ad7870fbf1983b7dd88a88b86bbf",
+      "local_path": "frontend/src/vendor/wealthfolio/ui/components/ui/date-picker-input.tsx",
+      "license": "MIT",
+      "changes": [
+        "local imports and namespaced translations; type-only imports; no invalid-date payload logging"
+      ]
+    },
+    "ui/calendar-rac": {
+      "source": "packages/ui/src/components/ui/calendar-rac.tsx",
+      "sha256": "a6ff93bd9607a61a988048400fcb9f1da75e650025fdba0bbcb0440682576ef2",
+      "local_path": "frontend/src/vendor/wealthfolio/ui/components/ui/calendar-rac.tsx",
+      "license": "MIT",
+      "changes": [
+        "local imports and namespaced translations; type-only imports; no invalid-date payload logging"
+      ]
+    },
+    "ui/datefield-rac": {
+      "source": "packages/ui/src/components/ui/datefield-rac.tsx",
+      "sha256": "c3feabea785a368d092198c6eb142dc026c7e8517ddb570887b66bf8c15e9bfc",
+      "local_path": "frontend/src/vendor/wealthfolio/ui/components/ui/datefield-rac.tsx",
+      "license": "MIT",
+      "changes": [
+        "local imports and namespaced translations; type-only imports; no invalid-date payload logging"
+      ]
+    },
+    "ui/textarea": {
+      "source": "packages/ui/src/components/ui/textarea.tsx",
+      "sha256": "14938de0ba0c1bf09b03e3bd57f6164d656284b4b04de422859c81ea746a32ed",
+      "local_path": "frontend/src/vendor/wealthfolio/ui/components/ui/textarea.tsx",
+      "license": "MIT",
+      "changes": [
+        "local imports and namespaced translations; type-only imports; no invalid-date payload logging"
+      ]
+    },
+    "covers/car": {
+      "source": "apps/frontend/public/goals/car.png",
+      "sha256": "2954d55eeca2d1a93e2e6e205e78ae12603acb717592ba2af8b5959b3223d4fc",
+      "local_path": "frontend/public/goal-covers/car.png",
+      "license": "AGPL-3.0-only (repository license; no separate asset notice found)",
+      "changes": ["unchanged non-brand illustration"],
+      "distribution_status": "Excluded from finalized v0.14 pending independent asset-rights clearance; historical source/hash retained"
+    },
+    "covers/home": {
+      "source": "apps/frontend/public/goals/home.png",
+      "sha256": "9a7a58f468c1dd892f10ed1d65109a3dcd0a94cd03e19d78228c8ffb0b23121d",
+      "local_path": "frontend/public/goal-covers/home.png",
+      "license": "AGPL-3.0-only (repository license; no separate asset notice found)",
+      "changes": ["unchanged non-brand illustration"],
+      "distribution_status": "Excluded from finalized v0.14 pending independent asset-rights clearance; historical source/hash retained"
+    },
+    "covers/education": {
+      "source": "apps/frontend/public/goals/education.png",
+      "sha256": "8c0a9ff363536257251df06e37fa3092461845ccc3431ba2e577046eafdbaa69",
+      "local_path": "frontend/public/goal-covers/education.png",
+      "license": "AGPL-3.0-only (repository license; no separate asset notice found)",
+      "changes": ["unchanged non-brand illustration"],
+      "distribution_status": "Excluded from finalized v0.14 pending independent asset-rights clearance; historical source/hash retained"
+    },
+    "covers/wedding": {
+      "source": "apps/frontend/public/goals/wedding.png",
+      "sha256": "38df01b5f4d24fdeb45dbaa964fabd94f7dcb99c136c440edb0f924ab9ac3559",
+      "local_path": "frontend/public/goal-covers/wedding.png",
+      "license": "AGPL-3.0-only (repository license; no separate asset notice found)",
+      "changes": ["unchanged non-brand illustration"],
+      "distribution_status": "Excluded from finalized v0.14 pending independent asset-rights clearance; historical source/hash retained"
+    },
+    "covers/custom_save_up": {
+      "source": "apps/frontend/public/goals/custom_save_up.png",
+      "sha256": "80ca477b8a9049b3d1e97a636ea5a56328af8091be9b7ede6444cc43d71536cf",
+      "local_path": "frontend/public/goal-covers/custom_save_up.png",
+      "license": "AGPL-3.0-only (repository license; no separate asset notice found)",
+      "changes": ["unchanged non-brand illustration"],
+      "distribution_status": "Excluded from finalized v0.14 pending independent asset-rights clearance; historical source/hash retained"
+    }
+  },
+  "performance_insights_files": {
+    "frontend/src/features/performance/performance-workspace.tsx": {
+      "source": "apps/frontend/src/pages/performance/performance-page.tsx",
+      "sha256": "4473681de269035627fb11ad59601dfeef41767ae4b3d4a324ccf30854159308",
+      "changes": [
+        "partial source adaptation: metric strip, chart card, selected comparisons; typed API/URL adapters instead of desktop/Rust"
+      ],
+      "local_path": "frontend/src/features/performance/performance-workspace.tsx"
+    },
+    "frontend/src/features/performance/performance-chart.tsx": {
+      "source": "apps/frontend/src/components/performance-chart.tsx",
+      "sha256": "0d4fe1582726d2b261908c5907426409ffd257079eff9e2f6a05b747f3c0c166",
+      "changes": [
+        "source chart; normalized exact percentages, no gap bridging, reduced motion"
+      ],
+      "local_path": "frontend/src/features/performance/performance-chart.tsx"
+    },
+    "frontend/src/features/performance/performance-chart-mobile.tsx": {
+      "source": "apps/frontend/src/components/performance-chart-mobile.tsx",
+      "sha256": "e70e43239ac059d3c63c377e8aadb9b87b331ff52e43cf8f0100d39698e942a0",
+      "changes": ["source mobile chart; shared exact percentage adapter"],
+      "local_path": "frontend/src/features/performance/performance-chart-mobile.tsx"
+    },
+    "frontend/src/features/performance/performance-chart-colors.ts": {
+      "source": "apps/frontend/src/components/performance-chart-colors.ts",
+      "sha256": "cc32b983587939434ff8fadf1f5a0870a08937657e47c0945bbb9a68c0e43ba0",
+      "changes": ["unchanged semantic series roles"],
+      "local_path": "frontend/src/features/performance/performance-chart-colors.ts"
+    },
+    "frontend/src/features/performance/top-movers.tsx": {
+      "source": "apps/frontend/src/pages/insights/overview/holdings-highlight-cards.tsx",
+      "sha256": "96bcab07d6aaf7d317302d43651c2ea78a345210f64f75644deb1a92037e3931",
+      "changes": [
+        "source TopMoversCard and rows; exact native-currency values and local navigation"
+      ],
+      "local_path": "frontend/src/features/performance/top-movers.tsx"
+    },
+    "frontend/src/features/performance/holdings-highlights.ts": {
+      "source": "apps/frontend/src/pages/insights/overview/holdings-highlights.ts",
+      "sha256": "edcb6d21b949dae2eefd9b6deba1bacac46d597cbe6bb4c3dc3bce31111e9960",
+      "changes": [
+        "exact ranking; exclude closed, missing, cash; caller scopes native currency"
+      ],
+      "local_path": "frontend/src/features/performance/holdings-highlights.ts"
+    },
+    "frontend/src/features/performance/treemap-palette.ts": {
+      "source": "apps/frontend/src/pages/holdings/components/treemap-palette.ts",
+      "sha256": "16607d61468d2aa55cf5dff9a02b0b1451d9f8b0617b55120e9cce7e82a20835",
+      "changes": [
+        "source color interpolation/contrast; exact bounded ratio, local theme attributes"
+      ],
+      "local_path": "frontend/src/features/performance/treemap-palette.ts"
+    },
+    "frontend/src/features/performance/allocation-targets.tsx": {
+      "source": "apps/frontend/src/pages/insights/overview/target-rails-card.tsx",
+      "sha256": "547184722f45ad7fd96b47523a7b764d7ed4a80213e656557cab29a2d7db0c84",
+      "changes": [
+        "partial source rails/header adaptation; local versioned flat classification editor, no worksheet"
+      ],
+      "local_path": "frontend/src/features/performance/allocation-targets.tsx"
+    },
+    "reference/composition-chart": {
+      "source": "apps/frontend/src/pages/holdings/components/composition-chart.tsx",
+      "sha256": "d5d18c99ba7a79bac193ecaee9abe5daf09565a5eba35327be1ed334da1cc5f5",
+      "changes": [
+        "source geometry and return-color conventions adapted in existing overview"
+      ]
+    },
+    "reference/insights-layout": {
+      "source": "apps/frontend/src/pages/insights/overview/insights-layout.ts",
+      "sha256": "75b55bd82a1fa7a9bd981d34364c7af9125f52e26289de1ad38e8e38fb4ad2e6",
+      "changes": [
+        "9/3 composition/targets and 6/6 highlights for new/default layouts; saved geometry retained"
+      ]
+    },
+    "reference/allocation-overview": {
+      "source": "apps/frontend/src/pages/allocation-targets/components/overview-tab.tsx",
+      "sha256": "e2e592d33a01e20d2ff6bb5e5abfdea76adbe2e041405e5faa5ca69f111e5f93",
+      "changes": [
+        "inspected; exact local drift service and read-only detail table"
+      ]
+    },
+    "reference/allocation-targets-tab": {
+      "source": "apps/frontend/src/pages/allocation-targets/components/targets-tab.tsx",
+      "sha256": "47e2e58eb7c03b8684375d32fb01626c6dd3af511502a85eadf7c8ac6e212622",
+      "changes": ["inspected; local flat classification input adaptation"]
+    },
+    "reference/allocation-worksheet": {
+      "source": "apps/frontend/src/pages/allocation-targets/components/allocation-worksheet-tab.tsx",
+      "sha256": "93c1f9ee3c829528adc5c0359c0db1d646b61917b1c3608fe453ae93f5e0811f",
+      "changes": ["inspected and retained uncompiled; Stage B postponed"]
+    },
+    "reference/measure": {
+      "source": "crates/portfolio-engine/src/measure.rs",
+      "sha256": "65ac126308ecdac3fcc256d4be02d02a8a4b64ba0dc4f6cdaf6be5700fea941d",
+      "changes": [
+        "conventions inspected only; Python Decimal implementation, not Rust copying"
+      ]
+    },
+    "reference/allocation-model": {
+      "source": "crates/core/src/portfolio/allocation_targets/model.rs",
+      "sha256": "9aff96ded1b2cfc7f12bc5fadad6419dacefa8d11c83297d41f8aad154de9c5e",
+      "changes": ["inspected band conventions only"]
+    },
+    "reference/allocation-drift": {
+      "source": "crates/core/src/portfolio/allocation_targets/drift_service.rs",
+      "sha256": "b9bc7e289146ea4241218e0e0a30f965fcd7ca1fcf10da6d2b3747a1e341a3bf",
+      "changes": ["inspected exact band conventions only"]
+    },
+    "locales/en/performance.json": {
+      "source": "apps/frontend/src/i18n/locales/en/performance.json",
+      "sha256": "5ebfb8da16cd658088b4c8596b207dcf1d0b69ac1ae55905742eace40bed0f46",
+      "changes": ["unchanged namespaced translation resource"]
+    },
+    "locales/en/allocation.json": {
+      "source": "apps/frontend/src/i18n/locales/en/allocation.json",
+      "sha256": "dece3688ab1eccf0f134c5ad8413dfb568faa0ec140929414e632f31715bd5dc",
+      "changes": ["unchanged namespaced translation resource"]
+    },
+    "locales/en/insights.json": {
+      "source": "apps/frontend/src/i18n/locales/en/insights.json",
+      "sha256": "add14509e2bda0714b86ed2581cab2a6020aedc80d9b80a6cab493ce89e39fc4",
+      "changes": ["unchanged namespaced translation resource"]
+    },
+    "locales/pt-BR/performance.json": {
+      "source": "apps/frontend/src/i18n/locales/pt/performance.json",
+      "sha256": "fdd9532c213cd9bd2e384cd0b38584afa9bb3368724fdbfe541c2caea354e5fd",
+      "changes": ["unchanged namespaced translation resource"]
+    },
+    "locales/pt-BR/allocation.json": {
+      "source": "apps/frontend/src/i18n/locales/pt/allocation.json",
+      "sha256": "972e71018afb881c2d7ea607d4419fcb903541fd9758106111810a5304757803",
+      "changes": ["unchanged namespaced translation resource"]
+    },
+    "locales/pt-BR/insights.json": {
+      "source": "apps/frontend/src/i18n/locales/pt/insights.json",
+      "sha256": "83cee594393b65c7ff04b311cfc8f04ae14ca4746a5012ebff381d1e778008a9",
+      "changes": ["unchanged namespaced translation resource"]
+    },
+    "locales/es-419/performance.json": {
+      "source": "apps/frontend/src/i18n/locales/es/performance.json",
+      "sha256": "58c01107ee2a70fa7235a401f07d33397605fd44b263b8bfabb6937893032784",
+      "changes": ["unchanged namespaced translation resource"]
+    },
+    "locales/es-419/allocation.json": {
+      "source": "apps/frontend/src/i18n/locales/es/allocation.json",
+      "sha256": "102972d7dcd07e8c41ed159ab29eaf883fe8cb763980987cdde437341b0b6835",
+      "changes": ["unchanged namespaced translation resource"]
+    },
+    "locales/es-419/insights.json": {
+      "source": "apps/frontend/src/i18n/locales/es/insights.json",
+      "sha256": "70bf6c0146f85b051e097d0e7690a453742763315f499e7cbc3eaaf0e8e23681",
+      "changes": ["unchanged namespaced translation resource"]
+    }
+  },
+  "dashboard_files": {
+    "frontend/src/features/dashboard/investments-dashboard.tsx::apps/frontend/src/pages/dashboard/dashboard-content.tsx": {
+      "source": "apps/frontend/src/pages/dashboard/dashboard-content.tsx",
+      "sha256": "4c8edd0f70b858fac0c93f1528007ee2c6d86d5c09ffca898a7e45b938fe6d57",
+      "local_path": "frontend/src/features/dashboard/investments-dashboard.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/investments-dashboard.tsx::apps/frontend/src/pages/dashboard/portfolio-page.tsx": {
+      "source": "apps/frontend/src/pages/dashboard/portfolio-page.tsx",
+      "sha256": "ab9be86a3fc3db4c27d6d5af1cc762f8ba48231f22b34d3eb56f8cfc88dc5729",
+      "local_path": "frontend/src/App.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/investments-dashboard.tsx::apps/frontend/src/pages/dashboard/dashboard-actions.tsx": {
+      "source": "apps/frontend/src/pages/dashboard/dashboard-actions.tsx",
+      "sha256": "9d83bf570e547f7270365de3be0fba5bae7d22f6cb359140225026bc8cd55e9c",
+      "local_path": "frontend/src/features/dashboard/investments-dashboard.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/investments-dashboard.tsx::apps/frontend/src/pages/dashboard/dashboard-portfolio-selector.tsx": {
+      "source": "apps/frontend/src/pages/dashboard/dashboard-portfolio-selector.tsx",
+      "sha256": "2e641c7e1b811a23018dd74ef2fa6fce6c11a9169b7c567e886424b4a132951c",
+      "local_path": "frontend/src/features/dashboard/investments-dashboard.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "inspected reference; existing scope/URL adapter reused"
+    },
+    "frontend/src/features/dashboard/investments-dashboard.tsx::apps/frontend/src/pages/dashboard/use-dashboard-period.ts": {
+      "source": "apps/frontend/src/pages/dashboard/use-dashboard-period.ts",
+      "sha256": "b8fb82c2f33da8910aadf2c0652958813e32409c17a512dd713e1141e40d7b25",
+      "local_path": "frontend/src/features/dashboard/investments-dashboard.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "inspected reference; existing scope/URL adapter reused"
+    },
+    "frontend/src/features/dashboard/investments-dashboard.tsx::apps/frontend/src/pages/dashboard/use-dashboard-portfolio.ts": {
+      "source": "apps/frontend/src/pages/dashboard/use-dashboard-portfolio.ts",
+      "sha256": "c9fcb8d01451d37a47d0c39fc627d45573e6bfd40042a579ee30bc8f02803dce",
+      "local_path": "frontend/src/features/dashboard/investments-dashboard.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "inspected reference; existing scope/URL adapter reused"
+    },
+    "frontend/src/features/dashboard/balance.tsx::apps/frontend/src/pages/dashboard/balance.tsx": {
+      "source": "apps/frontend/src/pages/dashboard/balance.tsx",
+      "sha256": "c31bb28cfa9923425862f63fb7a0c14b61183427d6c0b027158ad37263c48e23",
+      "local_path": "frontend/src/features/dashboard/balance.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/summary-sections.tsx::apps/frontend/src/pages/dashboard/accounts-summary.tsx": {
+      "source": "apps/frontend/src/pages/dashboard/accounts-summary.tsx",
+      "sha256": "7bcddf72071d43845a6524177cac81e0b5c7d08c2fd76504b69c20c29d3f9693",
+      "local_path": "frontend/src/features/dashboard/summary-sections.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/summary-sections.tsx::apps/frontend/src/pages/dashboard/top-holdings.tsx": {
+      "source": "apps/frontend/src/pages/dashboard/top-holdings.tsx",
+      "sha256": "4986c0c412ab61a58f1feb1af716b364b1fab26ca98feff030c3cc827725c9d9",
+      "local_path": "frontend/src/features/dashboard/summary-sections.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/summary-sections.tsx::apps/frontend/src/pages/dashboard/goals.tsx": {
+      "source": "apps/frontend/src/pages/dashboard/goals.tsx",
+      "sha256": "b6f9cd5584f957498dd887085106a60cae4b5d050ca74c96f31519b0e4c24f8c",
+      "local_path": "frontend/src/features/dashboard/summary-sections.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/history-chart.tsx::apps/frontend/src/components/history-chart.tsx": {
+      "source": "apps/frontend/src/components/history-chart.tsx",
+      "sha256": "167cb1326ecc7ecef8fdba09cffc1e1d4dc8431a8d8119390ed90c9dfcf52679",
+      "local_path": "frontend/src/features/dashboard/history-chart.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/history-chart-scale.ts::apps/frontend/src/components/history-chart-scale.ts": {
+      "source": "apps/frontend/src/components/history-chart-scale.ts",
+      "sha256": "19f1dcf4b70058cf51549b85eb4e7f6760008ed5279d93cc17578ad41a53e7c2",
+      "local_path": "frontend/src/features/dashboard/history-chart-scale.ts",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "unchanged dimensionless scale algorithm"
+    },
+    "frontend/src/features/dashboard/momentum-card.tsx::apps/frontend/src/pages/net-worth/components/momentum-card.tsx": {
+      "source": "apps/frontend/src/pages/net-worth/components/momentum-card.tsx",
+      "sha256": "998021b8d1a0fa71ea666342d28e2977dd171a7dac05a483abde37aa487aabc3",
+      "local_path": "frontend/src/features/dashboard/momentum-card.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/category-detail-sheet.tsx::apps/frontend/src/pages/net-worth/components/category-detail-sheet.tsx": {
+      "source": "apps/frontend/src/pages/net-worth/components/category-detail-sheet.tsx",
+      "sha256": "e109bf6aaccb8b8e2042f351dfb8f417aabc11d70bb532bbc1a3ffa0a881cf73",
+      "local_path": "frontend/src/features/dashboard/category-detail-sheet.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/category-detail-sheet.tsx::apps/frontend/src/pages/net-worth/components/category-trend-chart.tsx": {
+      "source": "apps/frontend/src/pages/net-worth/components/category-trend-chart.tsx",
+      "sha256": "9ba997651944fd535b0f39c20a519300596fd15304481e89b781101a37ed2e51",
+      "local_path": "frontend/src/features/dashboard/category-detail-sheet.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/components/net-worth-overview.tsx::apps/frontend/src/pages/net-worth/net-worth-content.tsx": {
+      "source": "apps/frontend/src/pages/net-worth/net-worth-content.tsx",
+      "sha256": "4661527881abe4d1082092f9e8584183659622cc5915f216eeea1c9d5920f8ea",
+      "local_path": "frontend/src/components/net-worth-overview.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/components/net-worth-overview.tsx::apps/frontend/src/pages/net-worth/components/breakdown-table.tsx": {
+      "source": "apps/frontend/src/pages/net-worth/components/breakdown-table.tsx",
+      "sha256": "d4ec0d174ffd04d58f2f8dcda07b7811aaca3abdde3f0e23d1bde600bb5d091f",
+      "local_path": "frontend/src/components/net-worth-overview.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/components/net-worth-overview.tsx::apps/frontend/src/pages/net-worth/components/velocity-card.tsx": {
+      "source": "apps/frontend/src/pages/net-worth/components/velocity-card.tsx",
+      "sha256": "361e2234eb84190a9c99b9420aa441e1021c164c140decd98d896971c81b820a",
+      "local_path": "frontend/src/components/net-worth-overview.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/components/net-worth-overview.tsx::apps/frontend/src/pages/net-worth/components/net-worth-attention.tsx": {
+      "source": "apps/frontend/src/pages/net-worth/components/net-worth-attention.tsx",
+      "sha256": "b46304cc951f5a603d2028a8462cd217457bcf0468ac2e87d832c947e40d80a2",
+      "local_path": "frontend/src/components/net-worth-overview.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/components/net-worth-overview.tsx::apps/frontend/src/pages/net-worth/components/composition-bar.tsx": {
+      "source": "apps/frontend/src/pages/net-worth/components/composition-bar.tsx",
+      "sha256": "6effbdbd728abc53fd56ed283a6fa6c5cbd2fa85582809533c9e72760cca867d",
+      "local_path": "frontend/src/components/net-worth-overview.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/components/dashboard-card.tsx::apps/frontend/src/components/dashboard-card.tsx": {
+      "source": "apps/frontend/src/components/dashboard-card.tsx",
+      "sha256": "b444bc6fd943cfc57bc781180babcd3cf448a60908b6c5abee6bb3274b9e1cea",
+      "local_path": "frontend/src/components/dashboard-card.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/components/net-worth-chart.tsx::apps/frontend/src/pages/net-worth/net-worth-chart.tsx": {
+      "source": "apps/frontend/src/pages/net-worth/net-worth-chart.tsx",
+      "sha256": "37ba326a7ed8c05736c4559b69147f5f245e8a4080bd7d657715d6d7e0b2bc54",
+      "local_path": "frontend/src/components/net-worth-chart.tsx",
+      "changes": [
+        "Source layout/interaction adaptation; local exact financial projections and URL state replace upstream monetary numbers/platform bindings."
+      ],
+      "reuse": "adapted layout and interactions"
+    },
+    "frontend/src/features/dashboard/period-controls.tsx": {
+      "source": "packages/ui/src/components/financial/interval-selector.tsx",
+      "sha256": "25b0eae9ca142df306e16cfe80d49ecfaec106ac9b9664fa65beebd114735e65",
+      "local_path": "frontend/src/features/dashboard/period-controls.tsx",
+      "changes": [
+        "Controlled selector composition, no localStorage financial filters; existing licensed AnimatedToggleGroup and calendar."
+      ],
+      "reuse": "adapted layout and interactions"
+    }
+  },
+  "settings_files": {
+    "settings-layout.tsx": {
+      "source": "apps/frontend/src/pages/settings/settings-layout.tsx",
+      "sha256": "1a0d128a3ee10684ce4039a43c99a5dc84a6f8f765637d262a3957476c1fd692",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "sidebar-nav.tsx": {
+      "source": "apps/frontend/src/pages/settings/sidebar-nav.tsx",
+      "sha256": "082e78ac8b246555976459826c26501ae7261ce5305a62dfebe7fea34183b9d6",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "settings-header.tsx": {
+      "source": "apps/frontend/src/pages/settings/settings-header.tsx",
+      "sha256": "b2f57f9a5d0a4a730477309d47655eb85bab83de2876970b1391a5046b2e4571",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "general/general-page.tsx": {
+      "source": "apps/frontend/src/pages/settings/general/general-page.tsx",
+      "sha256": "eab632986d377914d56880c417f5996304879caf0e3cdf7e84b85310c150c64c",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "general/currency-settings.tsx": {
+      "source": "apps/frontend/src/pages/settings/general/currency-settings.tsx",
+      "sha256": "8459c765ccc4e871efbf1338e77b0177de53f5717f9b9c7e29031cd3266b5cf2",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "general/language-region-settings.tsx": {
+      "source": "apps/frontend/src/pages/settings/general/language-region-settings.tsx",
+      "sha256": "897fc1a97b83f6b9605c121fd738066ff18db1837f0e15da460ff95f76f53e65",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "appearance/appearance-page.tsx": {
+      "source": "apps/frontend/src/pages/settings/appearance/appearance-page.tsx",
+      "sha256": "2413d21a39aa7f1267e20d40bc4686c82c24008a4df570091dc035d259df244b",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "appearance/appearance-form.tsx": {
+      "source": "apps/frontend/src/pages/settings/appearance/appearance-form.tsx",
+      "sha256": "226551b514ebef6b1f8fe5a0f0c60e23dbfcd86e04ae8d5d27b96e11c20f6937",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "accounts/accounts-page.tsx": {
+      "source": "apps/frontend/src/pages/settings/accounts/accounts-page.tsx",
+      "sha256": "3895fdb17363f3cc2012ffcf7556027bef2b6cc594c1f36fb42991100bc18dda",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "accounts/components/account-item.tsx": {
+      "source": "apps/frontend/src/pages/settings/accounts/components/account-item.tsx",
+      "sha256": "06478c28d5c43a520217dddcfef10154edd19a3127cec08cdc212e80163b03fc",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "portfolios/portfolios-page.tsx": {
+      "source": "apps/frontend/src/pages/settings/portfolios/portfolios-page.tsx",
+      "sha256": "40bbac71273aa6f810b4e9256ac17204d2e600b4900e7f19f3fa3e49059b68a9",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "taxonomies/taxonomies-page.tsx": {
+      "source": "apps/frontend/src/pages/settings/taxonomies/taxonomies-page.tsx",
+      "sha256": "caf362199b9bff1291b9ea54416f2251468cdf18cc8e24fa24c8ca51bde06e35",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "spending/spending-settings-page.tsx": {
+      "source": "apps/frontend/src/pages/settings/spending/spending-settings-page.tsx",
+      "sha256": "edd858e07100123b449d44caff16ee8bbe414ac2ba7f6008dc63fcf83fc5bc75",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "spending/components/overview-card.tsx": {
+      "source": "apps/frontend/src/pages/settings/spending/components/overview-card.tsx",
+      "sha256": "bc8c3fd2db120cb896537a3bb3f7baf3f689e0fc586ac2132dcac33679eafa93",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "spending/rules/spending-rules-page.tsx": {
+      "source": "apps/frontend/src/pages/settings/spending/rules/spending-rules-page.tsx",
+      "sha256": "fb676de5711f21edd82b444c12d5188778bb40b7bafc52794979e7977bd8cc2f",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "exports/exports-page.tsx": {
+      "source": "apps/frontend/src/pages/settings/exports/exports-page.tsx",
+      "sha256": "a55ebe4bcfd0d42b5c7653eb3365b2f43ce0058404fe67725879cc3f80fe3207",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "exports/exports-form.tsx": {
+      "source": "apps/frontend/src/pages/settings/exports/exports-form.tsx",
+      "sha256": "57d39767733b98c6162db0b74ab287cdd95f6a9d6d0237995673b721e47dd4a5",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "exports/backup-restore-form.tsx": {
+      "source": "apps/frontend/src/pages/settings/exports/backup-restore-form.tsx",
+      "sha256": "e3153d439f7b827a3f16f34c4e23fa32319c00be4d83f83b4666b724e74ef0c5",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    },
+    "about/about-page.tsx": {
+      "source": "apps/frontend/src/pages/settings/about/about-page.tsx",
+      "sha256": "28f01e9a82abbe29bd091d76ae1183d023b673e7c7904ea61081692b167afa6c",
+      "changes": [
+        "Settings layout/control composition adapted; local APIs, exact financial data, supported capabilities and web lifecycle replace upstream dependencies"
+      ]
+    }
+  }
+}

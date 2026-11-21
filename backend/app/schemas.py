@@ -60,6 +60,8 @@ class AccountUpdate(Input):
 
 class CategoryInput(Input):
     name: Name
+    color: Annotated[str, Field(pattern=r"^#[0-9a-fA-F]{6}$")] | None = None
+    icon: Annotated[str, Field(pattern=r"^[A-Za-z][A-Za-z0-9]{0,47}$")] | None = None
 
 
 class PayeeInput(Input):
@@ -136,6 +138,8 @@ class AccountOutput(Output):
 
 class CategoryOutput(Output):
     name: str
+    color: str | None = None
+    icon: str | None = None
 
 
 class PayeeOutput(Output):

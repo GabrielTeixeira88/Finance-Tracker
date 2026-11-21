@@ -8,7 +8,8 @@ import es from '../locales/es-419.json'
 import { getLocale, subscribePreferences } from './preferences'
 
 void i18n.use(initReactI18next).init({
-  resources: { en, 'pt-BR': pt, 'es-419': es },
+  // Lazy source namespaces must not mutate the imported canonical JSON resources.
+  resources: structuredClone({ en, 'pt-BR': pt, 'es-419': es }),
   lng: getLocale(),
   fallbackLng: 'en',
   supportedLngs: ['en', 'pt-BR', 'es-419'],

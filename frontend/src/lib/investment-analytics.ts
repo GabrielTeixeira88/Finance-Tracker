@@ -1,7 +1,8 @@
 import { t } from './i18n'
-import { getLocale } from './preferences'
+import { formatExactPercent } from './money'
 import { z } from 'zod'
 import { request } from './api'
+import { fixedHistory } from './fixed-income'
 import { marketHistorySchema } from './market-data'
 
 const amount = z.string().regex(/^-?\d+(\.\d+)?$/)
@@ -22,6 +23,8 @@ export const performanceSchema = z.object({
   net_external_flows: amount.nullable(),
   twr: metric,
   xirr: metric,
+  annualized_twr: metric.nullable().optional(),
+  risk: z.object({ volatility: metric, max_drawdown: metric }).optional(),
   absolute_gain: metric,
   points: z.array(point),
   benchmark: z
@@ -49,7 +52,102 @@ export const performanceSchema = z.object({
     }),
   ),
 })
+const reportingAmounts = z.object({
+  gross: amount.nullable(),
+  fees: amount.nullable(),
+  taxes: amount.nullable(),
+  net: amount.nullable(),
+})
+export const incomeReportingSchema = z.object({
+  currency: z.string(),
+  quality: z.enum(['COMPLETE', 'PARTIAL']),
+  missing_currencies: z.array(z.string()),
+  totals: reportingAmounts,
+  known_net: amount,
+  start: z.string(),
+  end: z.string(),
+  method: z.string(),
+  fx_policy: z.string(),
+  events: z.array(
+    reportingAmounts.extend({
+      id: z.string(),
+      date: z.string(),
+      account_id: z.string(),
+      account: z.string(),
+      asset_id: z.string().nullable(),
+      symbol: z.string(),
+      type: z.string(),
+      currency: z.string(),
+      original: z.object({
+        currency: z.string(),
+        gross: amount,
+        fees: amount,
+        taxes: amount,
+        net: amount,
+      }),
+      fx: z
+        .object({ date: z.string(), rate: amount, provider: z.string() })
+        .nullable(),
+    }),
+  ),
+  months: z.array(
+    reportingAmounts.extend({ month: z.string(), currency: z.string() }),
+  ),
+  breakdowns: z.record(
+    z.string(),
+    z.array(
+      reportingAmounts.extend({
+        name: z.string(),
+        id: z.string().nullable(),
+        currency: z.string(),
+      }),
+    ),
+  ),
+})
+export type IncomeReporting = z.infer<typeof incomeReportingSchema>
+const accrualSnapshot = z.object({
+  date: z.string(),
+  principal: amount.nullable(),
+  value: amount.nullable(),
+  gross_interest: amount.nullable(),
+  estimated_net_earnings: amount.nullable(),
+  income_tax: amount.nullable(),
+  iof: amount.nullable(),
+  quality: z.string(),
+})
+export const accrualIncomeSchema = z.object({
+  start: z.string(),
+  end: z.string(),
+  currency: z.string(),
+  opening: accrualSnapshot,
+  closing: accrualSnapshot,
+  period: z.object({
+    gross: amount.nullable(),
+    estimated_net: amount.nullable(),
+    redeemed_gross: amount,
+    redeemed_net: amount,
+  }),
+  history: fixedHistory,
+  contracts_count: z.number(),
+  quality: z.string(),
+  method: z.string(),
+  net_policy: z.string(),
+})
+export async function getAccruedIncome(
+  start: string,
+  end: string,
+  accountId: string,
+  signal?: AbortSignal,
+) {
+  return accrualIncomeSchema.parse(
+    await request(
+      `/investments/analytics/income/accrual?${analyticsParams(start, end, 'BRL', accountId)}`,
+      { signal },
+    ),
+  )
+}
 export const incomeSchema = z.object({
+  reporting: incomeReportingSchema.nullable().optional(),
   redemptions: z
     .array(
       z.object({
@@ -128,6 +226,20 @@ export const allocationSchema = z.object({
         currency: z.string(),
         original_value: amount.nullable(),
         value: amount.nullable(),
+        symbol: z.string().optional(),
+        name: z.string().optional(),
+        asset_class: z.string().optional(),
+        sector: z.string().optional(),
+        geography: z.string().optional(),
+        instrument_type: z.string().optional(),
+        issuer: z.string().optional(),
+        contract_fictional: z.boolean().optional(),
+        price_source: z.string().nullable().optional(),
+        price_date: z.string().nullable().optional(),
+        quantity: amount.optional(),
+        cost_basis: amount.optional(),
+        reporting_cost_basis: amount.nullable().optional(),
+        reporting_unrealized: amount.nullable().optional(),
       }),
     )
     .optional(),
@@ -139,6 +251,17 @@ export const allocationSchema = z.object({
   groups: z.record(z.string(), z.array(allocationGroup)),
   concentration: z.record(z.string(), amount.nullable()),
   metadata_policy: z.string(),
+  summary: z
+    .object({
+      cash_value: amount.nullable(),
+      invested_value: amount.nullable(),
+      cost_basis: amount.nullable(),
+      unrealized: amount.nullable(),
+      holdings_count: z.number(),
+      accounts_count: z.number(),
+      basis_fx_policy: z.string(),
+    })
+    .optional(),
 })
 export const insightsSchema = z.object({
   activity_trends: z
@@ -214,11 +337,7 @@ export async function getInsights(params: string, signal?: AbortSignal) {
 
 export function percent(value: string | null) {
   if (value === null) return t('common:unavailable')
-  // Intl consumes the exact decimal string; this cast bridges its older TS signature.
-  const format = new Intl.NumberFormat(getLocale(), {
-    maximumFractionDigits: 2,
-  }).format as unknown as (value: string) => string
-  return `${format(value)}%`
+  return formatExactPercent(value)
 }
 
 export function startDate(period: string, end: string, custom: string) {
@@ -250,3 +369,9 @@ export const analyticsPeriods = [
   'ALL',
   'Custom',
 ]
+
+/** Only complete projections enter chart/summary adapters. Partial coverage is never zero-filled. */
+export function reportedIncome(data: Income): Income | undefined {
+  if (data.reporting?.quality !== 'COMPLETE') return undefined
+  return incomeSchema.parse(data.reporting)
+}

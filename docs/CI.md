@@ -14,6 +14,39 @@ release tagging, banking credentials or paid GitHub features are involved.
 
 ## Jobs and local equivalents
 
+### v0.14 lockfile repair (2026-11-21)
+
+The original v0.14 PR failed before frontend tests: npm 10.9.9 could not validate
+the optional `@tailwindcss/oxide-wasm32-wasi` dependency subtree. Its bundled
+`@emnapi/core` and `@emnapi/runtime` entries were absent, so npm tried to resolve
+newer unrecorded 1.11.3 packages and `wasi-threads` 1.2.3. Restoring the actual
+bundled 1.11.1 entries, which reference the already locked threads 1.2.2, repairs
+the tree. No existing package versions, integrity hashes or manifest constraints
+were changed; the accepted minimatch risk remains documented separately.
+
+Reproduction and verification use Node 22 and CI's npm 10.9.9 in a disposable
+directory containing copies of the frontend manifest/lockfile:
+
+```sh
+npm exec --yes --package=npm@10.9.9 -- npm ci --dry-run --os=linux --cpu=x64
+npm exec --yes --package=npm@10.9.9 -- npm ci
+```
+
+The first command reproduced the exact failure before repair; the corrected tree
+also passes a clean local install. Actual Linux installation and the normal test,
+lint/type/build/browser jobs must still pass on GitHub before merging. Do not
+replace `npm ci`, discard the lockfile or force major dependency overrides.
+
+Once installation succeeded, CI exposed pre-migration browser selectors. The
+standard demo runner now uses the labeled searchbox, Add Activities/type-picker
+flow, row-body editing, budget row actions and current goal metadata dialog.
+It retains the exact expense/income/balance assertions, transfer reporting
+exclusions, import/reconciliation decisions, reset and responsive checks. Posting
+waits for the actual successful API response before balances are read. The
+Settings component test also waits for its code-split screen on cold runners;
+its General/category navigation assertions are unchanged. These are test-harness
+compatibility fixes, not changes to financial behavior or skipped CI checks.
+
 | Job | Commands |
 | --- | --- |
 | Backend tests and migrations | In backend: `uv sync --frozen`; `uv run --frozen --no-sync ruff check . ../scripts`; `uv run --frozen --no-sync ruff format --check . ../scripts`; `uv run --frozen --no-sync pytest` |

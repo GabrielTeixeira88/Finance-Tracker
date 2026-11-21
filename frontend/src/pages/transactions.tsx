@@ -1,6 +1,11 @@
+import { SpendingTable } from '@/features/activities/spending/spending-table'
+import { DeleteTransactionsDialog } from '@/features/activities/spending/delete-transactions-dialog'
 import { DetailDrawer } from '@/components/detail-drawer'
+import { ActivityEditor } from '@/features/activities/activity-editor'
+import { TransactionsFilterBar } from '@/features/activities/spending/transactions-filter-bar'
+import { TransactionsBulkBar } from '@/features/activities/spending/transactions-bulk-bar'
 import { t as tr } from '@/lib/i18n'
-import { useState } from 'react'
+import { useState, useImperativeHandle, type Ref } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Field, TransactionForm, TransactionComposer } from '@/components/forms'
 import { Button } from '@/components/ui/button'
@@ -30,16 +35,36 @@ export default function Transactions({
   categories,
   account,
   initialFilters,
+  embedded = false,
+  workspaceRef,
 }: {
   accounts: Account[]
   categories: Category[]
   initialFilters?: Record<string, string>
   account?: Account
+  embedded?: boolean
+  workspaceRef?: Ref<{ openAddForm: () => void }>
 }) {
   const [ruleSource, setRuleSource] = useState<Transaction>()
   const [editing, setEditing] = useState<Transaction>()
   const [inspecting, setInspecting] = useState<Transaction>()
+  const [draft, setDraft] = useState<Transaction>()
+  const [deleting, setDeleting] = useState<Transaction>()
+  const LedgerTable = embedded ? SpendingTable : TransactionTable
+  const Drawer = embedded ? ActivityEditor : DetailDrawer
+  const BulkActions = embedded ? TransactionsBulkBar : BulkTransactionActions
   const [creating, setCreating] = useState(false)
+  useImperativeHandle(
+    workspaceRef,
+    () => ({
+      openAddForm: () => {
+        setEditing(undefined)
+        setDraft(undefined)
+        setCreating(true)
+      },
+    }),
+    [],
+  )
   const [filters, setFilters] = useState<Record<string, string>>({
     ...initialFilters,
     ...(account ? { account_id: account.id } : {}),
@@ -87,34 +112,66 @@ export default function Transactions({
   }
   return (
     <>
+      <DeleteTransactionsDialog
+        open={deleting !== undefined}
+        count={1}
+        preview={
+          deleting
+            ? {
+                activityType: deleting.transaction_type,
+                amount: deleting.amount,
+                currency: deleting.currency,
+              }
+            : undefined
+        }
+        isPending={mutation.isPending}
+        onCancel={() => setDeleting(undefined)}
+        onConfirm={() => {
+          if (deleting)
+            mutation.mutate(
+              { path: `/transactions/${deleting.id}`, method: 'DELETE' },
+              {
+                onSuccess: () => {
+                  setDeleting(undefined)
+                  setEditing(undefined)
+                  setOffset(0)
+                  setSelected([])
+                },
+              },
+            )
+        }}
+      />
       {inspecting && (
         <TransactionSources
           row={inspecting}
           onClose={() => setInspecting(undefined)}
         />
       )}
-      <PageHeader
-        title={account?.name ?? tr('dynamic:transactions_1e3281')}
-        description={
-          account
-            ? `${label(account.type)} · ${account.currency}${account.active ? '' : ' · Inactive'}`
-            : tr(
-                'dynamic:your_financial_ledger_transfers_stay_separate_fr_ef279b',
-              )
-        }
-      >
-        <Button
-          onClick={() => {
-            setEditing(undefined)
-            setCreating(!creating)
-          }}
+      {!embedded && (
+        <PageHeader
+          title={account?.name ?? tr('dynamic:transactions_1e3281')}
+          description={
+            account
+              ? `${label(account.type)} · ${account.currency}${account.active ? '' : ' · Inactive'}`
+              : tr(
+                  'dynamic:your_financial_ledger_transfers_stay_separate_fr_ef279b',
+                )
+          }
         >
-          {creating
-            ? tr('dynamic:close_form_56adc8')
-            : tr('dynamic:_add_transaction_d1583a')}
-        </Button>
-      </PageHeader>
-      {account && (
+          <Button
+            onClick={() => {
+              setEditing(undefined)
+              setDraft(undefined)
+              setCreating(!creating)
+            }}
+          >
+            {creating
+              ? tr('dynamic:close_form_56adc8')
+              : tr('dynamic:_add_transaction_d1583a')}
+          </Button>
+        </PageHeader>
+      )}
+      {account && !embedded && (
         <div className="account-detail-strip">
           <span className="metadata">
             {tr('transactions:calculated_balance_all_recorded_dates_57ff7d')}
@@ -126,7 +183,7 @@ export default function Transactions({
         </div>
       )}
       {ruleSource && (
-        <DetailDrawer
+        <Drawer
           title={tr('rules:transaction_rules_eafa08')}
           onClose={() => setRuleSource(undefined)}
         >
@@ -163,14 +220,17 @@ export default function Transactions({
                   : (value ?? '')
             }
           />
-        </DetailDrawer>
+        </Drawer>
       )}
       {creating && (
-        <DetailDrawer
+        <Drawer
           title={tr('dynamic:_add_transaction_d1583a')}
           onClose={() => setCreating(false)}
         >
           <TransactionComposer
+            native={embedded}
+            key={draft?.id ?? 'new'}
+            initialDraft={draft}
             accounts={accounts}
             categories={categories}
             onSaved={() => {
@@ -178,10 +238,10 @@ export default function Transactions({
               setOffset(0)
             }}
           />
-        </DetailDrawer>
+        </Drawer>
       )}
       {editing && (
-        <DetailDrawer
+        <Drawer
           title={editing.description}
           onClose={() => setEditing(undefined)}
         >
@@ -207,10 +267,12 @@ export default function Transactions({
               />
             )
           )}
-        </DetailDrawer>
+        </Drawer>
       )}
-      <section className="panel">
-        <h2>{tr('transactions:transaction_history_aa7d3d')}</h2>
+      <section className={embedded ? 'space-y-3' : 'panel'}>
+        <h2 className={embedded ? 'sr-only' : undefined}>
+          {tr('transactions:transaction_history_aa7d3d')}
+        </h2>
         {(filters.spending_only ||
           filters.uncategorized ||
           filters.payee_id ||
@@ -234,61 +296,82 @@ export default function Transactions({
             </Button>
           </p>
         )}
-        <div className="filter-bar">
-          <Field label={tr('transactions:search_transactions_f6d97d')}>
-            <input
-              type="search"
-              maxLength={500}
-              placeholder={tr(
-                'transactions:description_merchant_or_payee_1579d6',
-              )}
-              value={filters.search ?? ''}
-              onChange={(e) => filter('search', e.target.value)}
-            />
-          </Field>
-          <Field label={tr('transactions:filter_account_b31a18')}>
-            <select
-              disabled={!!account}
-              value={filters.account_id ?? ''}
-              onChange={(e) => filter('account_id', e.target.value)}
-            >
-              <option value="">{tr('transactions:all_accounts_6a19f2')}</option>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
+        {embedded ? (
+          <TransactionsFilterBar
+            filters={filters}
+            accounts={accounts}
+            categories={categories}
+            account={account}
+            onChange={filter}
+            onClear={() => {
+              const next: Record<string, string> = account
+                ? { account_id: account.id }
+                : {}
+              setFilters(next)
+              rememberLedgerFilters(next)
+              setOffset(0)
+              setSelected([])
+            }}
+          />
+        ) : (
+          <div className="filter-bar">
+            <Field label={tr('transactions:search_transactions_f6d97d')}>
+              <input
+                type="search"
+                maxLength={500}
+                placeholder={tr(
+                  'transactions:description_merchant_or_payee_1579d6',
+                )}
+                value={filters.search ?? ''}
+                onChange={(e) => filter('search', e.target.value)}
+              />
+            </Field>
+            <Field label={tr('transactions:filter_account_b31a18')}>
+              <select
+                disabled={!!account}
+                value={filters.account_id ?? ''}
+                onChange={(e) => filter('account_id', e.target.value)}
+              >
+                <option value="">
+                  {tr('transactions:all_accounts_6a19f2')}
                 </option>
-              ))}
-            </select>
-          </Field>
-          <Field label={tr('transactions:filter_type_60c8f1')}>
-            <select
-              value={filters.transaction_type ?? ''}
-              onChange={(e) => filter('transaction_type', e.target.value)}
-            >
-              <option value="">{tr('transactions:all_types_30c8a0')}</option>
-              {transactionTypes.map((t) => (
-                <option key={t} value={t}>
-                  {label(t)}
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label={tr('transactions:filter_type_60c8f1')}>
+              <select
+                value={filters.transaction_type ?? ''}
+                onChange={(e) => filter('transaction_type', e.target.value)}
+              >
+                <option value="">{tr('transactions:all_types_30c8a0')}</option>
+                {transactionTypes.map((t) => (
+                  <option key={t} value={t}>
+                    {label(t)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label={tr('transactions:filter_category_41feed')}>
+              <select
+                value={filters.category_id ?? ''}
+                onChange={(e) => filter('category_id', e.target.value)}
+              >
+                <option value="">
+                  {tr('transactions:all_categories_060be0')}
                 </option>
-              ))}
-            </select>
-          </Field>
-          <Field label={tr('transactions:filter_category_41feed')}>
-            <select
-              value={filters.category_id ?? ''}
-              onChange={(e) => filter('category_id', e.target.value)}
-            >
-              <option value="">
-                {tr('transactions:all_categories_060be0')}
-              </option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        )}
         <details
           className="ledger-advanced"
           open={
@@ -392,7 +475,8 @@ export default function Transactions({
           )}
         </p>
         {selected.length > 0 && !invalidRange && !rows.isError && rows.data && (
-          <BulkTransactionActions
+          <BulkActions
+            onClear={() => setSelected([])}
             key={selected.join(',')}
             rows={rows.data.rows.filter((row) => selected.includes(row.id))}
             categories={categories}
@@ -424,7 +508,15 @@ export default function Transactions({
             </Button>
           </p>
         ) : (
-          <TransactionTable
+          <LedgerTable
+            {...(embedded
+              ? { pageOffset: offset, pageTotal: rows.data.total }
+              : {})}
+            onDuplicate={(row: Transaction) => {
+              setDraft(row)
+              setEditing(undefined)
+              setCreating(true)
+            }}
             onInspect={setInspecting}
             onCreateRule={setRuleSource}
             rows={rows.data.rows}
@@ -451,6 +543,10 @@ export default function Transactions({
               setCreating(false)
             }}
             onDelete={(row) => {
+              if (embedded) {
+                setDeleting(row)
+                return
+              }
               if (
                 window.confirm(
                   tr(

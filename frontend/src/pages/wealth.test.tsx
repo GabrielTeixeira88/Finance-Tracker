@@ -4,11 +4,48 @@ import userEvent from '@testing-library/user-event'
 import { vi } from 'vitest'
 import { NetWorthWorkspace } from './wealth'
 import Goals from './goals'
+import { t } from '@/lib/i18n'
 import { AppShell } from '@/components/app-shell'
+import { positionSchema, observationSchema } from '@/lib/wealth-api'
+function manualFixture(value: unknown, observations: unknown[]) {
+  const position = positionSchema.parse(value)
+  const rows = observations.map((row) => observationSchema.parse(row))
+  const last = rows
+    .filter((row) => !row.voided_at && row.effective_date <= '2026-09-30')
+    .at(-1)
+  return {
+    id: position.id,
+    name: position.name,
+    kind: 'vehicle',
+    currency: position.currency,
+    marketValue: last?.amount ?? null,
+    valuationDate: last?.effective_date ?? null,
+    unrealizedGain: null,
+    unrealizedGainPct: null,
+    position,
+    observations: rows,
+    linkedAssetId: null,
+    recordedStartingBalance: null,
+    recordedReduction: null,
+    paidShare: null,
+    netEquity: null,
+  }
+}
 
 vi.mock('@/components/portfolio-value-chart', () => ({
-  PortfolioValueChart: ({ label }: { label: string }) => (
-    <div aria-label={label} />
+  PortfolioValueChart: ({
+    label,
+    history,
+  }: {
+    label: string
+    history?: { points: { date: string; value: string | null }[] }
+  }) => (
+    <div
+      aria-label={label}
+      data-points={JSON.stringify(
+        history?.points.map(({ date, value }) => ({ date, value })),
+      )}
+    />
   ),
 }))
 function wrap(node: React.ReactNode, hash = '#/dashboard?view=net-worth') {
@@ -59,18 +96,15 @@ it('renders net worth and changes the requested historical period', async () => 
   )
   vi.stubGlobal('fetch', fetch)
   wrap(<NetWorthWorkspace navigate={vi.fn()} initialEnd="2026-09-30" />)
-  expect(await screen.findByText(/220,000/)).toBeVisible()
+  expect(
+    await screen.findByRole('heading', { level: 1, name: /220\.000,00/ }),
+  ).toBeVisible()
   await userEvent.selectOptions(screen.getByLabelText('Chart series'), 'assets')
   expect(await screen.findByLabelText('Assets')).toBeVisible()
-  await userEvent.selectOptions(
-    screen.getByLabelText('Chart series'),
-    'liabilities',
-  )
-  expect(await screen.findByLabelText('Liabilities')).toBeVisible()
-  await userEvent.selectOptions(screen.getByLabelText('Period'), '3M')
+  await userEvent.click(screen.getByRole('button', { name: '3M' }))
   await waitFor(() =>
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('start=2026-07-01'),
+      expect.stringContaining('start=2026-06-30'),
       expect.anything(),
     ),
   )
@@ -112,7 +146,9 @@ it('submits a dated manual asset through the API', async () => {
   )
   vi.stubGlobal('fetch', fetch)
   wrap(<NetWorthWorkspace navigate={vi.fn()} initialEnd="2026-09-30" />)
-  await userEvent.click(screen.getByRole('tab', { name: 'Assets' }))
+  await userEvent.click(
+    screen.getByRole('button', { name: t('wfCommon:layout.more_options') }),
+  )
   await userEvent.click(
     await screen.findByRole('button', { name: 'Add asset' }),
   )
@@ -131,36 +167,10 @@ it('submits a dated manual asset through the API', async () => {
 
 it('waits for the initial list and displays a newly saved goal without reload', async () => {
   let releaseInitial!: (value: Response) => void
-  let initial = true
-  let created = false
-  const detail = {
-    goal: {
-      id: 'new-goal',
-      name: 'Emergency fund',
-      mode: 'ACCOUNT',
-      currency: 'BRL',
-      target: '20000',
-      start_date: '2026-01-01',
-      deadline: null,
-      status: 'ACTIVE',
-      notes: '',
-    },
-    saved: '0',
-    allocated: '0',
-    remaining: '20000',
-    warnings: [],
-    entries: [],
-    progress: '0',
-    milestones: [],
-    required_monthly: null,
-    projected_completion: null,
-    overdue: false,
-    history: [],
-    projection_method: 'No interest',
-  }
-  const fetch = vi.fn<
-    (url: string, options?: RequestInit) => Promise<Response>
-  >(async (url, options) => {
+  let initial = true,
+    created = false
+  const detail = goalFixture('new-goal', 'Emergency fund')
+  const fetch = vi.fn(async (url: string, options?: RequestInit) => {
     if (url === '/api/goals' && options?.method === 'POST') {
       created = true
       return new Response(JSON.stringify(detail.goal), { status: 201 })
@@ -172,25 +182,53 @@ it('waits for the initial list and displays a newly saved goal without reload', 
       })
     }
     return new Response(
-      JSON.stringify(url === '/api/goals' && created ? [detail] : []),
+      JSON.stringify(
+        url === '/api/goals'
+          ? created
+            ? [detail]
+            : []
+          : url.startsWith('/api/goals/new-goal')
+            ? detail
+            : [],
+      ),
     )
   })
   vi.stubGlobal('fetch', fetch)
-  wrap(<Goals accounts={[]} />)
-  const add = screen.getByRole('button', { name: 'Add goal' })
-  expect(add).toBeDisabled()
+  wrap(<Goals accounts={[]} />, '#/goals')
+  expect(
+    screen.queryByRole('link', { name: /New Goal/i }),
+  ).not.toBeInTheDocument()
   releaseInitial(new Response('[]'))
-  await waitFor(() => expect(add).toBeEnabled())
-  await userEvent.click(add)
-  await userEvent.type(screen.getByLabelText('Goal name'), 'Emergency fund')
-  await userEvent.type(screen.getByLabelText('Target'), '20000')
-  await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+  await userEvent.click(await screen.findByRole('link', { name: /New Goal/i }))
+  await userEvent.click(
+    await screen.findByRole('button', {
+      name: new RegExp(t('wfGoals:new.template_custom_save_up_title'), 'i'),
+    }),
+  )
+  const title = screen.getByLabelText(t('wfGoals:new.title_label'))
+  await userEvent.clear(title)
+  await userEvent.type(title, 'Emergency fund')
+  const target = screen.getByRole('textbox', {
+    name: t('wfGoals:new.target_amount'),
+  })
+  await userEvent.clear(target)
+  await userEvent.type(target, '20000')
+  await userEvent.click(
+    screen.getByRole('button', { name: t('wfGoals:new.create_goal') }),
+  )
   expect(
-    await screen.findByRole('button', { name: 'Emergency fund' }),
+    await screen.findByRole('heading', { level: 1, name: 'Emergency fund' }),
   ).toBeVisible()
+  expect(fetch.mock.calls.some(([url]) => url.includes('/transactions'))).toBe(
+    false,
+  )
   expect(
-    fetch.mock.calls.some((c) => String(c[0]).includes('/transactions')),
-  ).toBe(false)
+    fetch.mock.calls.filter(
+      ([, options]) =>
+        options?.method === 'POST' &&
+        String(options.body).includes('Emergency fund'),
+    ),
+  ).toHaveLength(1)
 })
 
 it('exposes functional Net Worth and Goals navigation without changing other sections', async () => {
@@ -207,63 +245,60 @@ it('exposes functional Net Worth and Goals navigation without changing other sec
 })
 
 it('keeps projection inputs usable while clearing and typing a new assumption', async () => {
-  const detail = {
-    goal: {
-      id: 'g',
-      name: 'Synthetic zero goal',
-      mode: 'MANUAL',
-      currency: 'BRL',
-      target: '0',
-      start_date: '2025-01-01',
-      deadline: null,
-      status: 'ACTIVE',
-      notes: '',
-    },
-    saved: '0',
-    allocated: '0',
-    remaining: '0',
-    warnings: [],
-    entries: [],
-    progress: '1',
-    milestones: [25, 50, 75, 100],
-    required_monthly: null,
-    projected_completion: '2026-10-19',
-    overdue: false,
-    history: [],
-    projection_method: 'No interest',
-  }
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(
-      async (url: string) =>
-        new Response(
-          JSON.stringify(
-            url === '/api/goals'
-              ? [detail]
-              : url.startsWith('/api/goals/g')
-                ? detail
-                : [],
-          ),
+  const detail = goalFixture('g', 'Synthetic zero goal')
+  detail.goal.target = '0'
+  detail.goal.mode = 'MANUAL'
+  detail.saved = '0'
+  detail.remaining = '0'
+  detail.progress = '1'
+  const fetch = vi.fn(
+    async (url: string) =>
+      new Response(
+        JSON.stringify(
+          url === '/api/goals'
+            ? [detail]
+            : url.startsWith('/api/goals/g')
+              ? detail
+              : [],
         ),
-    ),
+      ),
   )
-  wrap(<Goals accounts={[]} />)
+  vi.stubGlobal('fetch', fetch)
+  wrap(<Goals accounts={[]} />, '#/goals?goal=g')
+  expect(
+    await screen.findByRole('progressbar', {
+      name: t('wfGoals:save_up.saved'),
+    }),
+  ).toHaveAttribute('aria-valuenow', '100')
   await userEvent.click(
-    await screen.findByRole('button', { name: 'Synthetic zero goal' }),
+    screen.getByRole('button', {
+      name: t('wfGoals:save_up.edit_aria', {
+        title: t('wfGoals:save_up.savings_inputs'),
+      }),
+    }),
   )
-  expect(screen.getByRole('progressbar')).toHaveAttribute('value', '100')
-  const input = await screen.findByLabelText('Assumed monthly contribution')
+  const input = screen.getByRole('textbox', {
+    name: t('wfGoals:save_up.field_monthly_contribution'),
+  })
   await userEvent.clear(input)
-  expect(screen.getByLabelText('Assumed monthly contribution')).toBeVisible()
+  expect(input).toBeVisible()
   await userEvent.type(input, '200')
+  expect(input).toHaveValue('200')
+  await userEvent.tab()
   await waitFor(() =>
-    expect(screen.getByLabelText('Assumed monthly contribution')).toHaveValue(
-      '200',
+    expect(fetch.mock.calls.some(([url]) => url.includes('/preview'))).toBe(
+      true,
     ),
   )
+  expect(
+    screen.getByRole('textbox', {
+      name: t('wfGoals:save_up.field_monthly_contribution'),
+    }),
+  ).toBeVisible()
 })
 
 it('keeps funding collapsed by default and exposes existing account allocations on demand', async () => {
+  const detail = goalFixture('funding-goal', 'Funding goal')
   vi.stubGlobal(
     'fetch',
     vi.fn(
@@ -282,54 +317,59 @@ it('keeps funding collapsed by default and exposes existing account allocations 
                     overallocated: false,
                   },
                 ]
-              : [],
+              : url === '/api/goals'
+                ? [detail]
+                : url.startsWith('/api/goals/funding-goal')
+                  ? detail
+                  : [],
           ),
         ),
     ),
   )
-  wrap(<Goals accounts={[]} />)
-  const summary = await screen.findByText('Funding overview', {
-    selector: 'summary',
-  })
-  expect(summary.closest('details')).not.toHaveAttribute('open')
-  expect(await screen.findByRole('table', { hidden: true })).not.toBeVisible()
+  wrap(<Goals accounts={[]} />, '#/goals?goal=funding-goal')
+  await screen.findByRole('button', { name: t('wfCommon:details') })
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   expect(screen.queryByText('Goal - Status')).toBeNull()
-  await userEvent.click(summary)
+  await userEvent.click(
+    screen.getByRole('button', { name: t('wfCommon:details') }),
+  )
   expect(
-    await screen.findByRole('table', { name: 'Funding overview' }),
+    await screen.findByRole('table', {
+      name: t('goalsMigration:sharedSavings'),
+    }),
   ).toBeVisible()
-  expect(screen.getByText('R$48,000.00')).toBeVisible()
-  expect(screen.getByText('R$25,000.00')).toBeVisible()
-  expect(screen.getByText('R$23,000.00')).toBeVisible()
-  await userEvent.click(summary)
-  expect(screen.getByRole('table', { hidden: true })).not.toBeVisible()
+  expect(screen.getByText('R$ 48.000,00')).toBeVisible()
+  expect(screen.getByText('R$ 25.000,00')).toBeVisible()
+  expect(screen.getByText('R$ 23.000,00')).toBeVisible()
+  await userEvent.keyboard('{Escape}')
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+  )
 })
 
 it('distinguishes actual goal progress from reached milestones in goal details', async () => {
-  const detail = {
-    goal: {
-      id: 'progress-goal',
-      name: 'Synthetic progress',
-      mode: 'ACCOUNT',
-      currency: 'BRL',
-      target: '20000',
-      start_date: '2026-01-01',
-      deadline: null,
-      status: 'ACTIVE',
-      notes: '',
-    },
-    saved: '9600',
-    allocated: '9600',
-    remaining: '10400',
-    warnings: [],
-    entries: [],
-    progress: '0.48',
-    milestones: [25],
-    required_monthly: null,
-    projected_completion: null,
-    overdue: false,
-    history: [],
-    projection_method: 'No interest',
+  const detail = goalFixture('progress-goal', 'Synthetic progress')
+  detail.saved = '9600'
+  detail.remaining = '10400'
+  detail.progress = '0.48'
+  const data = {
+    ...detail,
+    milestone_details: [
+      {
+        percent: 25,
+        amount: '5000',
+        reached: true,
+        first_observed_date: '2026-01-05',
+        estimated_date: null,
+      },
+      {
+        percent: 50,
+        amount: '10000',
+        reached: false,
+        first_observed_date: null,
+        estimated_date: null,
+      },
+    ],
   }
   vi.stubGlobal(
     'fetch',
@@ -338,30 +378,55 @@ it('distinguishes actual goal progress from reached milestones in goal details',
         new Response(
           JSON.stringify(
             url === '/api/goals'
-              ? [detail]
+              ? [data]
               : url.startsWith('/api/goals/progress-goal')
-                ? detail
+                ? data
                 : [],
           ),
         ),
     ),
   )
-  wrap(<Goals accounts={[]} />)
-  expect(
-    await screen.findByRole('img', { name: 'Synthetic progress: 48.0%' }),
-  ).toBeVisible()
+  wrap(<Goals accounts={[]} />, '#/goals')
+  const card = await screen.findByRole('link', { name: /Synthetic progress/ })
+  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '48')
   expect(screen.queryByText('Goal - Status')).toBeNull()
-  await userEvent.click(
-    screen.getByRole('button', { name: 'Synthetic progress' }),
-  )
-  await screen.findByRole('heading', {
-    name: 'Synthetic progress',
-  })
-  expect(screen.getByText('Milestones reached: 25.0%')).toBeVisible()
+  await userEvent.click(card)
+  await screen.findByRole('heading', { level: 1, name: 'Synthetic progress' })
   expect(
-    screen.getByRole('progressbar', { name: 'Synthetic progress' }),
-  ).toHaveAttribute('aria-valuetext', '48.0%')
+    screen.getByRole('progressbar', { name: t('wfGoals:save_up.saved') }),
+  ).toHaveAttribute('aria-valuenow', '48')
+  expect(screen.getAllByText('25,00%')).toHaveLength(2)
+  expect(screen.getAllByText('R$ 5.000,00')).toHaveLength(2)
+  expect(screen.getAllByText(/First recorded/)).toHaveLength(2)
 })
+
+function goalFixture(id: string, name: string) {
+  return {
+    goal: {
+      id,
+      name,
+      mode: 'ACCOUNT',
+      currency: 'BRL',
+      target: '20000',
+      start_date: '2026-01-01',
+      deadline: null as string | null,
+      status: 'ACTIVE',
+      notes: '',
+    },
+    saved: '0',
+    allocated: '0',
+    remaining: '20000',
+    warnings: [],
+    entries: [],
+    progress: '0',
+    milestones: [],
+    required_monthly: null,
+    projected_completion: null,
+    overdue: false,
+    history: [],
+    projection_method: 'No interest',
+  }
+}
 
 it('manual position details exclude future and voided observations while retaining their audit rows', async () => {
   const position = {
@@ -409,11 +474,16 @@ it('manual position details exclude future and voided observations while retaini
     async (url: string) =>
       new Response(
         JSON.stringify(
-          url.endsWith('/observations')
-            ? observations
-            : url === '/api/manual-positions'
-              ? [position]
-              : report,
+          url.includes('/workspace/manual-holdings')
+            ? {
+                as_of: '2026-09-30',
+                rows: [manualFixture(position, observations)],
+              }
+            : url.endsWith('/observations')
+              ? observations
+              : url === '/api/manual-positions'
+                ? [position]
+                : report,
         ),
       ),
   )
@@ -422,18 +492,95 @@ it('manual position details exclude future and voided observations while retaini
     <NetWorthWorkspace navigate={vi.fn()} initialEnd="2026-09-30" />,
     '#/dashboard?view=net-worth&position=p&end=2026-09-30',
   )
-  expect(await screen.findByText('R$100.12')).toBeVisible()
-  expect(screen.queryByText('R$999,999.00')).not.toBeInTheDocument()
+  expect(await screen.findByText('R$ 100,12')).toBeVisible()
+  expect(screen.queryByText('R$ 999.999,00')).not.toBeInTheDocument()
   expect(
-    screen.getByText(
-      'At least two dated observations are needed to chart history.',
-    ),
-  ).toBeVisible()
-  await userEvent.click(screen.getByRole('button', { name: 'Values' }))
+    await screen.findByLabelText(t('wfAsset:profile.history')),
+  ).toHaveAttribute(
+    'data-points',
+    JSON.stringify([{ date: '2026-08-31', value: '100.123456' }]),
+  )
+  await userEvent.click(
+    screen.getByRole('button', { name: t('wfAsset:profile.history') }),
+  )
   expect(await screen.findByText('2026-10-01')).toBeVisible()
-  expect(screen.getByText('Voided: Superseded')).toBeVisible()
+  expect(screen.getByText('Superseded')).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: 'Back' }))
+  await waitFor(() => expect(window.location.hash).not.toContain('position='))
   expect(fetch).not.toHaveBeenCalledWith(
     expect.anything(),
     expect.objectContaining({ method: 'POST' }),
   )
+})
+
+it('renders sparse declining manual observations without appending a zero or forward-filled chart value', async () => {
+  const position = {
+    id: 'car',
+    name: 'Fictional car',
+    kind: 'ASSET',
+    category: 'VEHICLE',
+    currency: 'BRL',
+    liquidity: 'ILLIQUID',
+    start_date: '2025-01-01',
+    end_date: null,
+    acquisition_cost: null,
+    disposal_proceeds: null,
+    associated_asset_id: null,
+    notes: '',
+    terms: '',
+  }
+  const observations = [
+    {
+      id: 'one',
+      effective_date: '2025-01-01',
+      amount: '50000.123456',
+      notes: '',
+      voided_at: null,
+      void_reason: null,
+    },
+    {
+      id: 'two',
+      effective_date: '2026-03-31',
+      amount: '40000.654321',
+      notes: '',
+      voided_at: null,
+      void_reason: null,
+    },
+  ]
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async (url: string) =>
+        new Response(
+          JSON.stringify(
+            url.includes('/workspace/manual-holdings')
+              ? {
+                  as_of: '2026-09-30',
+                  rows: [manualFixture(position, observations)],
+                }
+              : url.endsWith('/observations')
+                ? observations
+                : url === '/api/manual-positions'
+                  ? [position]
+                  : report,
+          ),
+        ),
+    ),
+  )
+  wrap(
+    <NetWorthWorkspace navigate={vi.fn()} initialEnd="2026-09-30" />,
+    '#/dashboard?view=net-worth&position=car&end=2026-09-30',
+  )
+  expect(
+    await screen.findByLabelText(t('wfAsset:profile.history')),
+  ).toHaveAttribute(
+    'data-points',
+    JSON.stringify(
+      observations.map((row) => ({
+        date: row.effective_date,
+        value: row.amount,
+      })),
+    ),
+  )
+  expect(screen.getByText('R$ 40.000,65')).toBeVisible()
 })

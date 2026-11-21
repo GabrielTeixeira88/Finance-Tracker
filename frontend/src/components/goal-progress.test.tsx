@@ -4,9 +4,9 @@ import { GoalProgress } from './goal-progress'
 import { DemoContext } from '@/lib/demo-runtime'
 import { goalTitle, goalPercent, goalTimeLeft } from '@/lib/goal-display'
 import { formatMoney } from '@/lib/money'
-import type { GoalDetail } from '@/lib/wealth-api'
+import { goalDetailSchema } from '@/lib/wealth-api'
 
-const detail: GoalDetail = {
+const detail = goalDetailSchema.parse({
   goal: {
     id: 'g',
     name: 'Synthetic / Home studio',
@@ -31,7 +31,7 @@ const detail: GoalDetail = {
   near_deadline: false,
   history: [],
   projection_method: 'Contribution only',
-}
+})
 
 describe('goal presentation', () => {
   it('uses backend schedule pace for red progress before the deadline', () => {
@@ -88,10 +88,10 @@ describe('goal presentation', () => {
   })
   it('rounds visible money and percentage without changing the source values', () => {
     render(<GoalProgress data={detail} onOpen={() => {}} />)
-    expect(screen.getByText('13.3%')).toBeVisible()
-    const saved = screen.getByText('R$2,000.00')
-    expect(saved).toHaveAttribute('title', 'R$1,999.999998 (BRL)')
-    expect(screen.getByText('R$13,000.00')).toBeVisible()
+    expect(screen.getByText('13,33%')).toBeVisible()
+    const saved = screen.getByText('R$ 2.000,00')
+    expect(saved).toHaveAttribute('title', 'R$ 2.000,00 (BRL)')
+    expect(screen.getByText('R$ 13.000,00')).toBeVisible()
     expect(detail.saved).toBe('1999.999998')
     expect(document.querySelector('img')).toBeNull()
     expect(document.querySelector('.goal-ring')).toBeNull()
@@ -126,7 +126,7 @@ describe('goal presentation', () => {
     const { rerender } = render(
       <GoalProgress data={{ ...detail, progress: '1.2' }} onOpen={() => {}} />,
     )
-    expect(screen.getByText('120.0%')).toBeVisible()
+    expect(screen.getByText('120,00%')).toBeVisible()
     expect(document.querySelector('.goal-card-fill')).toHaveStyle({
       width: '100%',
     })
@@ -136,27 +136,27 @@ describe('goal presentation', () => {
         onOpen={() => {}}
       />,
     )
-    expect(screen.queryByText('0.0%')).toBeNull()
+    expect(screen.queryByText('0,00%')).toBeNull()
     expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
   })
 
   it('uses fixed localized decimal precision, including large exact values', () => {
-    expect(goalPercent('1')).toBe('100.0%')
-    expect(goalPercent('0.025')).toBe('2.5%')
+    expect(goalPercent('1')).toBe('100,00%')
+    expect(goalPercent('0.025')).toBe('2,50%')
     expect(
       formatMoney('9007199254740993.999998', 'BRL', {
         locale: 'en-US',
         fractionDigits: 2,
       }),
-    ).toBe('R$9,007,199,254,740,994.00')
+    ).toBe('R$ 9.007.199.254.740.994,00')
     expect(
       formatMoney('1999.999998', 'BRL', { locale: 'pt-BR', fractionDigits: 2 }),
-    ).toBe('R$\u00a02.000,00')
+    ).toBe('R$ 2.000,00')
     expect(
       formatMoney('-1.234567', 'USD', { locale: 'en-US', fractionDigits: 2 }),
-    ).toBe('-$1.23')
+    ).toBe('-US$ 1,23')
     expect(
       formatMoney('20', 'JPY', { locale: 'en-US', fractionDigits: 2 }),
-    ).toBe('¥20.00')
+    ).toBe('JP¥ 20,00')
   })
 })

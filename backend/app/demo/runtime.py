@@ -21,16 +21,46 @@ DEFAULT_ROOT = PROJECT_ROOT / "data" / "demo-v012"
 
 
 class DemoStore:
-    def __init__(self, root: Path, normal_path: Path, scenario="real-market-br"):
-        if scenario not in {"synthetic", "real-market-br"}:
+    def __init__(
+        self, root: Path, normal_path: Path, scenario="real-market-br", *, household_root=None
+    ):
+        if scenario not in {
+            "synthetic",
+            "real-market-br",
+            "etf-showcase",
+            "income-showcase",
+            "income-portfolio",
+            "unified",
+        }:
             raise ValueError("Unknown demo scenario")
         self.scenario = scenario
         self.version, self.seed = VERSION, seed
+        self.household_root = household_root
+        if scenario == "unified":
+            from app.demo.unified import VERSION as unified_version
+            from app.demo.unified import seed as unified_seed
+
+            self.version, self.seed = unified_version, unified_seed
         if scenario == "real-market-br":
             from app.demo.real_market import VERSION as market_version
             from app.demo.real_market import seed as market_seed
 
             self.version, self.seed = market_version, market_seed
+        if scenario == "etf-showcase":
+            from app.demo.etf_showcase import VERSION as showcase_version
+            from app.demo.etf_showcase import seed as showcase_seed
+
+            self.version, self.seed = showcase_version, showcase_seed
+        if scenario == "income-showcase":
+            from app.demo.income_showcase import VERSION as income_version
+            from app.demo.income_showcase import seed as income_seed
+
+            self.version, self.seed = income_version, income_seed
+        if scenario == "income-portfolio":
+            from app.demo.income_portfolio import VERSION as portfolio_version
+            from app.demo.income_portfolio import seed as portfolio_seed
+
+            self.version, self.seed = portfolio_version, portfolio_seed
         self.root = root.absolute()
         # Refuse symlinks/junctions before any filesystem mutation.
         for path in [self.root, *self.root.parents]:
@@ -93,6 +123,10 @@ class DemoStore:
                 "sqlite_0014",
                 "sqlite_0015",
                 "sqlite_0016",
+                "sqlite_0017",
+                "sqlite_0018",
+                "sqlite_0019",
+                "sqlite_0020",
             }:
                 staging = self.owned(f"build-{uuid4().hex}.db")
                 url = URL.create("sqlite+pysqlite", database=str(staging))
@@ -112,6 +146,11 @@ class DemoStore:
                     self.backup(baseline, self.owned(f"baseline-archive-{uuid4().hex}.db"))
                 staging.replace(baseline)
             self.validate(baseline)
+            if self.needs_content_upgrade(baseline):
+                staging = self.owned(f"build-{uuid4().hex}.db")
+                self.extend_content_copy(baseline, staging)
+                self.backup(baseline, self.owned(f"baseline-archive-{uuid4().hex}.db"))
+                staging.replace(baseline)
             active = self.owned("active.json")
             if active.exists():
                 name = json.loads(active.read_text())["database"]
@@ -124,6 +163,10 @@ class DemoStore:
                     "sqlite_0014",
                     "sqlite_0015",
                     "sqlite_0016",
+                    "sqlite_0017",
+                    "sqlite_0018",
+                    "sqlite_0019",
+                    "sqlite_0020",
                 }:
                     # Upgrade a copy, preserving edits and the prior generation on failure.
                     target = self.owned(f"session-{uuid4().hex}.db")
@@ -141,8 +184,18 @@ class DemoStore:
                         os.fsync(stream.fileno())
                     pointer.replace(active)
                     self.path = target
+                if self.needs_content_upgrade(self.path):
+                    target = self.owned(f"session-{uuid4().hex}.db")
+                    self.extend_content_copy(self.path, target)
+                    pointer = self.owned("next.json")
+                    with pointer.open("w") as stream:
+                        json.dump({"database": target.name}, stream)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    pointer.replace(active)
+                    self.path = target
                 self.engine = make_engine(URL.create("sqlite+pysqlite", database=str(self.path)))
-            else:
+            elif not self.resume_household():
                 self.reset()
             return self
         except Exception:
@@ -152,6 +205,119 @@ class DemoStore:
     def revision(self, path):
         with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)) as db:
             return db.execute("SELECT version_num FROM alembic_version").fetchone()[0]
+
+    def needs_content_upgrade(self, path):
+        """Read only the ownership marker; never adopt arbitrary local financial files."""
+        if self.scenario != "unified":
+            return False
+        from app.demo import (
+            audit_content,
+            dashboard_content,
+            goal_content,
+            holdings_activities,
+            performance_content,
+            settings_content,
+            spending_content,
+        )
+
+        self.validate(path)
+        with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)) as db:
+            payload = json.loads(
+                db.execute(
+                    "SELECT payload FROM demo_fixtures WHERE id = ?", (self.version,)
+                ).fetchone()[0]
+            )
+        needs_upgrade = False
+        for extension in (
+            holdings_activities,
+            spending_content,
+            goal_content,
+            performance_content,
+            dashboard_content,
+            settings_content,
+            audit_content,
+        ):
+            version = payload.get(extension.MARKER, 0)
+            if not isinstance(version, int) or version > extension.CONTENT_VERSION:
+                raise ValueError("Unknown unified demo content version")
+            needs_upgrade |= version < extension.CONTENT_VERSION
+        return needs_upgrade
+
+    def extend_content_copy(self, source, target):
+        """Extend a backup atomically; a failure leaves original rows and pointers untouched."""
+        from app.demo import (
+            audit_content,
+            dashboard_content,
+            goal_content,
+            holdings_activities,
+            performance_content,
+            settings_content,
+            spending_content,
+        )
+
+        self.validate(source)
+        self.backup(source, target)
+        engine = make_engine(URL.create("sqlite+pysqlite", database=str(target)))
+        try:
+            with Session(engine) as session, session.begin():
+                holdings_activities.extend(session)
+                spending_content.extend(session)
+                goal_content.extend(session)
+                performance_content.extend(session)
+                dashboard_content.extend(session)
+                settings_content.extend(session)
+                audit_content.extend(session)
+            with engine.connect() as connection:
+                connection.exec_driver_sql("PRAGMA wal_checkpoint(TRUNCATE)")
+        finally:
+            engine.dispose()
+        self.validate(target)
+
+    def resume_household(self):
+        """Extend a backup of the prior owned demo; never mutate the source or personal DB."""
+        if self.scenario != "unified" or self.household_root is None:
+            return False
+        source = DemoStore(self.household_root, self.normal_path, "real-market-br")
+        if not source.root.exists():
+            return False
+        marker, active = source.owned("owner.json"), source.owned("active.json")
+        if not marker.exists() or not active.exists():
+            raise ValueError("Existing household workspace has no validated active generation")
+        if json.loads(marker.read_text()) != {
+            "application": "finance-tracker-local-demo",
+            "version": source.version,
+        }:
+            raise ValueError("Unknown household workspace owner")
+        name = json.loads(active.read_text())["database"]
+        if not re.fullmatch(r"session-[a-f0-9]{32}\.db", name):
+            raise ValueError("Invalid household session")
+        original = source.owned(name)
+        source.validate(original)
+        target = self.owned(f"session-{uuid4().hex}.db")
+        self.backup(original, target)
+        config = Config(str(PROJECT_ROOT / "backend/alembic.ini"))
+        config.attributes["database_url"] = URL.create("sqlite+pysqlite", database=str(target))
+        command.upgrade(config, "head")
+        engine = make_engine(config.attributes["database_url"])
+        try:
+            from app.demo.unified import extend
+
+            with Session(engine) as session, session.begin():
+                extend(session)
+            with engine.connect() as connection:
+                connection.exec_driver_sql("PRAGMA wal_checkpoint(TRUNCATE)")
+            self.validate(target)
+            pointer = self.owned("next.json")
+            with pointer.open("w") as stream:
+                json.dump({"database": target.name}, stream)
+                stream.flush()
+                os.fsync(stream.fileno())
+            pointer.replace(self.owned("active.json"))
+        except Exception:
+            engine.dispose()
+            raise
+        self.engine, self.path = engine, target
+        return True
 
     def backup(self, source, target):
         with (

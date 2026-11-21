@@ -13,9 +13,60 @@ from app.schemas import Currency
 router = APIRouter(prefix="/api", tags=["spending and budgets"])
 
 
+@router.get("/spending/workspace")
+def spending_workspace(
+    db: DB, date_from: date, date_to: date, currency: Currency, as_of: date | None = None
+):
+    from app.spending_workspace import workspace
+
+    return workspace(db, date_from, date_to, currency, as_of or date.today())
+
+
 @router.get("/budgets/monthly")
 def monthly(db: DB, month: inputs.Month, currency: Currency, as_of: date | None = None):
     return budgets.monthly(db, month, currency, as_of)
+
+
+@router.get("/budgets/workspace")
+def budget_workspace(db: DB, month: inputs.Month, currency: Currency, as_of: date | None = None):
+    """Expose recorded plan versions for the editor; monthly remains authoritative."""
+    from app.investments import wire
+    from app.spending_appearance import annotate
+
+    targets = list(db.scalars(select(BudgetTarget).where(BudgetTarget.currency == currency)))
+    identifiers = [row.id for row in targets]
+    versions = list(
+        db.scalars(
+            select(BudgetVersion)
+            .where(BudgetVersion.target_id.in_(identifiers))
+            .order_by(BudgetVersion.month, BudgetVersion.id)
+        )
+    )
+    overrides = list(
+        db.scalars(
+            select(BudgetMonthOverride).where(
+                BudgetMonthOverride.target_id.in_(identifiers),
+                BudgetMonthOverride.month == spending.month_start(month),
+            )
+        )
+    )
+    return {
+        "report": budgets.monthly(db, month, currency, as_of),
+        "targets": wire(targets),
+        "versions": wire(versions),
+        "overrides": wire(overrides),
+        "groups": annotate(
+            db,
+            list(
+                db.scalars(
+                    select(BudgetGroup).order_by(
+                        BudgetGroup.sort_order, BudgetGroup.name, BudgetGroup.id
+                    )
+                )
+            ),
+            "group",
+        ),
+    }
 
 
 @router.post("/budgets/targets", status_code=201)
@@ -73,27 +124,41 @@ def copy_month(data: inputs.CopyMonth, db: DB):
 
 @router.get("/budgets/groups")
 def groups(db: DB):
-    return list(
-        db.scalars(
-            select(BudgetGroup).order_by(BudgetGroup.sort_order, BudgetGroup.name, BudgetGroup.id)
-        )
+    from app.spending_appearance import annotate
+
+    return annotate(
+        db,
+        list(
+            db.scalars(
+                select(BudgetGroup).order_by(
+                    BudgetGroup.sort_order, BudgetGroup.name, BudgetGroup.id
+                )
+            )
+        ),
+        "group",
     )
 
 
 @router.post("/budgets/groups", status_code=201)
 def create_group(data: inputs.GroupInput, db: DB):
-    row = BudgetGroup(**data.model_dump())
+    from app.spending_appearance import annotate, save
+
+    row = BudgetGroup(name=data.name, sort_order=data.sort_order)
     db.add(row)
     db.flush()
-    return row
+    save(db, row.id, "group", data)
+    return annotate(db, [row], "group")[0]
 
 
 @router.put("/budgets/groups/{group_id}")
 def update_group(group_id: UUID, data: inputs.GroupInput, db: DB):
+    from app.spending_appearance import annotate, save
+
     row = ledger.require(db, BudgetGroup, group_id)
     row.name, row.sort_order = data.name, data.sort_order
     db.flush()
-    return row
+    save(db, row.id, "group", data)
+    return annotate(db, [row], "group")[0]
 
 
 @router.delete("/budgets/groups/{group_id}", status_code=204)

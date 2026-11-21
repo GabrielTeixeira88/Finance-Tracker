@@ -15,8 +15,20 @@ back to Graphite. The newly requested fonts restore Manrope/Plex/DM keys.
 
 ## Independent preferences
 
+Appearance settings are ordered Language & Region, Appearance Mode, Color Theme,
+Charts, Font Family, then Sidebar Order (2026-11-06). The Financial Colors chooser
+has been removed. Existing saved gain/loss conventions remain compatible; default
+green gains/red losses and semantic warning/error colors are unchanged.
+
+Dashboard, reporting, holdings-filter and settings currency selectors were removed
+by user request on 2026-11-06. Screens use their existing default/reporting currency;
+explicit currency bookmarks and backend FX/coverage rules remain supported.
+Currency labels on amounts and original records are preserved. Account, security,
+manual-asset, goal and Life Event forms retain their record currency fields, as
+explicitly requested. This is a UI change, not a BRL conversion or data migration.
+
 `lib/preferences.ts` is the validated registry and runtime store. Only font,
-palette (theme identity), mode, chartPalette, financialColors and language enter
+palette (theme identity), mode, chartPalette, financialColors, language and sidebarOrder enter
 `finance-tracker-preferences-normal` / `finance-tracker-preferences-demo`.
 `public/appearance-init.js` validates the same catalog before first paint.
 `data-theme` remains light/dark, separate from `data-palette`,
@@ -27,7 +39,8 @@ financial records, credentials or API contract changes are involved.
 
 Charts offer Theme default (preserves the approved Classic colors), Balanced,
 Cool, Warm and Muted. Each independent palette supplies eight decorative series.
-Gain/loss conventions offer standard green/red, reversed red/green and neutral/blue.
+Legacy saved gain/loss conventions support standard green/red, reversed red/green
+and neutral/blue for compatibility; the chooser is no longer exposed in Settings.
 They affect financial signs, never error/destructive/success UI states. Goal health
 is also independent: an off-track badge remains an explicit warning. Exact values,
 signs, labels, chart coordinates and financial calculations are unchanged.
@@ -95,13 +108,24 @@ Never pass account/payee/category/security names, notes, source descriptions, or
 arbitrary backend error prose through that helper. Keep route IDs, enum values,
 option values and API payloads independent of translated labels.
 
-Interface language does **not** change financial currency. Currency values use
-the existing exact-string Intl formatter. `es-419` uses the platform's CLDR Latin
-American conventions, including period decimals and comma grouping; it does not
-select MXN or another currency. pt-BR uses comma decimals and period grouping.
-Dates use Intl; native date inputs retain ISO API values and browser/OS widgets.
-Percentages retain exact decimal labels. Counts and bounded dimensionless chart
-coordinates may use Number; monetary values must never do so.
+Interface language does **not** change financial currency. Financial read-only
+numbers use one fixed Brazilian display convention in every language: period
+thousands separators, comma decimals, exactly two fractional digits. Examples:
+`R$ 57.434,51`, `US$ 1.234,56`, `18,30%`, and `230,00` units. Symbols/codes still
+identify the original currency; this is not currency conversion. The shared
+`formatMoney`/`formatMoneyParts`, `formatDecimal`, `formatExactPercent` and quantity
+helpers consume exact decimal strings through Intl without monetary Number
+conversion. Old compact/precision/locale overrides cannot change this convention;
+no K/M abbreviations or six-decimal monetary labels remain in normal views.
+Dates and counts retain their own semantics. Dates use the selected language's
+Intl conventions; native date inputs retain ISO API values and browser/OS widgets.
+Chart coordinates remain dimensionless, independent of formatted text.
+
+This is presentation-only rounding. Backend Decimal/storage/API precision, original
+currencies, calculations, source evidence and editing precision are unchanged.
+Editing controls continue using the selected language's validated decimal input
+conventions and retain all original digits. Original imported CSV/OFX/Gmail/provider
+text remains source evidence, not relocalized financial display.
 
 `DecimalInput` separates visible localized text from canonical exact strings.
 `parseLocalizedDecimal` validates grouping/sign/fraction without float conversion;
@@ -137,3 +161,46 @@ npm run test:demo -- --appearance
 
 The runner creates its own synthetic workspace. Never aim it at an existing local
 database or running user server. Screenshots go to `docs/screenshots/v013/after`.
+
+
+## Sidebar navigation order
+
+Settings > Appearance & Language > Sidebar order offers keyboard-accessible up/down
+buttons for the seven primary navigation destinations, including Settings. Changes
+apply immediately to expanded/collapsed desktop navigation and the mobile drawer.
+The last slot retains the existing bottom spacing; search, theme and collapse
+utilities remain fixed. Routes, active states and page bookmarks do not change.
+
+Order is a validated appearance preference, stored locally with existing normal/demo
+isolation. Unknown IDs and duplicates are discarded; missing destinations are
+appended in default order. Old preferences without an order retain today's default.
+Restore default order resets only navigation; Reset appearance preserves language
+and navigation order. Demo financial reset preserves this preference. No financial
+records, database schema or network services are involved.
+
+
+Sidebar-order validation (2026-11-05): 239 frontend tests pass, including malformed
+stored order, immutable moves, boundary buttons, live desktop/drawer updates,
+normal/demo separation and reset. Isolated Playwright verifies persistence after
+reload, mobile routing and restore-default behavior. Lint, formatting and the
+TypeScript/production build pass. Local captures: `docs/screenshots/v014-sidebar/`.
+
+
+Financial display validation (2026-11-05): 240 frontend tests and 22 backend
+ledger/ETF financial regressions pass. Browser checks cover eight financial views,
+both isolated demo scenarios, three interface languages and mobile layout. Build,
+lint and formatting pass. Captures remain local under
+`docs/screenshots/v014-numbers/`; financial databases and API values are unchanged.
+
+## Settings migration (unreleased v0.14)
+
+Language now lives first under General. The Appearance editor retains the complete
+local theme/font/chart registry and Sidebar order remains its last section. The
+removed financial-color chooser stays removed. The existing normal/demo preference
+keys and reset behavior are preserved. Theme previews use the shared money formatter.
+
+The November 9 Settings request supersedes the earlier removal of the Settings
+reporting-currency control: General now writes the canonical existing reporting
+preference. Dashboard/holdings currency selectors remain absent and original record
+currencies are never rewritten. Exact formatted monetary values remain 1.234,56.
+See [Settings implementation](SETTINGS_V014.md).

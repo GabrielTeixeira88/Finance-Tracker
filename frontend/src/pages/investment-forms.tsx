@@ -1,4 +1,8 @@
 import { t as tr, ui } from '@/lib/i18n'
+import {
+  ActivityTypePicker,
+  type ActivityType as PickerType,
+} from '@/features/activities/activity-type-picker'
 import { exactFormData } from '@/lib/localized-number'
 import { useState, type FormEvent } from 'react'
 import { z } from 'zod'
@@ -6,8 +10,8 @@ import { useMutation } from '@tanstack/react-query'
 import { Field } from '@/components/forms'
 import { Money } from '@/components/primitives'
 import { Button } from '@/components/ui/button'
-import { request, type Account, localDate } from '@/lib/api'
-import type { Asset } from '@/lib/investments'
+import { request, type Account, localDate, getDemoDate } from '@/lib/api'
+import type { Asset, Activity } from '@/lib/investments'
 import { quantityText } from '@/lib/investments'
 import { useWrite } from '@/lib/use-write'
 
@@ -108,7 +112,7 @@ export function PriceForm({
         <input
           type="date"
           name="price_date"
-          defaultValue={localDate()}
+          defaultValue={getDemoDate() ?? localDate()}
           required
         />
       </Field>
@@ -140,14 +144,22 @@ export function ActivityForm({
   accounts,
   assets,
   initialAccount,
+  initialAsset = '',
+  draft,
+  blockedAssetIds = [],
+  native = false,
   onSaved,
 }: {
   accounts: Account[]
   assets: Asset[]
   initialAccount: string
+  initialAsset?: string
+  draft?: Activity
+  blockedAssetIds?: string[]
+  native?: boolean
   onSaved: () => void
 }) {
-  const [kind, setKind] = useState('BUY')
+  const [kind, setKind] = useState(draft?.activity_type ?? 'BUY')
   const [accountId, setAccountId] = useState(
     initialAccount ||
       accounts.find((a) => a.type === 'INVESTMENT' && a.active)?.id ||
@@ -222,22 +234,39 @@ export function ActivityForm({
             ))}
         </select>
       </Field>
-      <Field label={tr('investment_forms:activity_type_c66092')}>
-        <select value={kind} onChange={(e) => setKind(e.target.value)}>
-          {['BUY', 'SELL', 'DIVIDEND', 'INTEREST', 'FEE', 'TAX'].map((t) => (
-            <option key={t} value={t}>
-              {ui(t)}
-            </option>
-          ))}
-        </select>
-      </Field>
+      {native ? (
+        <div className="col-span-full">
+          <ActivityTypePicker
+            value={kind as PickerType}
+            allowedTypes={['BUY', 'SELL', 'DIVIDEND', 'INTEREST', 'FEE', 'TAX']}
+            onSelect={(value) => {
+              setKind(value)
+              setApproved(null)
+            }}
+          />
+        </div>
+      ) : (
+        <Field label={tr('investment_forms:activity_type_c66092')}>
+          <select value={kind} onChange={(e) => setKind(e.target.value)}>
+            {['BUY', 'SELL', 'DIVIDEND', 'INTEREST', 'FEE', 'TAX'].map((t) => (
+              <option key={t} value={t}>
+                {ui(t)}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
       <Field label={tr('investment_forms:activity_security_6a7e9f')}>
-        <select name="asset_id" required={trade}>
+        <select name="asset_id" required={trade} defaultValue={initialAsset}>
           <option value="">
             {tr('investment_forms:account_cash_no_security_f2dcef')}
           </option>
           {assets
-            .filter((a) => a.currency === account?.currency)
+            .filter(
+              (a) =>
+                a.currency === account?.currency &&
+                !blockedAssetIds.includes(a.id),
+            )
             .map((a) => (
               <option key={a.id} value={a.id}>
                 {a.symbol} · {a.exchange}
@@ -249,36 +278,61 @@ export function ActivityForm({
         <input
           type="date"
           name="activity_date"
-          defaultValue={localDate()}
+          defaultValue={draft?.activity_date ?? getDemoDate() ?? localDate()}
           required
         />
       </Field>
       {trade ? (
         <>
           <Field label={tr('investment_forms:quantity_44f6af')}>
-            <input name="quantity" inputMode="decimal" required />
+            <input
+              name="quantity"
+              inputMode="decimal"
+              defaultValue={draft ? draft.quantity : ''}
+              required
+            />
           </Field>
           <Field label={tr('investment_forms:unit_price_3c6c77')}>
-            <input name="unit_price" inputMode="decimal" required />
+            <input
+              name="unit_price"
+              inputMode="decimal"
+              defaultValue={draft ? draft.unit_price : ''}
+              required
+            />
           </Field>
         </>
       ) : (
         <Field label={tr('investment_forms:gross_amount_ae5b9d')}>
-          <input name="gross_amount" inputMode="decimal" required />
+          <input
+            name="gross_amount"
+            inputMode="decimal"
+            defaultValue={draft ? draft.gross_amount : ''}
+            required
+          />
         </Field>
       )}
       {kind !== 'FEE' && kind !== 'TAX' && (
         <>
           <Field label={tr('investment_forms:activity_fees_8955ed')}>
-            <input name="fees" inputMode="decimal" defaultValue="0" required />
+            <input
+              name="fees"
+              inputMode="decimal"
+              defaultValue={draft?.fees ?? '0'}
+              required
+            />
           </Field>
           <Field label={tr('investment_forms:activity_taxes_82bdf6')}>
-            <input name="taxes" inputMode="decimal" defaultValue="0" required />
+            <input
+              name="taxes"
+              inputMode="decimal"
+              defaultValue={draft?.taxes ?? '0'}
+              required
+            />
           </Field>
         </>
       )}
       <Field label={tr('investment_forms:activity_notes_5f27dd')}>
-        <input name="notes" maxLength={500} />
+        <input name="notes" maxLength={500} defaultValue={draft?.notes ?? ''} />
       </Field>
       {(error || write.isError) && (
         <p role="alert">{error || write.error?.message}</p>
