@@ -275,8 +275,13 @@ it('renders compact product navigation and categories under Settings', async () 
   ).not.toBeInTheDocument()
   expect(within(nav).queryByText('Synthetic Checking')).not.toBeInTheDocument()
   await userEvent.click(within(nav).getByRole('button', { name: 'Settings' }))
+  // Settings is code-split; a cold CI transform can exceed the default 1s query wait.
   expect(
-    await screen.findByRole('heading', { name: 'General', level: 1 }),
+    await screen.findByRole(
+      'heading',
+      { name: 'General', level: 1 },
+      { timeout: 10000 },
+    ),
   ).toBeInTheDocument()
   await userEvent.click(screen.getByRole('link', { name: 'Spending' }))
   const categoriesHeading = await screen.findByRole('heading', {
@@ -290,7 +295,7 @@ it('renders compact product navigation and categories under Settings', async () 
   expect(
     screen.getByRole('button', { name: 'Add category' }),
   ).toBeInTheDocument()
-})
+}, 15000)
 
 it('opens account details with a fixed account ledger filter', async () => {
   const fetch = mockApi()
