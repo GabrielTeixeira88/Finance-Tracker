@@ -1,5 +1,14 @@
 # v0.14.0 source finalization
 
+Follow-up, 2026-11-21: the owner additionally authorized a targeted CI repair,
+current portfolio media, README/walkthrough improvements and merge after green
+GitHub CI. See [the lockfile repair](CI.md#v014-lockfile-repair-2026-11-21) and
+[the current walkthrough](PORTFOLIO_WALKTHROUGH.md). The original no-local-rerun
+restriction below records the November 10 licensing pass; it does not describe
+the later explicitly authorized clean install, focused checks and media capture.
+Only reviewed fictional v0.14 portfolio media are now allowlisted; personal data,
+raw audit captures, reference screenshots, builds and databases remain excluded.
+
 Decision date: 2026-11-10. The owner approved Option A and explicitly authorized
 committing the complete v0.14 branch, pushing it and merging through the normal
 GitHub checks. No tag, GitHub Release, deployment or provider refresh is authorized.
